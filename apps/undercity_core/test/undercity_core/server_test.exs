@@ -18,8 +18,8 @@ defmodule UndercityCore.ServerTest do
     assert {:ok, ^name} = Server.connect(name, "player")
   end
 
-  test "connect with non-existent server exits" do
-    assert catch_exit(Server.connect("nonexistent", "player"))
+  test "connect with non-existent server returns error" do
+    assert {:error, :server_not_found} = Server.connect("nonexistent", "player")
   end
 
   test "multiple servers can run with different names" do

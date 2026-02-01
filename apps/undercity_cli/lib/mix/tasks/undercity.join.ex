@@ -20,9 +20,12 @@ defmodule Mix.Tasks.Undercity.Join do
       Mix.raise("Could not connect to server. Is it running?")
     end
 
-    {:ok, name} =
-      :rpc.call(UndercityCore.server_node(), UndercityCore.Server, :connect, [server, player])
+    case :rpc.call(UndercityCore.server_node(), UndercityCore.Server, :connect, [server, player]) do
+      {:ok, name} ->
+        Mix.shell().info("Connected to #{name} as #{player}")
 
-    Mix.shell().info("Connected to #{name} as #{player}")
+      {:error, :server_not_found} ->
+        Mix.raise("Server \"#{server}\" not found. Is the server running with --name #{server}?")
+    end
   end
 end

@@ -10,6 +10,8 @@ defmodule UndercityCore.Server do
 
   def connect(server_name, player_name) do
     GenServer.call(via(server_name), {:connect, player_name})
+  catch
+    :exit, _ -> {:error, :server_not_found}
   end
 
   defp via(name) do
