@@ -7,6 +7,12 @@ defmodule Mix.Tasks.Undercity.Server do
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [name: :string])
     name = opts[:name] || "default"
-    Mix.shell().info("TODO: server #{name}")
+
+    Application.ensure_all_started(:undercity_core)
+
+    {:ok, _pid} = UndercityCore.Server.start_link(name: name)
+
+    Mix.shell().info("Server #{name} started")
+    Process.sleep(:infinity)
   end
 end
