@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Undercity.Server do
     unless Node.alive?() do
       Mix.raise(
         "This task must be run as a distributed node.\n\n" <>
-          "  elixir --name undercity_server@127.0.0.1 -S mix undercity.server --name #{name}"
+          "  elixir --name #{UndercityCore.server_node()} -S mix undercity.server --name #{name}"
       )
     end
 

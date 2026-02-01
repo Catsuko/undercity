@@ -16,10 +16,12 @@ defmodule Mix.Tasks.Undercity.Join do
       )
     end
 
-    true = Node.connect(:"undercity_server@127.0.0.1")
+    unless Node.connect(UndercityCore.server_node()) do
+      Mix.raise("Could not connect to server. Is it running?")
+    end
 
     {:ok, name} =
-      :rpc.call(:"undercity_server@127.0.0.1", UndercityCore.Server, :connect, [server, player])
+      :rpc.call(UndercityCore.server_node(), UndercityCore.Server, :connect, [server, player])
 
     Mix.shell().info("Connected to #{name} as #{player}")
   end
