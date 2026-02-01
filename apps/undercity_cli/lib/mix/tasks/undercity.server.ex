@@ -7,6 +7,19 @@ defmodule Mix.Tasks.Undercity.Server do
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [name: :string])
     name = opts[:name] || "default"
-    Mix.shell().info("TODO: server #{name}")
+
+    unless Node.alive?() do
+      Mix.raise(
+        "This task must be run as a distributed node.\n\n" <>
+          "  elixir --name undercity_server@127.0.0.1 -S mix undercity.server --name #{name}"
+      )
+    end
+
+    Application.ensure_all_started(:undercity_core)
+
+    {:ok, _pid} = UndercityCore.Server.start_link(name: name)
+
+    Mix.shell().info("Server #{name} started")
+    Process.sleep(:infinity)
   end
 end
