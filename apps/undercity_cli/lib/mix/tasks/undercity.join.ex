@@ -9,13 +9,6 @@ defmodule Mix.Tasks.Undercity.Join do
     server = opts[:server] || "default"
     player = opts[:player] || "anonymous"
 
-    unless Node.alive?() do
-      Mix.raise(
-        "This task must be run as a distributed node.\n\n" <>
-          "  elixir --name client_#{:rand.uniform(10000)}@127.0.0.1 -S mix undercity.join --server #{server}"
-      )
-    end
-
     unless Node.connect(UndercityCore.server_node()) do
       Mix.raise("Could not connect to server. Is it running?")
     end
