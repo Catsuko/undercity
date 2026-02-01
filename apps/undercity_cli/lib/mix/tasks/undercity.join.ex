@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Undercity.Join do
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [server: :string, player: :string])
     server = opts[:server] || "default"
-    _player = opts[:player] || "anonymous"
+    player = opts[:player] || "anonymous"
 
     unless Node.alive?() do
       Mix.raise(
@@ -19,8 +19,8 @@ defmodule Mix.Tasks.Undercity.Join do
     true = Node.connect(:"undercity_server@127.0.0.1")
 
     {:ok, name} =
-      :rpc.call(:"undercity_server@127.0.0.1", UndercityCore.Server, :connect, [server])
+      :rpc.call(:"undercity_server@127.0.0.1", UndercityCore.Server, :connect, [server, player])
 
-    Mix.shell().info("Connected to #{name}")
+    Mix.shell().info("Connected to #{name} as #{player}")
   end
 end

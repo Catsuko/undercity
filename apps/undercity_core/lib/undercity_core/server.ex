@@ -8,8 +8,8 @@ defmodule UndercityCore.Server do
     GenServer.start_link(__MODULE__, name, name: via(name))
   end
 
-  def connect(server_name) do
-    GenServer.call(via(server_name), :connect)
+  def connect(server_name, player_name) do
+    GenServer.call(via(server_name), {:connect, player_name})
   end
 
   defp via(name) do
@@ -24,7 +24,8 @@ defmodule UndercityCore.Server do
   end
 
   @impl true
-  def handle_call(:connect, _from, name) do
+  def handle_call({:connect, player_name}, _from, name) do
+    IO.puts("#{player_name} connected")
     {:reply, {:ok, name}, name}
   end
 end
