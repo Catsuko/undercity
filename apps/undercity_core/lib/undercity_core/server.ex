@@ -5,17 +5,15 @@ defmodule UndercityCore.Server do
 
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, name, name: via(name))
+    GenServer.start_link(__MODULE__, name, name: {:global, {__MODULE__, name}})
   end
 
   def connect(server_name, player_name) do
-    GenServer.call(via(server_name), {:connect, player_name})
+    Node.connect(UndercityCore.server_node())
+    :global.sync()
+    GenServer.call({:global, {__MODULE__, server_name}}, {:connect, player_name})
   catch
     :exit, _ -> {:error, :server_not_found}
-  end
-
-  defp via(name) do
-    {:via, Registry, {UndercityCore.ServerRegistry, name}}
   end
 
   # Server callbacks

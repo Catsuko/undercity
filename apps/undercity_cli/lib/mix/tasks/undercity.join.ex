@@ -9,16 +9,14 @@ defmodule Mix.Tasks.Undercity.Join do
     server = opts[:server] || "default"
     player = opts[:player] || "anonymous"
 
-    unless Node.connect(UndercityCore.server_node()) do
-      Mix.raise("Could not connect to server. Is it running?")
-    end
-
-    case :rpc.call(UndercityCore.server_node(), UndercityCore.Server, :connect, [server, player]) do
+    case UndercityCore.Server.connect(server, player) do
       {:ok, name} ->
         Mix.shell().info("Connected to #{name} as #{player}")
 
       {:error, :server_not_found} ->
-        Mix.raise("Server \"#{server}\" not found. Is the server running with --name #{server}?")
+        Mix.raise(
+          "Could not find server \"#{server}\". Is the server running with --name #{server}?"
+        )
     end
   end
 end

@@ -9,9 +9,8 @@ defmodule UndercityCore.ServerTest do
     %{name: name, pid: pid}
   end
 
-  test "start_link registers server via Registry", %{name: name} do
-    result = Registry.lookup(UndercityCore.ServerRegistry, name)
-    assert [{_pid, nil}] = result
+  test "start_link registers server globally", %{name: name} do
+    assert is_pid(:global.whereis_name({UndercityCore.Server, name}))
   end
 
   test "connect returns server name", %{name: name} do
