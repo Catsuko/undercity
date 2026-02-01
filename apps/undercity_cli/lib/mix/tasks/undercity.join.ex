@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
+  @moduledoc false
   @shortdoc "Join an Undercity game server"
 
   def run(args) do
