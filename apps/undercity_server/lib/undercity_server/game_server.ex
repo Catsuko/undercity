@@ -1,4 +1,4 @@
-defmodule UndercityCore.Server do
+defmodule UndercityServer.GameServer do
   @moduledoc false
 
   use GenServer
@@ -14,7 +14,7 @@ defmodule UndercityCore.Server do
         local_connect(server_name, player_name)
 
       [] ->
-        server_node = UndercityCore.server_node()
+        server_node = UndercityServer.server_node()
         Node.connect(server_node)
         rpc_connect(server_node, server_name, player_name)
     end

@@ -1,5 +1,7 @@
 defmodule UndercityCore do
-  @moduledoc false
+  @moduledoc """
+  Domain logic for Undercity.
 
-  def server_node, do: :"undercity_server@127.0.0.1"
+  This module contains pure domain structs and functions with no OTP dependencies.
+  """
 end

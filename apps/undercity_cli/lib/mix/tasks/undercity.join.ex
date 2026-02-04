@@ -9,7 +9,9 @@ defmodule Mix.Tasks.Undercity.Join do
     server = opts[:server] || "default"
     player = opts[:player] || "anonymous"
 
-    case UndercityCore.Server.connect(server, player) do
+    Application.ensure_all_started(:undercity_server)
+
+    case UndercityServer.GameServer.connect(server, player) do
       {:ok, name} ->
         Mix.shell().info("Connected to #{name} as #{player}")
 

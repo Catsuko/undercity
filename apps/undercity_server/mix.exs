@@ -1,9 +1,9 @@
-defmodule UndercityCli.MixProject do
+defmodule UndercityServer.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :undercity_cli,
+      app: :undercity_server,
       version: "0.1.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -17,13 +17,14 @@ defmodule UndercityCli.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {UndercityServer.Application, []}
     ]
   end
 
   defp deps do
     [
-      {:undercity_server, in_umbrella: true}
+      {:undercity_core, in_umbrella: true}
     ]
   end
 end
