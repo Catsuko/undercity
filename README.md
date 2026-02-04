@@ -30,9 +30,10 @@ elixir --name client@127.0.0.1 -S mix undercity.join --server my_server --player
 
 ## Project Structure
 
-This is an Elixir umbrella project with two apps:
+This is an Elixir umbrella project with three apps:
 
-- `undercity_core` - Game engine, logic, and OTP supervision
+- `undercity_core` - Pure domain logic (structs and functions, no OTP)
+- `undercity_server` - OTP server and supervision
 - `undercity_cli` - CLI client interface
 
 ## Tests
