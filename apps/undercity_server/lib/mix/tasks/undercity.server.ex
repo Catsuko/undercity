@@ -8,7 +8,7 @@ defmodule Mix.Tasks.Undercity.Server do
     {opts, _, _} = OptionParser.parse(args, strict: [name: :string])
     name = opts[:name] || "default"
 
-    Application.ensure_all_started(:undercity_server)
+    Mix.Task.run("app.start")
 
     {:ok, _pid} = UndercityServer.GameServer.start_link(name: name)
 
