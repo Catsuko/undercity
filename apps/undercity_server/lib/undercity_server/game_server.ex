@@ -9,24 +9,9 @@ defmodule UndercityServer.GameServer do
   end
 
   def connect(server_name, player_name) do
-    case Registry.lookup(__MODULE__.Registry, server_name) do
-      [{_pid, _}] ->
-        local_connect(server_name, player_name)
+    server_node = UndercityServer.server_node()
+    Node.connect(server_node)
 
-      [] ->
-        server_node = UndercityServer.server_node()
-        Node.connect(server_node)
-        rpc_connect(server_node, server_name, player_name)
-    end
-  end
-
-  defp local_connect(server_name, player_name) do
-    GenServer.call({:via, Registry, {__MODULE__.Registry, server_name}}, {:connect, player_name})
-  catch
-    :exit, _ -> {:error, :server_not_found}
-  end
-
-  defp rpc_connect(server_node, server_name, player_name) do
     case :rpc.call(server_node, GenServer, :call, [
            {:via, Registry, {__MODULE__.Registry, server_name}},
            {:connect, player_name}
