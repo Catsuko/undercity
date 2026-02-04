@@ -5,15 +5,35 @@ defmodule UndercityCore.Server do
 
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, name, name: {:global, {__MODULE__, name}})
+    GenServer.start_link(__MODULE__, name, name: {:via, Registry, {__MODULE__.Registry, name}})
   end
 
   def connect(server_name, player_name) do
-    Node.connect(UndercityCore.server_node())
-    :global.sync()
-    GenServer.call({:global, {__MODULE__, server_name}}, {:connect, player_name})
+    case Registry.lookup(__MODULE__.Registry, server_name) do
+      [{_pid, _}] ->
+        local_connect(server_name, player_name)
+
+      [] ->
+        server_node = UndercityCore.server_node()
+        Node.connect(server_node)
+        rpc_connect(server_node, server_name, player_name)
+    end
+  end
+
+  defp local_connect(server_name, player_name) do
+    GenServer.call({:via, Registry, {__MODULE__.Registry, server_name}}, {:connect, player_name})
   catch
     :exit, _ -> {:error, :server_not_found}
+  end
+
+  defp rpc_connect(server_node, server_name, player_name) do
+    case :rpc.call(server_node, GenServer, :call, [
+           {:via, Registry, {__MODULE__.Registry, server_name}},
+           {:connect, player_name}
+         ]) do
+      {:badrpc, _reason} -> {:error, :server_not_found}
+      result -> result
+    end
   end
 
   # Server callbacks
