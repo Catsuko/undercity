@@ -18,15 +18,10 @@ defmodule Mix.Tasks.Undercity.Join do
         Spinner.success("Connected to #{name} as #{player}")
 
       {:error, :server_not_found} ->
-        Spinner.failure("Could not reach the undercity")
-
-        Mix.raise(
-          "Could not find server \"#{server}\". Is the server running with --name #{server}?"
-        )
+        Spinner.failure("Could not reach the server")
 
       {:error, :server_down} ->
-        Spinner.failure("The undercity has gone dark")
-        Mix.raise("Server node is down")
+        Spinner.failure("Could not reach the server")
     end
   end
 end

@@ -9,14 +9,42 @@ defmodule UndercityCli.Spinner do
 
   @frames ~w(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
   @frame_rate 80
+  @message_cycle_ms 4000
 
   @colors [:magenta, :light_magenta, :cyan, :light_cyan, :blue, :light_blue]
 
+  # True color (24-bit) gradient for smooth text pulsing
+  # Medium grey (180,180,180) → subtle cyan tint (160,195,205) → back to grey
+  @text_pulse_base {180, 180, 180}
+  @text_pulse_peak {160, 195, 205}
+  @text_pulse_steps 30
+
+  # Generate smooth gradient at compile time
+  @text_pulse_colors (
+    half = for i <- 0..(@text_pulse_steps - 1) do
+      t = i / (@text_pulse_steps - 1)
+      {br, bg, bb} = @text_pulse_base
+      {pr, pg, pb} = @text_pulse_peak
+      {
+        round(br + (pr - br) * t),
+        round(bg + (pg - bg) * t),
+        round(bb + (pb - bb) * t)
+      }
+    end
+    half ++ Enum.reverse(half)
+  )
+
   @messages [
-    "Establishing connection",
-    "Descending into the undercity",
-    "Tunneling through",
-    "Searching for signal"
+    "Seeking passage through the dark",
+    "Wading through the murk",
+    "Listening for signs of life",
+    "Feeling along cold stone walls",
+    "Descending deeper still",
+    "The air grows thick and heavy",
+    "Shadows shift in the periphery",
+    "Something stirs below",
+    "Following the faint pulse",
+    "The path reveals itself"
   ]
 
   # Client API
@@ -68,11 +96,13 @@ defmodule UndercityCli.Spinner do
     state = %{
       frame_index: 0,
       color_index: 0,
-      message_index: 0,
+      text_pulse_index: 0,
+      message_index: :rand.uniform(length(@messages)) - 1,
       message: opts[:message]
     }
 
     schedule_frame()
+    schedule_message_cycle()
     render(state)
 
     {:ok, state}
@@ -98,10 +128,17 @@ defmodule UndercityCli.Spinner do
 
   @impl true
   def handle_info(:tick, state) do
-    new_state = advance_state(state)
+    new_state = advance_frame(state)
     render(new_state)
     schedule_frame()
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info(:cycle_message, state) do
+    new_index = rem(state.message_index + 1, length(@messages))
+    schedule_message_cycle()
+    {:noreply, %{state | message_index: new_index}}
   end
 
   # Private Functions
@@ -110,7 +147,11 @@ defmodule UndercityCli.Spinner do
     Process.send_after(self(), :tick, @frame_rate)
   end
 
-  defp advance_state(state) do
+  defp schedule_message_cycle do
+    Process.send_after(self(), :cycle_message, @message_cycle_ms)
+  end
+
+  defp advance_frame(state) do
     frame_index = rem(state.frame_index + 1, length(@frames))
 
     color_index =
@@ -118,29 +159,36 @@ defmodule UndercityCli.Spinner do
         do: rem(state.color_index + 1, length(@colors)),
         else: state.color_index
 
-    message_index =
-      if frame_index == 0 and color_index == 0,
-        do: rem(state.message_index + 1, length(@messages)),
-        else: state.message_index
+    # Advance text pulse every frame for smooth gradient
+    text_pulse_index = rem(state.text_pulse_index + 1, length(@text_pulse_colors))
 
-    %{state | frame_index: frame_index, color_index: color_index, message_index: message_index}
+    %{
+      state
+      | frame_index: frame_index,
+        color_index: color_index,
+        text_pulse_index: text_pulse_index
+    }
   end
 
   defp render(state) do
     frame = Enum.at(@frames, state.frame_index)
-    color = Enum.at(@colors, state.color_index)
+    spinner_color = Enum.at(@colors, state.color_index)
+    {r, g, b} = Enum.at(@text_pulse_colors, state.text_pulse_index)
     message = state.message || Enum.at(@messages, state.message_index)
 
     # Single write with cursor reset + content + clear to EOL to avoid flicker
+    # Uses 24-bit true color for smooth gradients: \e[38;2;R;G;Bm
     IO.write([
       "\r",
       " ",
-      apply(IO.ANSI, color, []),
+      apply(IO.ANSI, spinner_color, []),
       frame,
       IO.ANSI.reset(),
       " ",
+      "\e[38;2;#{r};#{g};#{b}m",
       message,
       "...",
+      IO.ANSI.reset(),
       "\e[K"
     ])
   end
