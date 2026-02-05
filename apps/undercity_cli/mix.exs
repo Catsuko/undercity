@@ -23,8 +23,7 @@ defmodule UndercityCli.MixProject do
 
   defp deps do
     [
-      {:undercity_server, in_umbrella: true},
-      {:bunt, "~> 1.0"}
+      {:undercity_server, in_umbrella: true}
     ]
   end
 end

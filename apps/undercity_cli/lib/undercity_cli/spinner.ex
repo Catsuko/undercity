@@ -2,7 +2,7 @@ defmodule UndercityCli.Spinner do
   @moduledoc """
   An animated spinner for CLI feedback during connection.
 
-  Uses braille dot patterns with color cycling for a smooth, modern feel.
+  Uses a rotating cross symbol with muted colors and gothic-themed messages.
   """
 
   use GenServer
