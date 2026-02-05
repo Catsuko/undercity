@@ -21,30 +21,42 @@ defmodule UndercityCli.Spinner do
 
   # Generate smooth gradient at compile time
   @text_pulse_colors (
-    half = for i <- 0..(@text_pulse_steps - 1) do
-      t = i / (@text_pulse_steps - 1)
-      {br, bg, bb} = @text_pulse_base
-      {pr, pg, pb} = @text_pulse_peak
-      {
-        round(br + (pr - br) * t),
-        round(bg + (pg - bg) * t),
-        round(bb + (pb - bb) * t)
-      }
-    end
-    half ++ Enum.reverse(half)
-  )
+                       half =
+                         for i <- 0..(@text_pulse_steps - 1) do
+                           t = i / (@text_pulse_steps - 1)
+                           {br, bg, bb} = @text_pulse_base
+                           {pr, pg, pb} = @text_pulse_peak
+
+                           {
+                             round(br + (pr - br) * t),
+                             round(bg + (pg - bg) * t),
+                             round(bb + (pb - bb) * t)
+                           }
+                         end
+
+                       half ++ Enum.reverse(half)
+                     )
 
   @messages [
-    "Seeking passage through the dark",
     "Wading through the murk",
     "Listening for signs of life",
     "Feeling along cold stone walls",
-    "Descending deeper still",
-    "The air grows thick and heavy",
-    "Shadows shift in the periphery",
-    "Something stirs below",
-    "Following the faint pulse",
-    "The path reveals itself"
+    "Heaving the iron door",
+    "Prying open the rusted gate",
+    "Clawing through the rubble",
+    "Lowering into the dark",
+    "Kicking through the barricade",
+    "Counting footsteps in the dark",
+    "Drawing wards in the dirt",
+    "Lighting torches in the gloom",
+    "Praying to forgotten saints",
+    "Scavenging for supplies",
+    "Polishing old chainmail",
+    "Checking the cracks in the wall",
+    "Sharpening the blade",
+    "Binding the wound tight",
+    "Tracing sigils on the stone",
+    "Whispering the old words"
   ]
 
   # Client API
