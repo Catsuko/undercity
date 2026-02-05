@@ -27,7 +27,7 @@ defmodule UndercityServer.GameServer do
       GenServer.call({:global, server_name}, {:connect, player_name}, @connect_timeout)
     catch
       :exit, {:noproc, _} ->
-        attempt = (@connect_retries + 1) - retries
+        attempt = @connect_retries + 1 - retries
         Process.sleep((:math.pow(2, attempt) * @retry_rate) |> trunc())
         connect(server_name, player_name, retries - 1)
 

@@ -1,6 +1,8 @@
 defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
+  alias UndercityCli.Spinner
+
   @moduledoc false
   @shortdoc "Join an Undercity game server"
 
@@ -9,14 +11,17 @@ defmodule Mix.Tasks.Undercity.Join do
     server = opts[:server] || "default"
     player = opts[:player] || "anonymous"
 
+    Spinner.start()
+
     case UndercityServer.GameServer.connect(server, player) do
       {:ok, name} ->
-        Mix.shell().info("Connected to #{name} as #{player}")
+        Spinner.success("Connected to #{name} as #{player}")
 
       {:error, :server_not_found} ->
-        Mix.raise(
-          "Could not find server \"#{server}\". Is the server running with --name #{server}?"
-        )
+        Spinner.failure("Could not reach the server")
+
+      {:error, :server_down} ->
+        Spinner.failure("Could not reach the server")
     end
   end
 end
