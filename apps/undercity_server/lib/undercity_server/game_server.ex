@@ -15,21 +15,21 @@ defmodule UndercityServer.GameServer do
   def connect(server_name, player_name) do
     server_node = UndercityServer.server_node()
     Node.connect(server_node)
-    connect(server_name, player_name, @connect_retries)
+    do_connect(server_name, player_name, @connect_retries)
   end
 
-  def connect(_, _, 0) do
+  defp do_connect(_, _, 0) do
     {:error, :server_not_found}
   end
 
-  def connect(server_name, player_name, retries) do
+  defp do_connect(server_name, player_name, retries) do
     try do
       GenServer.call({:global, server_name}, {:connect, player_name}, @connect_timeout)
     catch
       :exit, {:noproc, _} ->
-        attempt = (@connect_retries + 1) - retries
+        attempt = @connect_retries + 1 - retries
         Process.sleep((:math.pow(2, attempt) * @retry_rate) |> trunc())
-        connect(server_name, player_name, retries - 1)
+        do_connect(server_name, player_name, retries - 1)
 
       :exit, {:nodedown, _} ->
         {:error, :server_down}
