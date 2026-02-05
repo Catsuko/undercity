@@ -9,8 +9,8 @@ defmodule UndercityServer.GameServerTest do
     %{name: name, pid: pid}
   end
 
-  test "start_link registers server in local registry", %{name: name} do
-    assert [{pid, _}] = Registry.lookup(GameServer.Registry, name)
+  test "start_link registers server in global registry", %{name: name} do
+    pid = :global.whereis_name(name)
     assert is_pid(pid)
   end
 

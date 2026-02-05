@@ -5,9 +5,7 @@ defmodule UndercityServer.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      {Registry, keys: :unique, name: UndercityServer.GameServer.Registry}
-    ]
+    children = []
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)

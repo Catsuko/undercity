@@ -3,21 +3,36 @@ defmodule UndercityServer.GameServer do
 
   use GenServer
 
+  @connect_retries 5
+  @connect_timeout 2_000
+  @retry_rate 50
+
   def start_link(opts) do
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, name, name: {:via, Registry, {__MODULE__.Registry, name}})
+    GenServer.start_link(__MODULE__, name, name: {:global, name})
   end
 
   def connect(server_name, player_name) do
     server_node = UndercityServer.server_node()
     Node.connect(server_node)
+    connect(server_name, player_name, @connect_retries)
+  end
 
-    case :rpc.call(server_node, GenServer, :call, [
-           {:via, Registry, {__MODULE__.Registry, server_name}},
-           {:connect, player_name}
-         ]) do
-      {:badrpc, _reason} -> {:error, :server_not_found}
-      result -> result
+  def connect(_, _, 0) do
+    {:error, :server_not_found}
+  end
+
+  def connect(server_name, player_name, retries) do
+    try do
+      GenServer.call({:global, server_name}, {:connect, player_name}, @connect_timeout)
+    catch
+      :exit, {:noproc, _} ->
+        attempt = (@connect_retries + 1) - retries
+        Process.sleep((:math.pow(2, attempt) * @retry_rate) |> trunc())
+        connect(server_name, player_name, retries - 1)
+
+      :exit, {:nodedown, _} ->
+        {:error, :server_down}
     end
   end
 
