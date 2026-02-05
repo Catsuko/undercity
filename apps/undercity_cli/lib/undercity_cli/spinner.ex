@@ -7,11 +7,12 @@ defmodule UndercityCli.Spinner do
 
   use GenServer
 
-  @frames ~w(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-  @frame_rate 80
+  @frames ~w(+ × + ×)
+  @frame_rate 240
   @message_cycle_ms 4000
 
-  @colors [:magenta, :light_magenta, :cyan, :light_cyan, :blue, :light_blue]
+  # Muted colors using 256-color palette (greys with subtle tints)
+  @colors [103, 109, 110, 116, 110, 109]
 
   # True color (24-bit) gradient for smooth text pulsing
   # Medium grey (180,180,180) → subtle cyan tint (160,195,205) → back to grey
@@ -189,11 +190,11 @@ defmodule UndercityCli.Spinner do
     message = state.message || Enum.at(@messages, state.message_index)
 
     # Single write with cursor reset + content + clear to EOL to avoid flicker
-    # Uses 24-bit true color for smooth gradients: \e[38;2;R;G;Bm
+    # Uses 256-color for spinner, 24-bit true color for text gradients
     IO.write([
       "\r",
       " ",
-      apply(IO.ANSI, spinner_color, []),
+      "\e[38;5;#{spinner_color}m",
       frame,
       IO.ANSI.reset(),
       " ",
