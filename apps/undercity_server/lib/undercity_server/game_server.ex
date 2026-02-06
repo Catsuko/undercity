@@ -46,6 +46,6 @@ defmodule UndercityServer.GameServer do
   @impl true
   def handle_call({:connect, player_name}, _from, name) do
     block_info = UndercityServer.Gateway.enter(player_name)
-    {:reply, {:ok, block_info.name}, name}
+    {:reply, {:ok, block_info}, name}
   end
 end
