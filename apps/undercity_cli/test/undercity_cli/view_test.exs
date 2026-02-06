@@ -5,14 +5,16 @@ defmodule UndercityCli.ViewTest do
   alias UndercityCore.Person
 
   describe "describe_block/2" do
-    test "includes description and people" do
+    test "includes name, description and people" do
       block_info = %{
+        name: "The Plaza",
         description: "The central gathering place.",
         people: [Person.new("Grimshaw"), Person.new("Mordecai")]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "The Plaza"
       assert result =~ "The central gathering place."
       assert result =~ "Mordecai"
       refute result =~ "Grimshaw"
@@ -20,12 +22,14 @@ defmodule UndercityCli.ViewTest do
 
     test "shows alone message when only current player is present" do
       block_info = %{
+        name: "A Dark Corridor",
         description: "A dark corridor.",
         people: [Person.new("Grimshaw")]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "A Dark Corridor"
       assert result =~ "A dark corridor."
       assert result =~ "You are alone here."
     end
