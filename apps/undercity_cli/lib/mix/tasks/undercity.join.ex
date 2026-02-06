@@ -2,6 +2,7 @@ defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
   alias UndercityCli.Spinner
+  alias UndercityCli.View
 
   @moduledoc false
   @shortdoc "Join an Undercity game server"
@@ -16,12 +17,7 @@ defmodule Mix.Tasks.Undercity.Join do
     case UndercityServer.GameServer.connect(server, player) do
       {:ok, block_info} ->
         Spinner.success("Entered #{block_info.name} as #{player}")
-        IO.puts(block_info.description)
-
-        case block_info.people do
-          [] -> IO.puts("You are alone here.")
-          people -> IO.puts("Present: #{Enum.map_join(people, ", ", & &1.name)}")
-        end
+        IO.puts(View.describe_block(block_info, player))
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")
