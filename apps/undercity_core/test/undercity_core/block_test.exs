@@ -1,0 +1,111 @@
+defmodule UndercityCore.BlockTest do
+  use ExUnit.Case, async: true
+
+  alias UndercityCore.Block
+  alias UndercityCore.Person
+
+  describe "new/3" do
+    test "creates a block with id, name, and description" do
+      block = Block.new("plaza", "The Plaza", "A central gathering place.")
+
+      assert block.id == "plaza"
+      assert block.name == "The Plaza"
+      assert block.description == "A central gathering place."
+      assert block.people == MapSet.new()
+    end
+
+    test "description defaults to nil" do
+      block = Block.new("plaza", "The Plaza")
+
+      assert block.description == nil
+    end
+  end
+
+  describe "add_person/2" do
+    test "adds a person to the block" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block = Block.add_person(block, person)
+
+      assert MapSet.member?(block.people, person)
+    end
+
+    test "adding the same person twice does not duplicate" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block =
+        block
+        |> Block.add_person(person)
+        |> Block.add_person(person)
+
+      assert MapSet.size(block.people) == 1
+    end
+  end
+
+  describe "remove_person/2" do
+    test "removes a person from the block" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block =
+        block
+        |> Block.add_person(person)
+        |> Block.remove_person(person)
+
+      refute MapSet.member?(block.people, person)
+    end
+
+    test "removing a person not in the block is a no-op" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block = Block.remove_person(block, person)
+
+      assert block.people == MapSet.new()
+    end
+  end
+
+  describe "find_person_by_name/2" do
+    test "returns the person when found" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block = Block.add_person(block, person)
+
+      assert Block.find_person_by_name(block, "Grimshaw") == person
+    end
+
+    test "returns nil when not found" do
+      block = Block.new("plaza", "The Plaza")
+
+      assert Block.find_person_by_name(block, "Nobody") == nil
+    end
+  end
+
+  describe "list_people/1" do
+    test "returns an empty list when no people" do
+      block = Block.new("plaza", "The Plaza")
+
+      assert Block.list_people(block) == []
+    end
+
+    test "returns all people in the block" do
+      block = Block.new("plaza", "The Plaza")
+      person1 = Person.new("Grimshaw")
+      person2 = Person.new("Mordecai")
+
+      block =
+        block
+        |> Block.add_person(person1)
+        |> Block.add_person(person2)
+
+      people = Block.list_people(block)
+
+      assert length(people) == 2
+      assert person1 in people
+      assert person2 in people
+    end
+  end
+end

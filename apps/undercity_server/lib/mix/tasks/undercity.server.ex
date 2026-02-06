@@ -4,6 +4,8 @@ defmodule Mix.Tasks.Undercity.Server do
   @moduledoc false
   @shortdoc "Start the Undercity game server"
 
+  require Logger
+
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [name: :string])
     name = opts[:name] || "default"
@@ -12,7 +14,7 @@ defmodule Mix.Tasks.Undercity.Server do
 
     {:ok, _pid} = UndercityServer.GameServer.start_link(name: name)
 
-    Mix.shell().info("Server #{name} started")
+    Logger.info("Server #{name} started")
     Process.sleep(:infinity)
   end
 end
