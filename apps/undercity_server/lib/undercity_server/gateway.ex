@@ -11,25 +11,26 @@ defmodule UndercityServer.Gateway do
   require Logger
 
   alias UndercityCore.Person
+  alias UndercityCore.WorldMap
   alias UndercityServer.Block
-
-  @spawn_block "plaza"
 
   @doc """
   Creates a new person and spawns them in the default block.
   Returns info about the block they spawned in.
   """
   def enter(name) when is_binary(name) do
-    case Block.find_person(@spawn_block, name) do
+    spawn_block = WorldMap.spawn_block()
+
+    case Block.find_person(spawn_block, name) do
       nil ->
         person = Person.new(name)
-        :ok = Block.join(@spawn_block, person)
-        Logger.info("#{name} entered (#{@spawn_block})")
+        :ok = Block.join(spawn_block, person)
+        Logger.info("#{name} entered (#{spawn_block})")
 
       _existing ->
-        Logger.info("#{name} reconnected (#{@spawn_block})")
+        Logger.info("#{name} reconnected (#{spawn_block})")
     end
 
-    Block.info(@spawn_block)
+    Block.info(spawn_block)
   end
 end
