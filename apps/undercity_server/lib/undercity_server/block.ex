@@ -7,6 +7,7 @@ defmodule UndercityServer.Block do
 
   alias UndercityCore.Block, as: CoreBlock
   alias UndercityCore.Person
+  alias UndercityServer.Store
 
   # Client API
 
@@ -38,13 +39,19 @@ defmodule UndercityServer.Block do
 
   @impl true
   def init({id, name, description}) do
-    block = CoreBlock.new(id, name, description)
+    block =
+      case Store.load_block(id) do
+        {:ok, persisted} -> persisted
+        :error -> CoreBlock.new(id, name, description)
+      end
+
     {:ok, block}
   end
 
   @impl true
   def handle_call({:join, person}, _from, block) do
     block = CoreBlock.add_person(block, person)
+    Store.save_block(block)
     {:reply, :ok, block}
   end
 

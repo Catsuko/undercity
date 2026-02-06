@@ -5,6 +5,8 @@ defmodule UndercityServer.Application do
 
   @impl true
   def start(_type, _args) do
+    UndercityServer.Store.start()
+
     children = [
       {Registry, keys: :unique, name: UndercityServer.Registry},
       {UndercityServer.Block,
@@ -15,5 +17,10 @@ defmodule UndercityServer.Application do
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  @impl true
+  def stop(_state) do
+    UndercityServer.Store.stop()
   end
 end
