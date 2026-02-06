@@ -15,8 +15,9 @@ defmodule UndercityServer.Block do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
     description = Keyword.get(opts, :description)
+    exits = Keyword.get(opts, :exits, %{})
 
-    GenServer.start_link(__MODULE__, {id, name, description}, name: via(id))
+    GenServer.start_link(__MODULE__, {id, name, description, exits}, name: via(id))
   end
 
   def join(block_id, %Person{} = person) do
@@ -38,11 +39,11 @@ defmodule UndercityServer.Block do
   # Server callbacks
 
   @impl true
-  def init({id, name, description}) do
+  def init({id, name, description, exits}) do
     block =
       case Store.load_block(id) do
         {:ok, persisted} -> persisted
-        :error -> CoreBlock.new(id, name, description)
+        :error -> CoreBlock.new(id, name, description, exits)
       end
 
     {:ok, block}
@@ -66,7 +67,8 @@ defmodule UndercityServer.Block do
       id: block.id,
       name: block.name,
       description: block.description,
-      people: CoreBlock.list_people(block)
+      people: CoreBlock.list_people(block),
+      exits: CoreBlock.list_exits(block)
     }
 
     {:reply, info, block}

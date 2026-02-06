@@ -6,21 +6,24 @@ defmodule UndercityCore.Block do
   alias UndercityCore.Person
 
   @enforce_keys [:id, :name]
-  defstruct [:id, :name, :description, people: MapSet.new()]
+  defstruct [:id, :name, :description, people: MapSet.new(), exits: %{}]
 
+  @type direction :: :north | :south | :east | :west
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
           description: String.t() | nil,
-          people: MapSet.t(Person.t())
+          people: MapSet.t(Person.t()),
+          exits: %{direction() => String.t()}
         }
 
-  @spec new(String.t(), String.t(), String.t() | nil) :: t()
-  def new(id, name, description \\ nil) do
+  @spec new(String.t(), String.t(), String.t() | nil, %{direction() => String.t()}) :: t()
+  def new(id, name, description \\ nil, exits \\ %{}) do
     %__MODULE__{
       id: id,
       name: name,
-      description: description
+      description: description,
+      exits: exits
     }
   end
 
@@ -37,6 +40,16 @@ defmodule UndercityCore.Block do
   @spec find_person_by_name(t(), String.t()) :: Person.t() | nil
   def find_person_by_name(%__MODULE__{} = block, name) when is_binary(name) do
     Enum.find(block.people, fn person -> person.name == name end)
+  end
+
+  @spec exit(t(), direction()) :: {:ok, String.t()} | :error
+  def exit(%__MODULE__{} = block, direction) do
+    Map.fetch(block.exits, direction)
+  end
+
+  @spec list_exits(t()) :: [{direction(), String.t()}]
+  def list_exits(%__MODULE__{} = block) do
+    Map.to_list(block.exits)
   end
 
   @spec list_people(t()) :: [Person.t()]
