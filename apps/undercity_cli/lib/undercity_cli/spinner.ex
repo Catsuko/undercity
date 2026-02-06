@@ -94,6 +94,15 @@ defmodule UndercityCli.Spinner do
   end
 
   @doc """
+  Lingers for the given duration then clears the last message.
+  Call after success/1 to create a transient message that disappears.
+  """
+  def dismiss(linger_ms \\ 1000) do
+    Process.sleep(linger_ms)
+    IO.write(["\e[1A", "\r", IO.ANSI.clear_line()])
+  end
+
+  @doc """
   Stops the spinner without a final message.
   """
   def stop do
