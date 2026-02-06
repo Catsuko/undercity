@@ -45,7 +45,7 @@ defmodule UndercityServer.GameServer do
 
   @impl true
   def handle_call({:connect, player_name}, _from, name) do
-    IO.puts("#{player_name} connected")
-    {:reply, {:ok, name}, name}
+    block_info = UndercityServer.Gateway.enter(player_name)
+    {:reply, {:ok, block_info.name}, name}
   end
 end

@@ -5,7 +5,13 @@ defmodule UndercityServer.Application do
 
   @impl true
   def start(_type, _args) do
-    children = []
+    children = [
+      {Registry, keys: :unique, name: UndercityServer.Registry},
+      {UndercityServer.Block,
+       id: "plaza",
+       name: "The Plaza",
+       description: "The central gathering place of the undercity."}
+    ]
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)

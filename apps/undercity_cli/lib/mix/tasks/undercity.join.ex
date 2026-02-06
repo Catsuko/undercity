@@ -14,8 +14,8 @@ defmodule Mix.Tasks.Undercity.Join do
     Spinner.start()
 
     case UndercityServer.GameServer.connect(server, player) do
-      {:ok, name} ->
-        Spinner.success("Connected to #{name} as #{player}")
+      {:ok, block_name} ->
+        Spinner.success("Connected to #{server} as #{player} (#{block_name})")
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")
