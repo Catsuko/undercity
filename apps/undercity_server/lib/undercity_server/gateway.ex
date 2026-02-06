@@ -8,6 +8,8 @@ defmodule UndercityServer.Gateway do
   Block GenServers via the registry.
   """
 
+  require Logger
+
   alias UndercityCore.Person
   alias UndercityServer.Block
 
@@ -22,9 +24,10 @@ defmodule UndercityServer.Gateway do
       nil ->
         person = Person.new(name)
         :ok = Block.join(@spawn_block, person)
+        Logger.info("#{name} entered (#{@spawn_block})")
 
       _existing ->
-        :ok
+        Logger.info("#{name} reconnected (#{@spawn_block})")
     end
 
     Block.info(@spawn_block)
