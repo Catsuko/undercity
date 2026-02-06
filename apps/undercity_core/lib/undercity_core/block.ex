@@ -34,6 +34,11 @@ defmodule UndercityCore.Block do
     %{block | people: MapSet.delete(block.people, person)}
   end
 
+  @spec find_person_by_name(t(), String.t()) :: Person.t() | nil
+  def find_person_by_name(%__MODULE__{} = block, name) when is_binary(name) do
+    Enum.find(block.people, fn person -> person.name == name end)
+  end
+
   @spec list_people(t()) :: [Person.t()]
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)

@@ -21,5 +21,13 @@ defmodule UndercityServer.GatewayTest do
       assert "Grimshaw" in names
       assert "Mordecai" in names
     end
+
+    test "entering with the same name does not create a duplicate" do
+      Gateway.enter("Grimshaw")
+      info = Gateway.enter("Grimshaw")
+
+      grimshaws = Enum.filter(info.people, fn p -> p.name == "Grimshaw" end)
+      assert length(grimshaws) == 1
+    end
   end
 end

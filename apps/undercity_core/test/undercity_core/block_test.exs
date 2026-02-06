@@ -67,6 +67,23 @@ defmodule UndercityCore.BlockTest do
     end
   end
 
+  describe "find_person_by_name/2" do
+    test "returns the person when found" do
+      block = Block.new("plaza", "The Plaza")
+      person = Person.new("Grimshaw")
+
+      block = Block.add_person(block, person)
+
+      assert Block.find_person_by_name(block, "Grimshaw") == person
+    end
+
+    test "returns nil when not found" do
+      block = Block.new("plaza", "The Plaza")
+
+      assert Block.find_person_by_name(block, "Nobody") == nil
+    end
+  end
+
   describe "list_people/1" do
     test "returns an empty list when no people" do
       block = Block.new("plaza", "The Plaza")

@@ -22,6 +22,10 @@ defmodule UndercityServer.Block do
     GenServer.call(via(block_id), {:join, person})
   end
 
+  def find_person(block_id, name) do
+    GenServer.call(via(block_id), {:find_person, name})
+  end
+
   def info(block_id) do
     GenServer.call(via(block_id), :info)
   end
@@ -42,6 +46,11 @@ defmodule UndercityServer.Block do
   def handle_call({:join, person}, _from, block) do
     block = CoreBlock.add_person(block, person)
     {:reply, :ok, block}
+  end
+
+  @impl true
+  def handle_call({:find_person, name}, _from, block) do
+    {:reply, CoreBlock.find_person_by_name(block, name), block}
   end
 
   @impl true

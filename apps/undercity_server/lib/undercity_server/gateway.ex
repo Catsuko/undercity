@@ -18,8 +18,15 @@ defmodule UndercityServer.Gateway do
   Returns info about the block they spawned in.
   """
   def enter(name) when is_binary(name) do
-    person = Person.new(name)
-    :ok = Block.join(@spawn_block, person)
+    case Block.find_person(@spawn_block, name) do
+      nil ->
+        person = Person.new(name)
+        :ok = Block.join(@spawn_block, person)
+
+      _existing ->
+        :ok
+    end
+
     Block.info(@spawn_block)
   end
 end
