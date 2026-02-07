@@ -15,10 +15,7 @@ defmodule UndercityServer.BlockSupervisor do
     children = [
       {UndercityServer.Store, block.id},
       {UndercityServer.Block,
-       id: block.id,
-       name: block.name,
-       description: block.description,
-       exits: block.exits}
+       id: block.id, name: block.name, description: block.description, exits: block.exits}
     ]
 
     Supervisor.init(children, strategy: :rest_for_one)

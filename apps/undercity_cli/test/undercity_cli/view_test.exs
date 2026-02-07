@@ -5,12 +5,16 @@ defmodule UndercityCli.ViewTest do
   alias UndercityCore.Person
 
   describe "describe_block/2" do
-    test "includes name, description, people, and exits" do
+    test "includes grid, name, description, and people" do
       block_info = %{
         name: "The Plaza",
         description: "The central gathering place.",
         people: [Person.new("Grimshaw"), Person.new("Mordecai")],
-        exits: [north: "north_alley", south: "south_alley"]
+        neighbourhood: [
+          ["Ashwell", "North Alley", "Wormgarden"],
+          ["West Street", "The Plaza", "East Street"],
+          ["The Stray", "South Alley", "The Lame Horse Inn"]
+        ]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -19,23 +23,75 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "The central gathering place."
       assert result =~ "Mordecai"
       refute result =~ "Grimshaw"
-      assert result =~ "Exits: north, south"
+      assert result =~ "┌"
+      assert result =~ "┘"
     end
 
     test "shows alone message when only current player is present" do
       block_info = %{
-        name: "A Dark Corridor",
-        description: "A dark corridor.",
+        name: "Ashwell",
+        description: "Dry stone fountain, water long gone.",
         people: [Person.new("Grimshaw")],
-        exits: []
+        neighbourhood: [
+          [nil, nil, nil],
+          [nil, "Ashwell", "North Alley"],
+          [nil, "West Street", "The Plaza"]
+        ]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
-      assert result =~ "A Dark Corridor"
-      assert result =~ "A dark corridor."
+      assert result =~ "Ashwell"
+      assert result =~ "Dry stone fountain, water long gone."
       assert result =~ "You are alone here."
-      assert result =~ "There are no exits."
+    end
+  end
+
+  describe "render_grid/1" do
+    test "renders center block with all neighbours" do
+      neighbourhood = [
+        ["Ashwell", "North Alley", "Wormgarden"],
+        ["West Street", "The Plaza", "East Street"],
+        ["The Stray", "South Alley", "The Lame Horse Inn"]
+      ]
+
+      result = View.render_grid(neighbourhood)
+
+      assert result =~ "The Plaza"
+      assert result =~ "Ashwell"
+      assert result =~ "North Alley"
+      assert result =~ "West Street"
+      assert result =~ "East Street"
+      assert result =~ "┌"
+      assert result =~ "┘"
+    end
+
+    test "renders empty cells as blank spaces for corner blocks" do
+      neighbourhood = [
+        [nil, nil, nil],
+        [nil, "Ashwell", "North Alley"],
+        [nil, "West Street", "The Plaza"]
+      ]
+
+      result = View.render_grid(neighbourhood)
+
+      assert result =~ "Ashwell"
+      assert result =~ "North Alley"
+      assert result =~ "West Street"
+      assert result =~ "The Plaza"
+    end
+
+    test "renders empty cells for edge blocks" do
+      neighbourhood = [
+        ["North Alley", "Wormgarden", nil],
+        ["The Plaza", "East Street", nil],
+        ["South Alley", "The Lame Horse Inn", nil]
+      ]
+
+      result = View.render_grid(neighbourhood)
+
+      assert result =~ "East Street"
+      assert result =~ "Wormgarden"
     end
   end
 
@@ -64,20 +120,6 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "Mordecai"
       assert result =~ "Vesper"
       refute result =~ "Grimshaw"
-    end
-  end
-
-  describe "describe_exits/1" do
-    test "shows available exits" do
-      assert View.describe_exits(north: "market", east: "alley") == "Exits: north, east"
-    end
-
-    test "shows single exit" do
-      assert View.describe_exits(south: "catacombs") == "Exits: south"
-    end
-
-    test "shows no exits message when empty" do
-      assert View.describe_exits([]) == "There are no exits."
     end
   end
 end

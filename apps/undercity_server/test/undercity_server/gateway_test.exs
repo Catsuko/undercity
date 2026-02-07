@@ -76,7 +76,8 @@ defmodule UndercityServer.GatewayTest do
     end
 
     test "returns error if player not in block" do
-      assert {:error, :not_found} = Gateway.move("nobody_#{:rand.uniform(100_000)}", :north, "plaza")
+      assert {:error, :not_found} =
+               Gateway.move("nobody_#{:rand.uniform(100_000)}", :north, "plaza")
     end
   end
 end

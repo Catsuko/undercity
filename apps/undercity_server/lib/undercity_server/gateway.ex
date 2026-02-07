@@ -58,11 +58,9 @@ defmodule UndercityServer.Gateway do
   end
 
   defp resolve_exit(block_id, direction) do
-    info = Block.info(block_id)
-
-    case List.keyfind(info.exits, direction, 0) do
-      {_, destination_id} -> {:ok, destination_id}
-      nil -> {:error, :no_exit}
+    case WorldMap.resolve_exit(block_id, direction) do
+      {:ok, _destination_id} = ok -> ok
+      :error -> {:error, :no_exit}
     end
   end
 
