@@ -3,14 +3,21 @@ defmodule UndercityServer.BlockTest do
 
   alias UndercityCore.Person
   alias UndercityServer.Block
+  alias UndercityServer.BlockSupervisor
 
   setup do
     id = "block_#{:rand.uniform(100_000)}"
 
     start_supervised!(
-      {Block, id: id, name: "Test Block", description: "A test block."},
+      {BlockSupervisor,
+       %{id: id, name: "Test Block", description: "A test block.", exits: %{}}},
       id: id
     )
+
+    on_exit(fn ->
+      path = Path.join([File.cwd!(), "data", "blocks", "#{id}.dets"])
+      File.rm(path)
+    end)
 
     %{id: id}
   end

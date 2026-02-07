@@ -1,37 +1,73 @@
 defmodule UndercityServer.Store do
   @moduledoc """
-  Disk-backed persistence for undercity server state using DETS.
+  Per-block disk-backed persistence using DETS.
+  Each block gets its own DETS file under data/blocks/.
   """
 
-  @table :undercity_store
+  use GenServer
 
-  def start do
-    path = data_path() |> String.to_charlist()
+  # Client API
+
+  def start_link(block_id) do
+    GenServer.start_link(__MODULE__, block_id, name: via(block_id))
+  end
+
+  def save_block(block_id, block) do
+    GenServer.call(via(block_id), {:save, block})
+  end
+
+  def load_block(block_id) do
+    GenServer.call(via(block_id), :load)
+  end
+
+  def clear(block_id) do
+    GenServer.call(via(block_id), :clear)
+  end
+
+  defp via(block_id) do
+    {:via, Registry, {UndercityServer.Registry, {:store, block_id}}}
+  end
+
+  # Server callbacks
+
+  @impl true
+  def init(block_id) do
+    path = data_path(block_id) |> String.to_charlist()
     File.mkdir_p!(Path.dirname(to_string(path)))
-    {:ok, @table} = :dets.open_file(@table, file: path, type: :set)
-    :ok
+    table = String.to_atom("store_#{block_id}")
+    {:ok, ^table} = :dets.open_file(table, file: path, type: :set)
+    {:ok, %{table: table, block_id: block_id}}
   end
 
-  def stop do
-    :dets.close(@table)
+  @impl true
+  def handle_call({:save, block}, _from, state) do
+    :ok = :dets.insert(state.table, {:block, block})
+    {:reply, :ok, state}
   end
 
-  def save_block(block) do
-    :ok = :dets.insert(@table, {{:block, block.id}, block})
+  @impl true
+  def handle_call(:load, _from, state) do
+    result =
+      case :dets.lookup(state.table, :block) do
+        [{:block, block}] -> {:ok, block}
+        [] -> :error
+      end
+
+    {:reply, result, state}
   end
 
-  def load_block(id) do
-    case :dets.lookup(@table, {:block, id}) do
-      [{_key, block}] -> {:ok, block}
-      [] -> :error
-    end
+  @impl true
+  def handle_call(:clear, _from, state) do
+    :dets.delete_all_objects(state.table)
+    {:reply, :ok, state}
   end
 
-  def clear do
-    :dets.delete_all_objects(@table)
+  @impl true
+  def terminate(_reason, state) do
+    :dets.close(state.table)
   end
 
-  defp data_path do
-    Path.join([File.cwd!(), "data", "undercity.dets"])
+  defp data_path(block_id) do
+    Path.join([File.cwd!(), "data", "blocks", "#{block_id}.dets"])
   end
 end

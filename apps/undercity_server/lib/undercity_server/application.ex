@@ -5,16 +5,10 @@ defmodule UndercityServer.Application do
 
   @impl true
   def start(_type, _args) do
-    UndercityServer.Store.start()
-
     block_children =
       Enum.map(UndercityCore.WorldMap.blocks(), fn block ->
         Supervisor.child_spec(
-          {UndercityServer.Block,
-           id: block.id,
-           name: block.name,
-           description: block.description,
-           exits: block.exits},
+          {UndercityServer.BlockSupervisor, block},
           id: {:block, block.id}
         )
       end)
@@ -26,10 +20,5 @@ defmodule UndercityServer.Application do
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  @impl true
-  def stop(_state) do
-    UndercityServer.Store.stop()
   end
 end
