@@ -30,4 +30,34 @@ defmodule UndercityServer.GatewayTest do
       assert length(grimshaws) == 1
     end
   end
+
+  describe "move/3" do
+    test "moves a player to an adjacent block" do
+      Gateway.enter("Grimshaw")
+
+      {:ok, info} = Gateway.move("Grimshaw", :north, "plaza")
+
+      assert info.id == "north_alley"
+      assert Enum.any?(info.people, fn p -> p.name == "Grimshaw" end)
+    end
+
+    test "player is removed from the source block" do
+      Gateway.enter("Grimshaw")
+
+      {:ok, _} = Gateway.move("Grimshaw", :north, "plaza")
+
+      plaza_info = UndercityServer.Block.info("plaza")
+      refute Enum.any?(plaza_info.people, fn p -> p.name == "Grimshaw" end)
+    end
+
+    test "returns error for invalid direction" do
+      Gateway.enter("Grimshaw")
+
+      assert {:error, :no_exit} = Gateway.move("Grimshaw", :up, "plaza")
+    end
+
+    test "returns error if player not in block" do
+      assert {:error, :not_found} = Gateway.move("Nobody", :north, "plaza")
+    end
+  end
 end

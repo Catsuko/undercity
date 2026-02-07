@@ -28,6 +28,10 @@ defmodule UndercityServer.Block do
     GenServer.call(via(block_id), {:find_person, name})
   end
 
+  def leave(block_id, %Person{} = person) do
+    GenServer.call(via(block_id), {:leave, person})
+  end
+
   def info(block_id) do
     GenServer.call(via(block_id), :info)
   end
@@ -52,6 +56,13 @@ defmodule UndercityServer.Block do
   @impl true
   def handle_call({:join, person}, _from, block) do
     block = CoreBlock.add_person(block, person)
+    Store.save_block(block.id, block)
+    {:reply, :ok, block}
+  end
+
+  @impl true
+  def handle_call({:leave, person}, _from, block) do
+    block = CoreBlock.remove_person(block, person)
     Store.save_block(block.id, block)
     {:reply, :ok, block}
   end

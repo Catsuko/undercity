@@ -33,4 +33,34 @@ defmodule UndercityServer.Gateway do
 
     Block.info(spawn_block)
   end
+
+  @doc """
+  Moves a player in a given direction from their current block.
+  Returns {:ok, block_info} on success or {:error, reason} on failure.
+  """
+  def move(player_name, direction, from_block_id) do
+    with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
+         {:ok, person} <- find_person(from_block_id, player_name) do
+      :ok = Block.leave(from_block_id, person)
+      :ok = Block.join(destination_id, person)
+      Logger.info("#{player_name} moved #{direction} to #{destination_id}")
+      {:ok, Block.info(destination_id)}
+    end
+  end
+
+  defp resolve_exit(block_id, direction) do
+    info = Block.info(block_id)
+
+    case List.keyfind(info.exits, direction, 0) do
+      {_, destination_id} -> {:ok, destination_id}
+      nil -> {:error, :no_exit}
+    end
+  end
+
+  defp find_person(block_id, name) do
+    case Block.find_person(block_id, name) do
+      nil -> {:error, :not_found}
+      person -> {:ok, person}
+    end
+  end
 end

@@ -55,4 +55,29 @@ defmodule UndercityServer.BlockTest do
       assert length(info.people) == 2
     end
   end
+
+  describe "leave/2" do
+    test "removes a person from the block", %{id: id} do
+      person = Person.new("Grimshaw")
+      Block.join(id, person)
+
+      assert :ok = Block.leave(id, person)
+
+      info = Block.info(id)
+      assert info.people == []
+    end
+
+    test "other people remain after someone leaves", %{id: id} do
+      grimshaw = Person.new("Grimshaw")
+      mordecai = Person.new("Mordecai")
+      Block.join(id, grimshaw)
+      Block.join(id, mordecai)
+
+      Block.leave(id, grimshaw)
+
+      info = Block.info(id)
+      assert length(info.people) == 1
+      assert hd(info.people).name == "Mordecai"
+    end
+  end
 end
