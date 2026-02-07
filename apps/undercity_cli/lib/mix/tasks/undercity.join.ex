@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
+  alias UndercityCli.GameLoop
   alias UndercityCli.Spinner
   alias UndercityCli.View
 
@@ -19,6 +20,7 @@ defmodule Mix.Tasks.Undercity.Join do
         Spinner.success("Woke up in #{block_info.name} as #{player}")
         Spinner.dismiss()
         IO.puts(View.describe_block(block_info, player))
+        GameLoop.run(server, player, block_info)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")
