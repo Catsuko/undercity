@@ -31,7 +31,7 @@ defmodule UndercityServer.GameServer do
   catch
     :exit, {:noproc, _} ->
       attempt = @connect_retries + 1 - retries
-      Process.sleep((:math.pow(2, attempt) * @retry_rate) |> trunc())
+      (:math.pow(2, attempt) * @retry_rate) |> trunc() |> Process.sleep()
       connect(server_name, player_name, retries - 1)
 
     :exit, {:nodedown, _} ->

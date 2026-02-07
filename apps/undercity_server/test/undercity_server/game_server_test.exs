@@ -4,7 +4,7 @@ defmodule UndercityServer.GameServerTest do
   alias UndercityServer.GameServer
 
   setup do
-    name = "test_server_#{:rand.uniform(10000)}"
+    name = "test_server_#{:rand.uniform(10_000)}"
     {:ok, pid} = GameServer.start_link(name: name)
     %{name: name, pid: pid}
   end
@@ -19,7 +19,7 @@ defmodule UndercityServer.GameServerTest do
   end
 
   test "multiple servers can run with different names" do
-    other_name = "other_server_#{:rand.uniform(10000)}"
+    other_name = "other_server_#{:rand.uniform(10_000)}"
     {:ok, pid} = GameServer.start_link(name: other_name)
 
     assert {:ok, %{name: "The Plaza"}} = GenServer.call(pid, {:connect, "player"})
