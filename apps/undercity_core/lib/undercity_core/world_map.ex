@@ -11,15 +11,55 @@ defmodule UndercityCore.WorldMap do
 
   @block_defs [
     %{id: "ashwell", name: "Ashwell", description: "Dry stone fountain, water long gone."},
-    %{id: "north_alley", name: "North Alley", description: "Narrow and watched by shuttered windows."},
+    %{
+      id: "north_alley",
+      name: "North Alley",
+      description: "Narrow and watched by shuttered windows."
+    },
     %{id: "wormgarden", name: "Wormgarden", description: "Crooked headstones in black soil."},
-    %{id: "west_street", name: "West Street", description: "Cobblestones caked in dust and filth."},
-    %{id: "plaza", name: "The Plaza", description: "The central gathering place of the undercity."},
-    %{id: "east_street", name: "East Street", description: "Cracked flagstones lined with iron lamp posts."},
+    %{
+      id: "west_street",
+      name: "West Street",
+      description: "Cobblestones caked in dust and filth."
+    },
+    %{
+      id: "plaza",
+      name: "The Plaza",
+      description: "The central gathering place of the undercity."
+    },
+    %{
+      id: "east_street",
+      name: "East Street",
+      description: "Cracked flagstones lined with iron lamp posts."
+    },
     %{id: "the_stray", name: "The Stray", description: "A dead end, rubble and broken carts."},
-    %{id: "south_alley", name: "South Alley", description: "Low archway dripping with condensation."},
-    %{id: "lame_horse", name: "The Lame Horse Inn", description: "A sagging timber frame, the sign above the door barely legible."}
+    %{
+      id: "south_alley",
+      name: "South Alley",
+      description: "Low archway dripping with condensation."
+    },
+    %{
+      id: "lame_horse",
+      name: "The Lame Horse Inn",
+      description: "A sagging timber frame, the sign above the door barely legible."
+    }
   ]
+
+  @grid [
+    ["ashwell", "north_alley", "wormgarden"],
+    ["west_street", "plaza", "east_street"],
+    ["the_stray", "south_alley", "lame_horse"]
+  ]
+
+  @grid_positions (for {row, r} <- Enum.with_index(@grid),
+                       {id, c} <- Enum.with_index(row),
+                       into: %{} do
+                     {id, {r, c}}
+                   end)
+
+  @block_names (for %{id: id, name: name} <- @block_defs, into: %{} do
+                  {id, name}
+                end)
 
   @connections [
     {"ashwell", :east, "north_alley"},
@@ -37,6 +77,21 @@ defmodule UndercityCore.WorldMap do
   ]
 
   def spawn_block, do: @spawn_block
+
+  def neighbourhood(block_id) do
+    {row, col} = Map.fetch!(@grid_positions, block_id)
+
+    for dr <- -1..1 do
+      Enum.map(-1..1, fn dc -> grid_cell(row + dr, col + dc) end)
+    end
+  end
+
+  defp grid_cell(r, c) when r >= 0 and r < 3 and c >= 0 and c < 3 do
+    id = @grid |> Enum.at(r) |> Enum.at(c)
+    Map.fetch!(@block_names, id)
+  end
+
+  defp grid_cell(_r, _c), do: nil
 
   def blocks do
     exits = build_exits(@connections)
