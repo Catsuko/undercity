@@ -7,23 +7,25 @@ defmodule UndercityServer.Application do
   def start(_type, _args) do
     UndercityServer.Store.start()
 
-    spawn_block = find_block(UndercityCore.WorldMap.spawn_block())
+    block_children =
+      Enum.map(UndercityCore.WorldMap.blocks(), fn block ->
+        Supervisor.child_spec(
+          {UndercityServer.Block,
+           id: block.id,
+           name: block.name,
+           description: block.description,
+           exits: block.exits},
+          id: {:block, block.id}
+        )
+      end)
 
     children = [
-      {Registry, keys: :unique, name: UndercityServer.Registry},
-      {UndercityServer.Block,
-       id: spawn_block.id,
-       name: spawn_block.name,
-       description: spawn_block.description,
-       exits: spawn_block.exits}
+      {Registry, keys: :unique, name: UndercityServer.Registry}
+      | block_children
     ]
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)
-  end
-
-  defp find_block(id) do
-    Enum.find(UndercityCore.WorldMap.blocks(), fn b -> b.id == id end)
   end
 
   @impl true
