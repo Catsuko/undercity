@@ -41,7 +41,7 @@ defmodule UndercityCli.GameLoop do
         end
 
       :quit ->
-        IO.puts("You fade into the shadows...")
+        :ok
 
       :unknown ->
         IO.puts("Unknown command. Try: look, north/south/east/west (or n/s/e/w), quit")
