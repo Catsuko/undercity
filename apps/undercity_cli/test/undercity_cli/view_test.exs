@@ -7,10 +7,14 @@ defmodule UndercityCli.ViewTest do
   describe "describe_block/2" do
     test "includes grid, name, description, and people" do
       block_info = %{
-        id: "plaza",
         name: "The Plaza",
         description: "The central gathering place.",
-        people: [Person.new("Grimshaw"), Person.new("Mordecai")]
+        people: [Person.new("Grimshaw"), Person.new("Mordecai")],
+        neighbourhood: [
+          ["Ashwell", "North Alley", "Wormgarden"],
+          ["West Street", "The Plaza", "East Street"],
+          ["The Stray", "South Alley", "The Lame Horse Inn"]
+        ]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -25,10 +29,14 @@ defmodule UndercityCli.ViewTest do
 
     test "shows alone message when only current player is present" do
       block_info = %{
-        id: "ashwell",
         name: "Ashwell",
         description: "Dry stone fountain, water long gone.",
-        people: [Person.new("Grimshaw")]
+        people: [Person.new("Grimshaw")],
+        neighbourhood: [
+          [nil, nil, nil],
+          [nil, "Ashwell", "North Alley"],
+          [nil, "West Street", "The Plaza"]
+        ]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -114,5 +122,4 @@ defmodule UndercityCli.ViewTest do
       refute result =~ "Grimshaw"
     end
   end
-
 end

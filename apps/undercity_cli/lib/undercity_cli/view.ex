@@ -3,12 +3,10 @@ defmodule UndercityCli.View do
   Formats server data for CLI display.
   """
 
-  alias UndercityCore.WorldMap
-
   @cell_width 20
 
   def describe_block(block_info, current_player) do
-    grid = render_grid(WorldMap.neighbourhood(block_info.id))
+    grid = render_grid(block_info.neighbourhood)
 
     [
       grid,
@@ -73,5 +71,4 @@ defmodule UndercityCli.View do
       people -> "Present: #{Enum.map_join(people, ", ", & &1.name)}"
     end
   end
-
 end

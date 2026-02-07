@@ -9,8 +9,7 @@ defmodule UndercityServer.BlockTest do
     id = "block_#{:rand.uniform(100_000)}"
 
     start_supervised!(
-      {BlockSupervisor,
-       %{id: id, name: "Test Block", description: "A test block.", exits: %{}}},
+      {BlockSupervisor, %{id: id, name: "Test Block", description: "A test block.", exits: %{}}},
       id: id
     )
 

@@ -76,11 +76,30 @@ defmodule UndercityCore.WorldMap do
     {"south_alley", :east, "lame_horse"}
   ]
 
+  @exits Enum.reduce(@connections, %{}, fn {from, direction, to}, acc ->
+           reverse =
+             case direction do
+               :north -> :south
+               :south -> :north
+               :east -> :west
+               :west -> :east
+             end
+
+           acc
+           |> Map.update(from, %{direction => to}, &Map.put(&1, direction, to))
+           |> Map.update(to, %{reverse => from}, &Map.put(&1, reverse, from))
+         end)
+
   def spawn_block, do: @spawn_block
 
   def neighbourhood(block_id) do
-    {row, col} = Map.fetch!(@grid_positions, block_id)
+    case Map.fetch(@grid_positions, block_id) do
+      {:ok, position} -> {:ok, build_neighbourhood(position)}
+      :error -> :error
+    end
+  end
 
+  defp build_neighbourhood({row, col}) do
     for dr <- -1..1 do
       Enum.map(-1..1, fn dc -> grid_cell(row + dr, col + dc) end)
     end
@@ -93,26 +112,16 @@ defmodule UndercityCore.WorldMap do
 
   defp grid_cell(_r, _c), do: nil
 
+  def resolve_exit(block_id, direction) do
+    case get_in(@exits, [block_id, direction]) do
+      nil -> :error
+      destination_id -> {:ok, destination_id}
+    end
+  end
+
   def blocks do
-    exits = build_exits(@connections)
-
     Enum.map(@block_defs, fn block ->
-      Map.put(block, :exits, Map.get(exits, block.id, %{}))
+      Map.put(block, :exits, Map.get(@exits, block.id, %{}))
     end)
   end
-
-  defp build_exits(connections) do
-    Enum.reduce(connections, %{}, fn {from, direction, to}, acc ->
-      reverse = reverse_direction(direction)
-
-      acc
-      |> Map.update(from, %{direction => to}, &Map.put(&1, direction, to))
-      |> Map.update(to, %{reverse => from}, &Map.put(&1, reverse, from))
-    end)
-  end
-
-  defp reverse_direction(:north), do: :south
-  defp reverse_direction(:south), do: :north
-  defp reverse_direction(:east), do: :west
-  defp reverse_direction(:west), do: :east
 end

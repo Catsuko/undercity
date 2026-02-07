@@ -79,7 +79,11 @@ defmodule UndercityServer.Block do
       name: block.name,
       description: block.description,
       people: CoreBlock.list_people(block),
-      exits: CoreBlock.list_exits(block)
+      neighbourhood:
+        case UndercityCore.WorldMap.neighbourhood(block.id) do
+          {:ok, grid} -> grid
+          :error -> nil
+        end
     }
 
     {:reply, info, block}
