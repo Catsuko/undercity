@@ -8,7 +8,8 @@ defmodule UndercityCli.View do
       ["\e[38;5;103m", block_info.name, IO.ANSI.reset()],
       ["\e[38;5;245m", block_info.description, IO.ANSI.reset()],
       "",
-      describe_people(block_info.people, current_player)
+      describe_people(block_info.people, current_player),
+      describe_exits(block_info[:exits] || [])
     ]
     |> Enum.map_join("\n", &IO.iodata_to_binary/1)
   end
@@ -20,5 +21,12 @@ defmodule UndercityCli.View do
       [] -> "You are alone here."
       people -> "Present: #{Enum.map_join(people, ", ", & &1.name)}"
     end
+  end
+
+  def describe_exits([]), do: "There are no exits."
+
+  def describe_exits(exits) do
+    directions = Enum.map_join(exits, ", ", fn {dir, _} -> to_string(dir) end)
+    "Exits: #{directions}"
   end
 end
