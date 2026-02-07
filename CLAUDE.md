@@ -22,6 +22,10 @@ Use 'bd' for task tracking.
 - Use `mix lint` for linting (runs `mix format --check-formatted` and `mix credo --strict`).
 - Before committing, run tests (`mix test`) and linting (`mix lint`) to ensure nothing is broken.
 
+## Content
+
+- Refer to `STYLE_GUIDE.md` when writing or reviewing world content (block descriptions, flavour text, etc.).
+
 ## Workflow
 
 - Always ask for review before closing/completing tasks or committing to git, unless explicitly told otherwise.
