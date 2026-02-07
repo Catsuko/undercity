@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.Undercity.Server do
-  use Mix.Task
+  @shortdoc "Start the Undercity game server"
 
   @moduledoc false
-  @shortdoc "Start the Undercity game server"
+  use Mix.Task
 
   require Logger
 

@@ -1,12 +1,12 @@
 defmodule Mix.Tasks.Undercity.Join do
+  @shortdoc "Join an Undercity game server"
+
+  @moduledoc false
   use Mix.Task
 
   alias UndercityCli.GameLoop
   alias UndercityCli.Spinner
   alias UndercityCli.View
-
-  @moduledoc false
-  @shortdoc "Join an Undercity game server"
 
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [server: :string, player: :string])

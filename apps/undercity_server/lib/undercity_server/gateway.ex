@@ -8,11 +8,11 @@ defmodule UndercityServer.Gateway do
   Block GenServers via the registry.
   """
 
-  require Logger
-
   alias UndercityCore.Person
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
+
+  require Logger
 
   @doc """
   Creates a new person and spawns them in the default block.
@@ -48,8 +48,7 @@ defmodule UndercityServer.Gateway do
   end
 
   defp find_player_block(name) do
-    WorldMap.blocks()
-    |> Enum.find_value(:not_found, fn block ->
+    Enum.find_value(WorldMap.blocks(), :not_found, fn block ->
       case Block.find_person(block.id, name) do
         nil -> false
         _person -> {:ok, block.id}

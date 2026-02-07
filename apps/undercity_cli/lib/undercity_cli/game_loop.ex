@@ -23,7 +23,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp loop(server, player, block_info) do
-    input = IO.gets("> ") |> String.trim() |> String.downcase()
+    input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
     case parse(input) do
       :look ->

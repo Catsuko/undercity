@@ -32,7 +32,7 @@ defmodule UndercityServer.Store do
 
   @impl true
   def init(block_id) do
-    path = data_path(block_id) |> String.to_charlist()
+    path = block_id |> data_path() |> String.to_charlist()
     File.mkdir_p!(Path.dirname(to_string(path)))
     table = String.to_atom("store_#{block_id}")
     {:ok, ^table} = :dets.open_file(table, file: path, type: :set)
