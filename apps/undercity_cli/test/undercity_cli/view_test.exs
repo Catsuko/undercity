@@ -5,29 +5,37 @@ defmodule UndercityCli.ViewTest do
   alias UndercityCore.Person
 
   describe "describe_block/2" do
-    test "includes description and people" do
+    test "includes name, description, people, and exits" do
       block_info = %{
+        name: "The Plaza",
         description: "The central gathering place.",
-        people: [Person.new("Grimshaw"), Person.new("Mordecai")]
+        people: [Person.new("Grimshaw"), Person.new("Mordecai")],
+        exits: [north: "north_alley", south: "south_alley"]
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "The Plaza"
       assert result =~ "The central gathering place."
       assert result =~ "Mordecai"
       refute result =~ "Grimshaw"
+      assert result =~ "Exits: north, south"
     end
 
     test "shows alone message when only current player is present" do
       block_info = %{
+        name: "A Dark Corridor",
         description: "A dark corridor.",
-        people: [Person.new("Grimshaw")]
+        people: [Person.new("Grimshaw")],
+        exits: []
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "A Dark Corridor"
       assert result =~ "A dark corridor."
       assert result =~ "You are alone here."
+      assert result =~ "There are no exits."
     end
   end
 
@@ -56,6 +64,20 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "Mordecai"
       assert result =~ "Vesper"
       refute result =~ "Grimshaw"
+    end
+  end
+
+  describe "describe_exits/1" do
+    test "shows available exits" do
+      assert View.describe_exits(north: "market", east: "alley") == "Exits: north, east"
+    end
+
+    test "shows single exit" do
+      assert View.describe_exits(south: "catacombs") == "Exits: south"
+    end
+
+    test "shows no exits message when empty" do
+      assert View.describe_exits([]) == "There are no exits."
     end
   end
 end

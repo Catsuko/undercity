@@ -3,14 +3,21 @@ defmodule UndercityServer.BlockTest do
 
   alias UndercityCore.Person
   alias UndercityServer.Block
+  alias UndercityServer.BlockSupervisor
 
   setup do
     id = "block_#{:rand.uniform(100_000)}"
 
     start_supervised!(
-      {Block, id: id, name: "Test Block", description: "A test block."},
+      {BlockSupervisor,
+       %{id: id, name: "Test Block", description: "A test block.", exits: %{}}},
       id: id
     )
+
+    on_exit(fn ->
+      path = Path.join([File.cwd!(), "data", "blocks", "#{id}.dets"])
+      File.rm(path)
+    end)
 
     %{id: id}
   end
@@ -46,6 +53,31 @@ defmodule UndercityServer.BlockTest do
 
       info = Block.info(id)
       assert length(info.people) == 2
+    end
+  end
+
+  describe "leave/2" do
+    test "removes a person from the block", %{id: id} do
+      person = Person.new("Grimshaw")
+      Block.join(id, person)
+
+      assert :ok = Block.leave(id, person)
+
+      info = Block.info(id)
+      assert info.people == []
+    end
+
+    test "other people remain after someone leaves", %{id: id} do
+      grimshaw = Person.new("Grimshaw")
+      mordecai = Person.new("Mordecai")
+      Block.join(id, grimshaw)
+      Block.join(id, mordecai)
+
+      Block.leave(id, grimshaw)
+
+      info = Block.info(id)
+      assert length(info.people) == 1
+      assert hd(info.people).name == "Mordecai"
     end
   end
 end

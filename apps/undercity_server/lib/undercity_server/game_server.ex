@@ -12,6 +12,10 @@ defmodule UndercityServer.GameServer do
     GenServer.start_link(__MODULE__, name, name: {:global, name})
   end
 
+  def move(server_name, player_name, direction, from_block_id) do
+    GenServer.call({:global, server_name}, {:move, player_name, direction, from_block_id})
+  end
+
   def connect(server_name, player_name) do
     server_node = UndercityServer.server_node()
     Node.connect(server_node)
@@ -47,5 +51,11 @@ defmodule UndercityServer.GameServer do
   def handle_call({:connect, player_name}, _from, name) do
     block_info = UndercityServer.Gateway.enter(player_name)
     {:reply, {:ok, block_info}, name}
+  end
+
+  @impl true
+  def handle_call({:move, player_name, direction, from_block_id}, _from, name) do
+    result = UndercityServer.Gateway.move(player_name, direction, from_block_id)
+    {:reply, result, name}
   end
 end

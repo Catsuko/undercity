@@ -15,8 +15,9 @@ defmodule UndercityServer.Block do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
     description = Keyword.get(opts, :description)
+    exits = Keyword.get(opts, :exits, %{})
 
-    GenServer.start_link(__MODULE__, {id, name, description}, name: via(id))
+    GenServer.start_link(__MODULE__, {id, name, description, exits}, name: via(id))
   end
 
   def join(block_id, %Person{} = person) do
@@ -25,6 +26,10 @@ defmodule UndercityServer.Block do
 
   def find_person(block_id, name) do
     GenServer.call(via(block_id), {:find_person, name})
+  end
+
+  def leave(block_id, %Person{} = person) do
+    GenServer.call(via(block_id), {:leave, person})
   end
 
   def info(block_id) do
@@ -38,11 +43,11 @@ defmodule UndercityServer.Block do
   # Server callbacks
 
   @impl true
-  def init({id, name, description}) do
+  def init({id, name, description, exits}) do
     block =
       case Store.load_block(id) do
         {:ok, persisted} -> persisted
-        :error -> CoreBlock.new(id, name, description)
+        :error -> CoreBlock.new(id, name, description, exits)
       end
 
     {:ok, block}
@@ -51,7 +56,14 @@ defmodule UndercityServer.Block do
   @impl true
   def handle_call({:join, person}, _from, block) do
     block = CoreBlock.add_person(block, person)
-    Store.save_block(block)
+    Store.save_block(block.id, block)
+    {:reply, :ok, block}
+  end
+
+  @impl true
+  def handle_call({:leave, person}, _from, block) do
+    block = CoreBlock.remove_person(block, person)
+    Store.save_block(block.id, block)
     {:reply, :ok, block}
   end
 
@@ -66,7 +78,8 @@ defmodule UndercityServer.Block do
       id: block.id,
       name: block.name,
       description: block.description,
-      people: CoreBlock.list_people(block)
+      people: CoreBlock.list_people(block),
+      exits: CoreBlock.list_exits(block)
     }
 
     {:reply, info, block}
