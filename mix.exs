@@ -13,7 +13,7 @@ defmodule Undercity.MixProject do
 
   defp aliases do
     [
-      lint: ["format --check-formatted", "credo"]
+      lint: ["format --check-formatted", "credo --strict"]
     ]
   end
 

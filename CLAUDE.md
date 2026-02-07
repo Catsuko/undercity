@@ -17,6 +17,11 @@ Use 'bd' for task tracking.
 - One branch per bead; sub-tasks use the parent bead's branch unless specified otherwise
 - Merges are handled manually (not by Claude)
 
+## Code Quality
+
+- Use `mix lint` for linting (runs `mix format --check-formatted` and `mix credo --strict`).
+- Before committing, run tests (`mix test`) and linting (`mix lint`) to ensure nothing is broken.
+
 ## Workflow
 
 - Always ask for review before closing/completing tasks or committing to git, unless explicitly told otherwise.
