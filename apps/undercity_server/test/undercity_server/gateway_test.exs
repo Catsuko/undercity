@@ -12,7 +12,7 @@ defmodule UndercityServer.GatewayTest do
 
       assert info.id == "plaza"
       assert info.name == "The Plaza"
-      assert info.description == "The central gathering place of the undercity."
+      assert info.type == :square
       assert Enum.any?(info.people, fn p -> p.name == name end)
     end
 

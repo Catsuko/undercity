@@ -15,7 +15,7 @@ defmodule UndercityServer.Integration.JoinTest do
 
       assert is_binary(block_info.id)
       assert is_binary(block_info.name)
-      assert is_binary(block_info.description)
+      assert is_atom(block_info.type)
       assert is_list(block_info.people)
     end
 

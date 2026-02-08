@@ -14,10 +14,10 @@ defmodule UndercityServer.Block do
   def start_link(opts) do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
-    description = Keyword.get(opts, :description)
+    type = Keyword.fetch!(opts, :type)
     exits = Keyword.get(opts, :exits, %{})
 
-    GenServer.start_link(__MODULE__, {id, name, description, exits}, name: via(id))
+    GenServer.start_link(__MODULE__, {id, name, type, exits}, name: via(id))
   end
 
   def join(block_id, %Person{} = person) do
@@ -43,11 +43,11 @@ defmodule UndercityServer.Block do
   # Server callbacks
 
   @impl true
-  def init({id, name, description, exits}) do
+  def init({id, name, type, exits}) do
     block =
       case Store.load_block(id) do
         {:ok, persisted} -> persisted
-        :error -> CoreBlock.new(id, name, description, exits)
+        :error -> CoreBlock.new(id, name, type, exits)
       end
 
     {:ok, block}
@@ -77,7 +77,7 @@ defmodule UndercityServer.Block do
     info = %{
       id: block.id,
       name: block.name,
-      description: block.description,
+      type: block.type,
       people: CoreBlock.list_people(block),
       neighbourhood:
         case UndercityCore.WorldMap.neighbourhood(block.id) do

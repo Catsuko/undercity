@@ -5,15 +5,32 @@ defmodule UndercityCli.View do
 
   @cell_width 20
 
+  @descriptions %{
+    street: "A narrow passage of broken cobblestones winding between crumbling walls.",
+    square: "A wide, open space where the ground has been worn flat by countless feet.",
+    fountain: "A stone basin sits at the centre of this space, dry and cracked.",
+    graveyard: "Crooked headstones lean in black soil, their inscriptions worn smooth.",
+    inn: "A sagging timber structure with a low doorway and walls darkened by smoke."
+  }
+
   def describe_block(block_info, current_player) do
     grid = render_grid(block_info.neighbourhood)
+    description = Map.fetch!(@descriptions, block_info.type)
 
     Enum.map_join(
       [
         grid,
         "",
-        ["\e[38;5;103m", block_info.name, IO.ANSI.reset()],
-        ["\e[38;5;245m", block_info.description, IO.ANSI.reset()],
+        [
+          "\e[38;5;245m",
+          "You are at ",
+          "\e[38;5;103m",
+          block_info.name,
+          "\e[38;5;245m",
+          ". ",
+          description,
+          IO.ANSI.reset()
+        ],
         "",
         describe_people(block_info.people, current_player)
       ],

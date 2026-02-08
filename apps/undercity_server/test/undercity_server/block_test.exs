@@ -9,7 +9,7 @@ defmodule UndercityServer.BlockTest do
     id = "block_#{:rand.uniform(100_000)}"
 
     start_supervised!(
-      {BlockSupervisor, %{id: id, name: "Test Block", description: "A test block.", exits: %{}}},
+      {BlockSupervisor, %{id: id, name: "Test Block", type: :street, exits: %{}}},
       id: id
     )
 
@@ -27,7 +27,7 @@ defmodule UndercityServer.BlockTest do
 
       assert info.id == id
       assert info.name == "Test Block"
-      assert info.description == "A test block."
+      assert info.type == :street
       assert info.people == []
     end
   end
