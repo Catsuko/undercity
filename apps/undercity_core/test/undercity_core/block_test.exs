@@ -5,25 +5,19 @@ defmodule UndercityCore.BlockTest do
   alias UndercityCore.Person
 
   describe "new/3" do
-    test "creates a block with id, name, and description" do
-      block = Block.new("plaza", "The Plaza", "A central gathering place.")
+    test "creates a block with id, name, and type" do
+      block = Block.new("plaza", "The Plaza", :square)
 
       assert block.id == "plaza"
       assert block.name == "The Plaza"
-      assert block.description == "A central gathering place."
+      assert block.type == :square
       assert block.people == MapSet.new()
-    end
-
-    test "description defaults to nil" do
-      block = Block.new("plaza", "The Plaza")
-
-      assert block.description == nil
     end
   end
 
   describe "add_person/2" do
     test "adds a person to the block" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person = Person.new("Grimshaw")
 
       block = Block.add_person(block, person)
@@ -32,7 +26,7 @@ defmodule UndercityCore.BlockTest do
     end
 
     test "adding the same person twice does not duplicate" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person = Person.new("Grimshaw")
 
       block =
@@ -46,7 +40,7 @@ defmodule UndercityCore.BlockTest do
 
   describe "remove_person/2" do
     test "removes a person from the block" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person = Person.new("Grimshaw")
 
       block =
@@ -58,7 +52,7 @@ defmodule UndercityCore.BlockTest do
     end
 
     test "removing a person not in the block is a no-op" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person = Person.new("Grimshaw")
 
       block = Block.remove_person(block, person)
@@ -69,7 +63,7 @@ defmodule UndercityCore.BlockTest do
 
   describe "find_person_by_name/2" do
     test "returns the person when found" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person = Person.new("Grimshaw")
 
       block = Block.add_person(block, person)
@@ -78,7 +72,7 @@ defmodule UndercityCore.BlockTest do
     end
 
     test "returns nil when not found" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
 
       assert Block.find_person_by_name(block, "Nobody") == nil
     end
@@ -87,13 +81,13 @@ defmodule UndercityCore.BlockTest do
   describe "new/4" do
     test "creates a block with exits" do
       exits = %{north: "market", south: "catacombs"}
-      block = Block.new("plaza", "The Plaza", "A central gathering place.", exits)
+      block = Block.new("plaza", "The Plaza", :square, exits)
 
       assert block.exits == exits
     end
 
     test "exits default to empty map" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
 
       assert block.exits == %{}
     end
@@ -101,13 +95,13 @@ defmodule UndercityCore.BlockTest do
 
   describe "exit/2" do
     test "returns the destination block id for a valid direction" do
-      block = Block.new("plaza", "The Plaza", nil, %{north: "market"})
+      block = Block.new("plaza", "The Plaza", :square, %{north: "market"})
 
       assert Block.exit(block, :north) == {:ok, "market"}
     end
 
     test "returns :error for an invalid direction" do
-      block = Block.new("plaza", "The Plaza", nil, %{north: "market"})
+      block = Block.new("plaza", "The Plaza", :square, %{north: "market"})
 
       assert Block.exit(block, :south) == :error
     end
@@ -126,7 +120,7 @@ defmodule UndercityCore.BlockTest do
     end
 
     test "returns empty list when no exits" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
 
       assert Block.list_exits(block) == []
     end
@@ -134,13 +128,13 @@ defmodule UndercityCore.BlockTest do
 
   describe "list_people/1" do
     test "returns an empty list when no people" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
 
       assert Block.list_people(block) == []
     end
 
     test "returns all people in the block" do
-      block = Block.new("plaza", "The Plaza")
+      block = Block.new("plaza", "The Plaza", :square)
       person1 = Person.new("Grimshaw")
       person2 = Person.new("Mordecai")
 

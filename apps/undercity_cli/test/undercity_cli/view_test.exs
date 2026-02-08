@@ -5,10 +5,10 @@ defmodule UndercityCli.ViewTest do
   alias UndercityCore.Person
 
   describe "describe_block/2" do
-    test "includes grid, name, description, and people" do
+    test "includes grid, name, type-driven description, and people" do
       block_info = %{
         name: "The Plaza",
-        description: "The central gathering place.",
+        type: :square,
         people: [Person.new("Grimshaw"), Person.new("Mordecai")],
         neighbourhood: [
           ["Ashwell", "North Alley", "Wormgarden"],
@@ -19,8 +19,9 @@ defmodule UndercityCli.ViewTest do
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "You are at"
       assert result =~ "The Plaza"
-      assert result =~ "The central gathering place."
+      assert result =~ "A wide, open space where the ground has been worn flat by countless feet."
       assert result =~ "Mordecai"
       refute result =~ "Grimshaw"
       assert result =~ "┌"
@@ -30,7 +31,7 @@ defmodule UndercityCli.ViewTest do
     test "shows alone message when only current player is present" do
       block_info = %{
         name: "Ashwell",
-        description: "Dry stone fountain, water long gone.",
+        type: :fountain,
         people: [Person.new("Grimshaw")],
         neighbourhood: [
           [nil, nil, nil],
@@ -41,8 +42,9 @@ defmodule UndercityCli.ViewTest do
 
       result = View.describe_block(block_info, "Grimshaw")
 
+      assert result =~ "You are at"
       assert result =~ "Ashwell"
-      assert result =~ "Dry stone fountain, water long gone."
+      assert result =~ "A stone basin sits at the centre of this space, dry and cracked."
       assert result =~ "You are alone here."
     end
   end

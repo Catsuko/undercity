@@ -10,59 +10,15 @@ defmodule UndercityCore.WorldMap do
   @spawn_block "plaza"
 
   @block_defs [
-    %{
-      id: "ashwell",
-      name: "Ashwell",
-      description:
-        "A dry stone well ringed by crumbling steps. Whatever water it once held is long gone, replaced by ash and offerings no one claims."
-    },
-    %{
-      id: "north_alley",
-      name: "North Alley",
-      description: "A narrow passage between leaning walls, watched by shuttered windows that never quite stay closed."
-    },
-    %{
-      id: "wormgarden",
-      name: "Wormgarden",
-      description:
-        "A sunken burial ground where crooked headstones list in black soil. The names have worn away but the ground stays freshly turned."
-    },
-    %{
-      id: "west_street",
-      name: "West Street",
-      description:
-        "A crooked, winding street paved with cobblestones caked in dust and filth. The gutters run with something darker than rainwater."
-    },
-    %{
-      id: "plaza",
-      name: "The Plaza",
-      description:
-        "A wide, open gathering place beneath a dead grey sky. Faded banners hang in tatters from the walls, their colours long since bled away."
-    },
-    %{
-      id: "east_street",
-      name: "East Street",
-      description:
-        "A broad street where the flagstones have buckled and split. Rusted iron lamp posts lean at wrong angles, their bases swallowed by creeping black moss."
-    },
-    %{
-      id: "the_stray",
-      name: "The Stray",
-      description:
-        "A collapsed passage choked with rubble and broken carts. Whatever road this was, it leads nowhere now."
-    },
-    %{
-      id: "south_alley",
-      name: "South Alley",
-      description:
-        "A low, arched tunnel that reeks of damp and rot. Something has scratched long grooves into the stone walls."
-    },
-    %{
-      id: "lame_horse",
-      name: "The Lame Horse Inn",
-      description:
-        "A sagging timber-framed tavern with a sign above the door barely legible beneath the grime. The smell of stale ale seeps through the walls."
-    }
+    %{id: "ashwell", name: "Ashwell", type: :fountain},
+    %{id: "north_alley", name: "North Alley", type: :street},
+    %{id: "wormgarden", name: "Wormgarden", type: :graveyard},
+    %{id: "west_street", name: "West Street", type: :street},
+    %{id: "plaza", name: "The Plaza", type: :square},
+    %{id: "east_street", name: "East Street", type: :street},
+    %{id: "the_stray", name: "The Stray", type: :street},
+    %{id: "south_alley", name: "South Alley", type: :street},
+    %{id: "lame_horse", name: "The Lame Horse Inn", type: :inn}
   ]
 
   @grid [

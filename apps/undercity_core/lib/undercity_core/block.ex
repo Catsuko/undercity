@@ -5,24 +5,25 @@ defmodule UndercityCore.Block do
 
   alias UndercityCore.Person
 
-  @enforce_keys [:id, :name]
-  defstruct [:id, :name, :description, people: MapSet.new(), exits: %{}]
+  @enforce_keys [:id, :name, :type]
+  defstruct [:id, :name, :type, people: MapSet.new(), exits: %{}]
 
   @type direction :: :north | :south | :east | :west
+  @type block_type :: :street | :square | :fountain | :graveyard | :inn
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
-          description: String.t() | nil,
+          type: block_type(),
           people: MapSet.t(Person.t()),
           exits: %{direction() => String.t()}
         }
 
-  @spec new(String.t(), String.t(), String.t() | nil, %{direction() => String.t()}) :: t()
-  def new(id, name, description \\ nil, exits \\ %{}) do
+  @spec new(String.t(), String.t(), block_type(), %{direction() => String.t()}) :: t()
+  def new(id, name, type, exits \\ %{}) do
     %__MODULE__{
       id: id,
       name: name,
-      description: description,
+      type: type,
       exits: exits
     }
   end
