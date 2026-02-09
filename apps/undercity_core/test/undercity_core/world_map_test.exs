@@ -76,4 +76,34 @@ defmodule UndercityCore.WorldMapTest do
       assert :error = WorldMap.neighbourhood("lame_horse_interior")
     end
   end
+
+  describe "building_names/0" do
+    test "includes blocks with enter exits" do
+      names = WorldMap.building_names()
+
+      assert MapSet.member?(names, "The Lame Horse")
+    end
+
+    test "does not include blocks without enter exits" do
+      names = WorldMap.building_names()
+
+      refute MapSet.member?(names, "The Plaza")
+    end
+  end
+
+  describe "parent_block/1" do
+    test "returns parent block id for interior block" do
+      assert {:ok, "lame_horse"} = WorldMap.parent_block("lame_horse_interior")
+    end
+
+    test "returns error for grid block" do
+      assert :error = WorldMap.parent_block("plaza")
+    end
+  end
+
+  describe "block_name/1" do
+    test "returns the name for a block id" do
+      assert "The Plaza" = WorldMap.block_name("plaza")
+    end
+  end
 end

@@ -99,6 +99,23 @@ defmodule UndercityCore.WorldMap do
     end
   end
 
+  @building_names (for {block_id, exits} <- @exits,
+                       Map.has_key?(exits, :enter),
+                       into: MapSet.new() do
+                     Map.fetch!(@block_names, block_id)
+                   end)
+
+  def block_name(block_id), do: Map.fetch!(@block_names, block_id)
+
+  def building_names, do: @building_names
+
+  def parent_block(block_id) do
+    case get_in(@exits, [block_id, :exit]) do
+      nil -> :error
+      parent_id -> {:ok, parent_id}
+    end
+  end
+
   def blocks do
     Enum.map(@block_defs, fn block ->
       Map.put(block, :exits, Map.get(@exits, block.id, %{}))

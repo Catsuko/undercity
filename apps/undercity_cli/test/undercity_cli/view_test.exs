@@ -4,6 +4,8 @@ defmodule UndercityCli.ViewTest do
   alias UndercityCli.View
   alias UndercityCore.Person
 
+  @buildings MapSet.new(["The Lame Horse"])
+
   describe "describe_block/2" do
     test "includes grid, name, type-driven description, and people" do
       block_info = %{
@@ -14,7 +16,9 @@ defmodule UndercityCli.ViewTest do
           ["Ashwell", "North Alley", "Wormgarden"],
           ["West Street", "The Plaza", "East Street"],
           ["The Stray", "South Alley", "The Lame Horse"]
-        ]
+        ],
+        buildings: @buildings,
+        inside: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -37,7 +41,9 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil],
           [nil, "Ashwell", "North Alley"],
           [nil, "West Street", "The Plaza"]
-        ]
+        ],
+        buildings: @buildings,
+        inside: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -57,7 +63,9 @@ defmodule UndercityCli.ViewTest do
           ["The Plaza", "East Street", nil],
           ["South Alley", "The Lame Horse", nil],
           [nil, nil, nil]
-        ]
+        ],
+        buildings: @buildings,
+        inside: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -67,12 +75,18 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "┌"
     end
 
-    test "uses 'inside' prefix for inn blocks" do
+    test "uses 'inside' prefix for inn blocks with dimmed grid" do
       block_info = %{
         name: "The Lame Horse Inn",
         type: :inn,
         people: [],
-        neighbourhood: nil
+        neighbourhood: [
+          ["The Plaza", "East Street", nil],
+          ["South Alley", "The Lame Horse", nil],
+          [nil, nil, nil]
+        ],
+        buildings: @buildings,
+        inside: "The Lame Horse"
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -80,24 +94,11 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "You are inside"
       assert result =~ "The Lame Horse Inn"
       assert result =~ "A sagging timber structure"
-    end
-
-    test "omits grid when neighbourhood is nil" do
-      block_info = %{
-        name: "The Lame Horse Inn",
-        type: :inn,
-        people: [],
-        neighbourhood: nil
-      }
-
-      result = View.describe_block(block_info, "Grimshaw")
-
-      refute result =~ "┌"
-      refute result =~ "┘"
+      assert result =~ "┌"
     end
   end
 
-  describe "render_grid/1" do
+  describe "render_grid/3" do
     test "renders center block with all neighbours" do
       neighbourhood = [
         ["Ashwell", "North Alley", "Wormgarden"],
@@ -131,17 +132,51 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "The Plaza"
     end
 
-    test "renders empty cells for edge blocks" do
+    test "renders building box around building cells" do
       neighbourhood = [
-        ["North Alley", "Wormgarden", nil],
         ["The Plaza", "East Street", nil],
-        ["South Alley", "The Lame Horse", nil]
+        ["South Alley", "The Lame Horse", nil],
+        [nil, nil, nil]
       ]
 
-      result = View.render_grid(neighbourhood)
+      result = View.render_grid(neighbourhood, @buildings)
 
-      assert result =~ "East Street"
-      assert result =~ "Wormgarden"
+      assert result =~ "╔"
+      assert result =~ "║"
+      assert result =~ "╚"
+      assert result =~ "The Lame Horse"
+    end
+
+    test "does not render building box around normal cells" do
+      neighbourhood = [
+        ["Ashwell", "North Alley", "Wormgarden"],
+        ["West Street", "The Plaza", "East Street"],
+        ["The Stray", "South Alley", nil]
+      ]
+
+      result = View.render_grid(neighbourhood, MapSet.new())
+
+      refute result =~ "╔"
+      refute result =~ "║"
+      refute result =~ "╚"
+    end
+
+    test "dims grid and fills building box when inside" do
+      neighbourhood = [
+        ["The Plaza", "East Street", nil],
+        ["South Alley", "The Lame Horse", nil],
+        [nil, nil, nil]
+      ]
+
+      result = View.render_grid(neighbourhood, @buildings, "The Lame Horse")
+
+      # Dim colour used for grid lines
+      assert result =~ "\e[38;5;235m"
+      # Background fill inside the building box
+      assert result =~ "\e[48;5;236m"
+      # Building box characters still present
+      assert result =~ "╔"
+      assert result =~ "║"
     end
   end
 
