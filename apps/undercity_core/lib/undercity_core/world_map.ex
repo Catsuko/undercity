@@ -18,7 +18,8 @@ defmodule UndercityCore.WorldMap do
     %{id: "east_street", name: "East Street", type: :street},
     %{id: "the_stray", name: "The Stray", type: :street},
     %{id: "south_alley", name: "South Alley", type: :street},
-    %{id: "lame_horse", name: "The Lame Horse Inn", type: :inn}
+    %{id: "lame_horse", name: "The Lame Horse", type: :space},
+    %{id: "lame_horse_interior", name: "The Lame Horse Inn", type: :inn}
   ]
 
   @grid [
@@ -37,6 +38,10 @@ defmodule UndercityCore.WorldMap do
                   {id, name}
                 end)
 
+  @block_types (for %{id: id, type: type} <- @block_defs, into: %{} do
+                  {id, type}
+                end)
+
   @connections [
     {"ashwell", :east, "north_alley"},
     {"ashwell", :south, "west_street"},
@@ -49,7 +54,8 @@ defmodule UndercityCore.WorldMap do
     {"wormgarden", :south, "east_street"},
     {"east_street", :south, "lame_horse"},
     {"the_stray", :east, "south_alley"},
-    {"south_alley", :east, "lame_horse"}
+    {"south_alley", :east, "lame_horse"},
+    {"lame_horse", :enter, "lame_horse_interior"}
   ]
 
   @exits Enum.reduce(@connections, %{}, fn {from, direction, to}, acc ->
@@ -59,6 +65,8 @@ defmodule UndercityCore.WorldMap do
                :south -> :north
                :east -> :west
                :west -> :east
+               :enter -> :exit
+               :exit -> :enter
              end
 
            acc
@@ -92,6 +100,30 @@ defmodule UndercityCore.WorldMap do
     case get_in(@exits, [block_id, direction]) do
       nil -> :error
       destination_id -> {:ok, destination_id}
+    end
+  end
+
+  @building_names (for {block_id, exits} <- @exits,
+                       Map.has_key?(exits, :enter),
+                       into: MapSet.new() do
+                     Map.fetch!(@block_names, block_id)
+                   end)
+
+  def block_name(block_id), do: Map.fetch!(@block_names, block_id)
+
+  def building_names, do: @building_names
+
+  def building_type(block_id) do
+    case get_in(@exits, [block_id, :enter]) do
+      nil -> nil
+      interior_id -> Map.fetch!(@block_types, interior_id)
+    end
+  end
+
+  def parent_block(block_id) do
+    case get_in(@exits, [block_id, :exit]) do
+      nil -> :error
+      parent_id -> {:ok, parent_id}
     end
   end
 

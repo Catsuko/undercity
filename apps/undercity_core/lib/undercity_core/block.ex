@@ -8,8 +8,8 @@ defmodule UndercityCore.Block do
   @enforce_keys [:id, :name, :type]
   defstruct [:id, :name, :type, people: MapSet.new(), exits: %{}]
 
-  @type direction :: :north | :south | :east | :west
-  @type block_type :: :street | :square | :fountain | :graveyard | :inn
+  @type direction :: :north | :south | :east | :west | :enter | :exit
+  @type block_type :: :street | :square | :fountain | :graveyard | :space | :inn
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),

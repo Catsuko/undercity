@@ -91,6 +91,13 @@ defmodule UndercityCore.BlockTest do
 
       assert block.exits == %{}
     end
+
+    test "creates a block with enter and exit directions" do
+      exits = %{enter: "inn_interior", exit: "inn_exterior"}
+      block = Block.new("inn", "The Inn", :space, exits)
+
+      assert block.exits == exits
+    end
   end
 
   describe "exit/2" do

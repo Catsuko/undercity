@@ -14,7 +14,9 @@ defmodule UndercityCli.GameLoop do
     "n" => :north,
     "s" => :south,
     "e" => :east,
-    "w" => :west
+    "w" => :west,
+    "enter" => :enter,
+    "exit" => :exit
   }
 
   def run(server, player, block_info) do
@@ -48,7 +50,7 @@ defmodule UndercityCli.GameLoop do
         render(
           block_info,
           player,
-          "Unknown command. Try: look, north/south/east/west (or n/s/e/w), quit"
+          "Unknown command. Try: look, north/south/east/west (or n/s/e/w), enter, exit, quit"
         )
 
         loop(server, player, block_info)
