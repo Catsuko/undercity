@@ -28,6 +28,11 @@ defmodule UndercityCli.GameLoopTest do
       assert GameLoop.parse("w") == {:move, :west}
     end
 
+    test "parses enter and exit commands" do
+      assert GameLoop.parse("enter") == {:move, :enter}
+      assert GameLoop.parse("exit") == {:move, :exit}
+    end
+
     test "returns unknown for unrecognized input" do
       assert GameLoop.parse("fly") == :unknown
       assert GameLoop.parse("dance") == :unknown

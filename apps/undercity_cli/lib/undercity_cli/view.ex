@@ -10,34 +10,43 @@ defmodule UndercityCli.View do
     square: "A wide, open space where the ground has been worn flat by countless feet.",
     fountain: "A stone basin sits at the centre of this space, dry and cracked.",
     graveyard: "Crooked headstones lean in black soil, their inscriptions worn smooth.",
+    space: "A patch of open ground before a squat building, its timbers warped and dark.",
     inn: "A sagging timber structure with a low doorway and walls darkened by smoke."
   }
 
   def describe_block(block_info, current_player) do
-    grid = render_grid(block_info.neighbourhood)
     description = Map.fetch!(@descriptions, block_info.type)
+    prefix = block_prefix(block_info.type)
 
-    Enum.map_join(
-      [
-        grid,
-        "",
+    sections =
+      case block_info.neighbourhood do
+        nil -> []
+        neighbourhood -> [render_grid(neighbourhood), ""]
+      end
+
+    sections =
+      sections ++
         [
-          "\e[38;5;245m",
-          "You are at ",
-          "\e[38;5;103m",
-          block_info.name,
-          "\e[38;5;245m",
-          ". ",
-          description,
-          IO.ANSI.reset()
-        ],
-        "",
-        describe_people(block_info.people, current_player)
-      ],
-      "\n",
-      &IO.iodata_to_binary/1
-    )
+          [
+            "\e[38;5;245m",
+            "You are #{prefix} ",
+            "\e[38;5;103m",
+            block_info.name,
+            "\e[38;5;245m",
+            ". ",
+            description,
+            IO.ANSI.reset()
+          ],
+          "",
+          describe_people(block_info.people, current_player)
+        ]
+
+    Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
   end
+
+  defp block_prefix(:space), do: "outside"
+  defp block_prefix(:inn), do: "inside"
+  defp block_prefix(_type), do: "at"
 
   def render_grid(neighbourhood) do
     bar = String.duplicate("─", @cell_width)

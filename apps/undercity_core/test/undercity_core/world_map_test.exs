@@ -10,7 +10,7 @@ defmodule UndercityCore.WorldMapTest do
       assert grid == [
                ["Ashwell", "North Alley", "Wormgarden"],
                ["West Street", "The Plaza", "East Street"],
-               ["The Stray", "South Alley", "The Lame Horse Inn"]
+               ["The Stray", "South Alley", "The Lame Horse"]
              ]
     end
 
@@ -29,7 +29,7 @@ defmodule UndercityCore.WorldMapTest do
 
       assert grid == [
                ["The Plaza", "East Street", nil],
-               ["South Alley", "The Lame Horse Inn", nil],
+               ["South Alley", "The Lame Horse", nil],
                [nil, nil, nil]
              ]
     end
@@ -60,6 +60,20 @@ defmodule UndercityCore.WorldMapTest do
 
     test "returns error for unknown block" do
       assert :error = WorldMap.resolve_exit("unknown", :north)
+    end
+
+    test "resolves enter direction to interior block" do
+      assert {:ok, "lame_horse_interior"} = WorldMap.resolve_exit("lame_horse", :enter)
+    end
+
+    test "resolves exit direction from interior to exterior" do
+      assert {:ok, "lame_horse"} = WorldMap.resolve_exit("lame_horse_interior", :exit)
+    end
+  end
+
+  describe "neighbourhood/1 for interior blocks" do
+    test "returns error for off-grid interior block" do
+      assert :error = WorldMap.neighbourhood("lame_horse_interior")
     end
   end
 end

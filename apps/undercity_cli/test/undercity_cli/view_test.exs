@@ -13,7 +13,7 @@ defmodule UndercityCli.ViewTest do
         neighbourhood: [
           ["Ashwell", "North Alley", "Wormgarden"],
           ["West Street", "The Plaza", "East Street"],
-          ["The Stray", "South Alley", "The Lame Horse Inn"]
+          ["The Stray", "South Alley", "The Lame Horse"]
         ]
       }
 
@@ -47,6 +47,54 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "A stone basin sits at the centre of this space, dry and cracked."
       assert result =~ "You are alone here."
     end
+
+    test "uses 'outside' prefix for space blocks" do
+      block_info = %{
+        name: "The Lame Horse",
+        type: :space,
+        people: [],
+        neighbourhood: [
+          ["The Plaza", "East Street", nil],
+          ["South Alley", "The Lame Horse", nil],
+          [nil, nil, nil]
+        ]
+      }
+
+      result = View.describe_block(block_info, "Grimshaw")
+
+      assert result =~ "You are outside"
+      assert result =~ "The Lame Horse"
+      assert result =~ "┌"
+    end
+
+    test "uses 'inside' prefix for inn blocks" do
+      block_info = %{
+        name: "The Lame Horse Inn",
+        type: :inn,
+        people: [],
+        neighbourhood: nil
+      }
+
+      result = View.describe_block(block_info, "Grimshaw")
+
+      assert result =~ "You are inside"
+      assert result =~ "The Lame Horse Inn"
+      assert result =~ "A sagging timber structure"
+    end
+
+    test "omits grid when neighbourhood is nil" do
+      block_info = %{
+        name: "The Lame Horse Inn",
+        type: :inn,
+        people: [],
+        neighbourhood: nil
+      }
+
+      result = View.describe_block(block_info, "Grimshaw")
+
+      refute result =~ "┌"
+      refute result =~ "┘"
+    end
   end
 
   describe "render_grid/1" do
@@ -54,7 +102,7 @@ defmodule UndercityCli.ViewTest do
       neighbourhood = [
         ["Ashwell", "North Alley", "Wormgarden"],
         ["West Street", "The Plaza", "East Street"],
-        ["The Stray", "South Alley", "The Lame Horse Inn"]
+        ["The Stray", "South Alley", "The Lame Horse"]
       ]
 
       result = View.render_grid(neighbourhood)
@@ -87,7 +135,7 @@ defmodule UndercityCli.ViewTest do
       neighbourhood = [
         ["North Alley", "Wormgarden", nil],
         ["The Plaza", "East Street", nil],
-        ["South Alley", "The Lame Horse Inn", nil]
+        ["South Alley", "The Lame Horse", nil]
       ]
 
       result = View.render_grid(neighbourhood)

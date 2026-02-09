@@ -18,7 +18,8 @@ defmodule UndercityCore.WorldMap do
     %{id: "east_street", name: "East Street", type: :street},
     %{id: "the_stray", name: "The Stray", type: :street},
     %{id: "south_alley", name: "South Alley", type: :street},
-    %{id: "lame_horse", name: "The Lame Horse Inn", type: :inn}
+    %{id: "lame_horse", name: "The Lame Horse", type: :space},
+    %{id: "lame_horse_interior", name: "The Lame Horse Inn", type: :inn}
   ]
 
   @grid [
@@ -49,7 +50,8 @@ defmodule UndercityCore.WorldMap do
     {"wormgarden", :south, "east_street"},
     {"east_street", :south, "lame_horse"},
     {"the_stray", :east, "south_alley"},
-    {"south_alley", :east, "lame_horse"}
+    {"south_alley", :east, "lame_horse"},
+    {"lame_horse", :enter, "lame_horse_interior"}
   ]
 
   @exits Enum.reduce(@connections, %{}, fn {from, direction, to}, acc ->
@@ -59,6 +61,8 @@ defmodule UndercityCore.WorldMap do
                :south -> :north
                :east -> :west
                :west -> :east
+               :enter -> :exit
+               :exit -> :enter
              end
 
            acc
