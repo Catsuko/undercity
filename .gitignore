@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Persisted game data
-/data/
+**/data/
 
 # Claude Code local settings
 .claude/
