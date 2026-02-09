@@ -12,7 +12,8 @@ defmodule UndercityCli.View do
     fountain: "A stone basin sits at the centre of this space, dry and cracked.",
     graveyard: "Crooked headstones lean in black soil, their inscriptions worn smooth.",
     space: "A patch of open ground before a squat building, its timbers warped and dark.",
-    inn: "A sagging timber structure with a low doorway and walls darkened by smoke."
+    space_inn: "A crooked timber frame leans over the street, its shuttered windows half-rotted from the damp.",
+    inn: "Low beams sag overhead in a room thick with the smell of damp wood and old smoke."
   }
 
   @dim "\e[38;5;235m"
@@ -21,7 +22,7 @@ defmodule UndercityCli.View do
   @bg_fill "\e[48;5;236m"
 
   def describe_block(block_info, current_player) do
-    description = Map.fetch!(@descriptions, block_info.type)
+    description = Map.fetch!(@descriptions, description_key(block_info))
     prefix = block_prefix(block_info.type)
     buildings = Map.get(block_info, :buildings, MapSet.new())
     inside = Map.get(block_info, :inside)
@@ -51,6 +52,10 @@ defmodule UndercityCli.View do
 
     Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
   end
+
+  defp description_key(%{type: :space, building_type: bt}) when bt != nil, do: :"space_#{bt}"
+
+  defp description_key(%{type: type}), do: type
 
   defp block_prefix(:space), do: "outside"
   defp block_prefix(:inn), do: "inside"

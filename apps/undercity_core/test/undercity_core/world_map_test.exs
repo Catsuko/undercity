@@ -106,4 +106,14 @@ defmodule UndercityCore.WorldMapTest do
       assert "The Plaza" = WorldMap.block_name("plaza")
     end
   end
+
+  describe "building_type/1" do
+    test "returns interior block type for a block with a building" do
+      assert :inn = WorldMap.building_type("lame_horse")
+    end
+
+    test "returns nil for a block without a building" do
+      assert nil == WorldMap.building_type("plaza")
+    end
+  end
 end

@@ -38,6 +38,10 @@ defmodule UndercityCore.WorldMap do
                   {id, name}
                 end)
 
+  @block_types (for %{id: id, type: type} <- @block_defs, into: %{} do
+                  {id, type}
+                end)
+
   @connections [
     {"ashwell", :east, "north_alley"},
     {"ashwell", :south, "west_street"},
@@ -108,6 +112,13 @@ defmodule UndercityCore.WorldMap do
   def block_name(block_id), do: Map.fetch!(@block_names, block_id)
 
   def building_names, do: @building_names
+
+  def building_type(block_id) do
+    case get_in(@exits, [block_id, :enter]) do
+      nil -> nil
+      interior_id -> Map.fetch!(@block_types, interior_id)
+    end
+  end
 
   def parent_block(block_id) do
     case get_in(@exits, [block_id, :exit]) do

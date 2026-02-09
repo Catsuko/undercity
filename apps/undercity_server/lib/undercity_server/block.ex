@@ -99,7 +99,8 @@ defmodule UndercityServer.Block do
       people: CoreBlock.list_people(block),
       neighbourhood: neighbourhood,
       buildings: WorldMap.building_names(),
-      inside: inside
+      inside: inside,
+      building_type: WorldMap.building_type(block.id)
     }
 
     {:reply, info, block}

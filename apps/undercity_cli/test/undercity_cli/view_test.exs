@@ -18,7 +18,8 @@ defmodule UndercityCli.ViewTest do
           ["The Stray", "South Alley", "The Lame Horse"]
         ],
         buildings: @buildings,
-        inside: nil
+        inside: nil,
+        building_type: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -43,7 +44,8 @@ defmodule UndercityCli.ViewTest do
           [nil, "West Street", "The Plaza"]
         ],
         buildings: @buildings,
-        inside: nil
+        inside: nil,
+        building_type: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
@@ -54,7 +56,7 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "You are alone here."
     end
 
-    test "uses 'outside' prefix for space blocks" do
+    test "uses 'outside' prefix with building-type description for space blocks" do
       block_info = %{
         name: "The Lame Horse",
         type: :space,
@@ -65,14 +67,36 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: nil
+        inside: nil,
+        building_type: :inn
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
       assert result =~ "You are outside"
       assert result =~ "The Lame Horse"
+      assert result =~ "crooked timber frame"
       assert result =~ "┌"
+    end
+
+    test "falls back to generic space description when no building type" do
+      block_info = %{
+        name: "Some Space",
+        type: :space,
+        people: [],
+        neighbourhood: [
+          [nil, nil, nil],
+          [nil, "Some Space", nil],
+          [nil, nil, nil]
+        ],
+        buildings: MapSet.new(),
+        inside: nil,
+        building_type: nil
+      }
+
+      result = View.describe_block(block_info, "Grimshaw")
+
+      assert result =~ "A patch of open ground"
     end
 
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
@@ -86,14 +110,15 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: "The Lame Horse"
+        inside: "The Lame Horse",
+        building_type: nil
       }
 
       result = View.describe_block(block_info, "Grimshaw")
 
       assert result =~ "You are inside"
       assert result =~ "The Lame Horse Inn"
-      assert result =~ "A sagging timber structure"
+      assert result =~ "Low beams sag overhead"
       assert result =~ "┌"
     end
   end
