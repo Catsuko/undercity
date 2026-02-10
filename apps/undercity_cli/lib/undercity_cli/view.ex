@@ -25,12 +25,15 @@ defmodule UndercityCli.View do
     description = Map.fetch!(@descriptions, description_key(block_info))
     prefix = block_prefix(block_info.type)
     buildings = Map.get(block_info, :buildings, MapSet.new())
-    inside = Map.get(block_info, :inside)
 
     sections =
       case block_info.neighbourhood do
-        nil -> []
-        neighbourhood -> [render_grid(neighbourhood, buildings, inside), ""]
+        nil ->
+          []
+
+        neighbourhood ->
+          parent = if inside?(block_info), do: grid_centre(neighbourhood)
+          [render_grid(neighbourhood, buildings, parent), ""]
       end
 
     sections =
@@ -60,6 +63,17 @@ defmodule UndercityCli.View do
   defp block_prefix(:space), do: "outside"
   defp block_prefix(:inn), do: "inside"
   defp block_prefix(_type), do: "at"
+
+  defp inside?(block_info) do
+    centre = grid_centre(block_info.neighbourhood)
+    buildings = Map.get(block_info, :buildings, MapSet.new())
+
+    MapSet.member?(buildings, centre) and block_info.building_type == nil
+  end
+
+  defp grid_centre(neighbourhood) do
+    neighbourhood |> Enum.at(1) |> Enum.at(1)
+  end
 
   def render_grid(neighbourhood, buildings \\ MapSet.new(), inside \\ nil) do
     line_color = if inside, do: @dim, else: @grid_color

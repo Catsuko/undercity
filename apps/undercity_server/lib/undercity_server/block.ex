@@ -76,7 +76,7 @@ defmodule UndercityServer.Block do
   def handle_call(:info, _from, block) do
     alias UndercityCore.WorldMap
 
-    %{neighbourhood: neighbourhood, inside: inside} = WorldMap.block_context(block.id)
+    neighbourhood = WorldMap.block_context(block.id)
 
     info = %{
       id: block.id,
@@ -85,7 +85,6 @@ defmodule UndercityServer.Block do
       people: CoreBlock.list_people(block),
       neighbourhood: neighbourhood,
       buildings: WorldMap.building_names(),
-      inside: inside,
       building_type: WorldMap.building_type(block.id)
     }
 

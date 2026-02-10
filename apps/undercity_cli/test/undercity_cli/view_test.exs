@@ -18,7 +18,6 @@ defmodule UndercityCli.ViewTest do
           ["The Stray", "South Alley", "The Lame Horse"]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: nil
       }
 
@@ -44,7 +43,6 @@ defmodule UndercityCli.ViewTest do
           [nil, "West Street", "The Plaza"]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: nil
       }
 
@@ -67,7 +65,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: :inn
       }
 
@@ -90,7 +87,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: MapSet.new(),
-        inside: nil,
         building_type: nil
       }
 
@@ -110,7 +106,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: "The Lame Horse",
         building_type: nil
       }
 

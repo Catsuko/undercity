@@ -128,25 +128,24 @@ defmodule UndercityCore.WorldMap do
   end
 
   @doc """
-  Returns the spatial context for a block: its surrounding neighbourhood grid
-  and whether the block is inside a building.
+  Returns the neighbourhood grid for a block.
 
   Grid blocks get their own neighbourhood directly. Interior blocks inherit
-  their parent building's neighbourhood and report the parent's name as `inside`.
+  their parent building's neighbourhood.
   """
-  @spec block_context(String.t()) :: %{neighbourhood: [[String.t() | nil]] | nil, inside: String.t() | nil}
+  @spec block_context(String.t()) :: [[String.t() | nil]] | nil
   def block_context(block_id) do
     if Map.has_key?(@grid_positions, block_id) do
       {:ok, grid} = neighbourhood(block_id)
-      %{neighbourhood: grid, inside: nil}
+      grid
     else
       case parent_block(block_id) do
         {:ok, parent_id} ->
           {:ok, grid} = neighbourhood(parent_id)
-          %{neighbourhood: grid, inside: block_name(parent_id)}
+          grid
 
         :error ->
-          %{neighbourhood: nil, inside: nil}
+          nil
       end
     end
   end

@@ -133,6 +133,20 @@ defmodule UndercityCore.BlockTest do
     end
   end
 
+  describe "inside?/1" do
+    test "returns true when block has an exit direction" do
+      block = Block.new("lame_horse_interior", "The Lame Horse Inn", :inn, %{exit: "lame_horse"})
+
+      assert Block.inside?(block)
+    end
+
+    test "returns false when block has no exit direction" do
+      block = Block.new("plaza", "The Plaza", :square, %{north: "north_alley"})
+
+      refute Block.inside?(block)
+    end
+  end
+
   describe "list_people/1" do
     test "returns an empty list when no people" do
       block = Block.new("plaza", "The Plaza", :square)

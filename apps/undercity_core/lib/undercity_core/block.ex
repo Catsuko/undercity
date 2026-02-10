@@ -57,4 +57,9 @@ defmodule UndercityCore.Block do
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)
   end
+
+  @spec inside?(t()) :: boolean()
+  def inside?(%__MODULE__{} = block) do
+    Map.has_key?(block.exits, :exit)
+  end
 end
