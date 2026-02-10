@@ -9,7 +9,6 @@ defmodule UndercityCli.ViewTest do
   describe "describe_block/2" do
     test "includes grid, name, type-driven description, and people" do
       block_info = %{
-        name: "The Plaza",
         type: :square,
         people: [Person.new("Grimshaw"), Person.new("Mordecai")],
         neighbourhood: [
@@ -34,7 +33,6 @@ defmodule UndercityCli.ViewTest do
 
     test "shows alone message when only current player is present" do
       block_info = %{
-        name: "Ashwell",
         type: :fountain,
         people: [Person.new("Grimshaw")],
         neighbourhood: [
@@ -56,7 +54,6 @@ defmodule UndercityCli.ViewTest do
 
     test "uses 'outside' prefix with building-type description for space blocks" do
       block_info = %{
-        name: "The Lame Horse",
         type: :space,
         people: [],
         neighbourhood: [
@@ -78,7 +75,6 @@ defmodule UndercityCli.ViewTest do
 
     test "falls back to generic space description when no building type" do
       block_info = %{
-        name: "Some Space",
         type: :space,
         people: [],
         neighbourhood: [
@@ -97,7 +93,6 @@ defmodule UndercityCli.ViewTest do
 
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
       block_info = %{
-        name: "The Lame Horse Inn",
         type: :inn,
         people: [],
         neighbourhood: [

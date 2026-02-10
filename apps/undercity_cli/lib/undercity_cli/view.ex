@@ -25,6 +25,8 @@ defmodule UndercityCli.View do
     description = Map.fetch!(@descriptions, description_key(block_info))
     prefix = block_prefix(block_info.type)
     buildings = Map.get(block_info, :buildings, MapSet.new())
+    inside = inside?(block_info)
+    name = display_name(block_info, inside)
 
     sections =
       case block_info.neighbourhood do
@@ -32,7 +34,7 @@ defmodule UndercityCli.View do
           []
 
         neighbourhood ->
-          parent = if inside?(block_info), do: grid_centre(neighbourhood)
+          parent = if inside, do: grid_centre(neighbourhood)
           [render_grid(neighbourhood, buildings, parent), ""]
       end
 
@@ -43,7 +45,7 @@ defmodule UndercityCli.View do
             "\e[38;5;245m",
             "You are #{prefix} ",
             "\e[38;5;103m",
-            block_info.name,
+            name,
             "\e[38;5;245m",
             ". ",
             description,
@@ -63,6 +65,18 @@ defmodule UndercityCli.View do
   defp block_prefix(:space), do: "outside"
   defp block_prefix(:inn), do: "inside"
   defp block_prefix(_type), do: "at"
+
+  def display_name(block_info, inside \\ nil) do
+    inside = if is_nil(inside), do: inside?(block_info), else: inside
+
+    if inside do
+      centre = grid_centre(block_info.neighbourhood)
+      type_label = block_info.type |> Atom.to_string() |> String.capitalize()
+      "#{centre} #{type_label}"
+    else
+      grid_centre(block_info.neighbourhood)
+    end
+  end
 
   defp inside?(block_info) do
     centre = grid_centre(block_info.neighbourhood)

@@ -80,7 +80,6 @@ defmodule UndercityServer.Block do
 
     info = %{
       id: block.id,
-      name: block.name,
       type: block.type,
       people: CoreBlock.list_people(block),
       neighbourhood: neighbourhood,
