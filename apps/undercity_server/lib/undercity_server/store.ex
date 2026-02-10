@@ -20,10 +20,6 @@ defmodule UndercityServer.Store do
     GenServer.call(via(block_id), :load)
   end
 
-  def clear(block_id) do
-    GenServer.call(via(block_id), :clear)
-  end
-
   defp via(block_id) do
     {:via, Registry, {UndercityServer.Registry, {:store, block_id}}}
   end
@@ -54,12 +50,6 @@ defmodule UndercityServer.Store do
       end
 
     {:reply, result, state}
-  end
-
-  @impl true
-  def handle_call(:clear, _from, state) do
-    :dets.delete_all_objects(state.table)
-    {:reply, :ok, state}
   end
 
   @impl true

@@ -76,7 +76,7 @@ defmodule UndercityCore.WorldMap do
 
   def spawn_block, do: @spawn_block
 
-  def neighbourhood(block_id) do
+  defp neighbourhood(block_id) do
     case Map.fetch(@grid_positions, block_id) do
       {:ok, position} -> {:ok, build_neighbourhood(position)}
       :error -> :error
@@ -109,8 +109,6 @@ defmodule UndercityCore.WorldMap do
                      Map.fetch!(@block_names, block_id)
                    end)
 
-  def block_name(block_id), do: Map.fetch!(@block_names, block_id)
-
   def building_names, do: @building_names
 
   def building_type(block_id) do
@@ -120,7 +118,7 @@ defmodule UndercityCore.WorldMap do
     end
   end
 
-  def parent_block(block_id) do
+  defp parent_block(block_id) do
     case get_in(@exits, [block_id, :exit]) do
       nil -> :error
       parent_id -> {:ok, parent_id}
