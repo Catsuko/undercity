@@ -6,15 +6,10 @@ defmodule Mix.Tasks.Undercity.Server do
 
   require Logger
 
-  def run(args) do
-    {opts, _, _} = OptionParser.parse(args, strict: [name: :string])
-    name = opts[:name] || "default"
-
+  def run(_args) do
     Mix.Task.run("app.start")
 
-    {:ok, _pid} = UndercityServer.GameServer.start_link(name: name)
-
-    Logger.info("Server #{name} started")
+    Logger.info("Server started")
     Process.sleep(:infinity)
   end
 end

@@ -13,10 +13,7 @@ defmodule UndercityServer.Application do
         )
       end)
 
-    children = [
-      {Registry, keys: :unique, name: UndercityServer.Registry}
-      | block_children
-    ]
+    children = block_children
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)

@@ -1,39 +1,36 @@
 defmodule UndercityServer.Integration.JoinTest do
   use ExUnit.Case
 
-  alias UndercityServer.GameServer
-
-  setup do
-    name = "test_server_#{:rand.uniform(100_000)}"
-    {:ok, pid} = GameServer.start_link(name: name)
-    %{pid: pid}
-  end
+  alias UndercityServer.Gateway
 
   describe "joining the world" do
-    test "returns block info with expected shape", %{pid: pid} do
-      assert {:ok, block_info} = GenServer.call(pid, {:connect, "Grimshaw"})
+    test "returns block info with expected shape" do
+      block_info = Gateway.enter("Grimshaw_#{:rand.uniform(100_000)}")
 
       assert is_binary(block_info.id)
       assert is_atom(block_info.type)
       assert is_list(block_info.people)
     end
 
-    test "joining player appears in people list", %{pid: pid} do
-      {:ok, block_info} = GenServer.call(pid, {:connect, "Grimshaw"})
+    test "joining player appears in people list" do
+      name = "Grimshaw_#{:rand.uniform(100_000)}"
+      block_info = Gateway.enter(name)
 
-      assert Enum.any?(block_info.people, fn p -> p.name == "Grimshaw" end)
+      assert Enum.any?(block_info.people, fn p -> p.name == name end)
     end
 
-    test "reconnecting does not duplicate the player", %{pid: pid} do
-      GenServer.call(pid, {:connect, "Grimshaw"})
-      {:ok, block_info} = GenServer.call(pid, {:connect, "Grimshaw"})
+    test "reconnecting does not duplicate the player" do
+      name = "Grimshaw_#{:rand.uniform(100_000)}"
+      Gateway.enter(name)
+      block_info = Gateway.enter(name)
 
-      grimshaws = Enum.filter(block_info.people, fn p -> p.name == "Grimshaw" end)
+      grimshaws = Enum.filter(block_info.people, fn p -> p.name == name end)
       assert length(grimshaws) == 1
     end
 
-    test "people list contains structs with name and id", %{pid: pid} do
-      {:ok, block_info} = GenServer.call(pid, {:connect, "Grimshaw"})
+    test "people list contains structs with name and id" do
+      name = "Grimshaw_#{:rand.uniform(100_000)}"
+      block_info = Gateway.enter(name)
 
       for person <- block_info.people do
         assert is_binary(person.name)

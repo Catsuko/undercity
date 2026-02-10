@@ -4,7 +4,7 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.View
-  alias UndercityServer.GameServer
+  alias UndercityServer.Gateway
 
   @directions %{
     "north" => :north,
@@ -19,28 +19,28 @@ defmodule UndercityCli.GameLoop do
     "exit" => :exit
   }
 
-  def run(server, player, block_info) do
+  def run(player, block_info) do
     render(block_info, player)
-    loop(server, player, block_info)
+    loop(player, block_info)
   end
 
-  defp loop(server, player, block_info) do
+  defp loop(player, block_info) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
     case parse(input) do
       :look ->
         render(block_info, player)
-        loop(server, player, block_info)
+        loop(player, block_info)
 
       {:move, direction} ->
-        case GameServer.move(server, player, direction, block_info.id) do
+        case Gateway.move(player, direction, block_info.id) do
           {:ok, new_info} ->
             render(new_info, player)
-            loop(server, player, new_info)
+            loop(player, new_info)
 
           {:error, :no_exit} ->
             render(block_info, player, "You can't go that way.")
-            loop(server, player, block_info)
+            loop(player, block_info)
         end
 
       :quit ->
@@ -53,7 +53,7 @@ defmodule UndercityCli.GameLoop do
           "Unknown command. Try: look, north/south/east/west (or n/s/e/w), enter, exit, quit"
         )
 
-        loop(server, player, block_info)
+        loop(player, block_info)
     end
   end
 

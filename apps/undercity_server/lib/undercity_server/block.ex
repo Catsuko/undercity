@@ -17,28 +17,26 @@ defmodule UndercityServer.Block do
     type = Keyword.fetch!(opts, :type)
     exits = Keyword.get(opts, :exits, %{})
 
-    GenServer.start_link(__MODULE__, {id, name, type, exits}, name: via(id))
+    GenServer.start_link(__MODULE__, {id, name, type, exits}, name: process_name(id))
   end
 
   def join(block_id, %Person{} = person) do
-    GenServer.call(via(block_id), {:join, person})
+    GenServer.call(process_name(block_id), {:join, person})
   end
 
   def find_person(block_id, name) do
-    GenServer.call(via(block_id), {:find_person, name})
+    GenServer.call(process_name(block_id), {:find_person, name})
   end
 
   def leave(block_id, %Person{} = person) do
-    GenServer.call(via(block_id), {:leave, person})
+    GenServer.call(process_name(block_id), {:leave, person})
   end
 
   def info(block_id) do
-    GenServer.call(via(block_id), :info)
+    GenServer.call(process_name(block_id), :info)
   end
 
-  defp via(id) do
-    {:via, Registry, {UndercityServer.Registry, {:block, id}}}
-  end
+  def process_name(id), do: :"block_#{id}"
 
   # Server callbacks
 
