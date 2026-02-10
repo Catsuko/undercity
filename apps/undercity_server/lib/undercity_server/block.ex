@@ -76,21 +76,7 @@ defmodule UndercityServer.Block do
   def handle_call(:info, _from, block) do
     alias UndercityCore.WorldMap
 
-    {neighbourhood, inside} =
-      case WorldMap.neighbourhood(block.id) do
-        {:ok, grid} ->
-          {grid, nil}
-
-        :error ->
-          case WorldMap.parent_block(block.id) do
-            {:ok, parent_id} ->
-              {:ok, grid} = WorldMap.neighbourhood(parent_id)
-              {grid, WorldMap.block_name(parent_id)}
-
-            :error ->
-              {nil, nil}
-          end
-      end
+    %{neighbourhood: neighbourhood, inside: inside} = WorldMap.block_context(block.id)
 
     info = %{
       id: block.id,
