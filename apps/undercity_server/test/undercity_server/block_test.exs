@@ -26,7 +26,6 @@ defmodule UndercityServer.BlockTest do
       info = Block.info(id)
 
       assert info.id == id
-      assert info.name == "Test Block"
       assert info.type == :street
       assert info.people == []
     end

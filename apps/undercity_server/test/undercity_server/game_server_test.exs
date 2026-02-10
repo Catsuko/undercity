@@ -15,13 +15,13 @@ defmodule UndercityServer.GameServerTest do
   end
 
   test "handle_call :connect returns block info", %{pid: pid} do
-    assert {:ok, %{name: "The Plaza"}} = GenServer.call(pid, {:connect, "player"})
+    assert {:ok, %{id: "plaza"}} = GenServer.call(pid, {:connect, "player"})
   end
 
   test "multiple servers can run with different names" do
     other_name = "other_server_#{:rand.uniform(10_000)}"
     {:ok, pid} = GameServer.start_link(name: other_name)
 
-    assert {:ok, %{name: "The Plaza"}} = GenServer.call(pid, {:connect, "player"})
+    assert {:ok, %{id: "plaza"}} = GenServer.call(pid, {:connect, "player"})
   end
 end

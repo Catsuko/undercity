@@ -100,39 +100,6 @@ defmodule UndercityCore.BlockTest do
     end
   end
 
-  describe "exit/2" do
-    test "returns the destination block id for a valid direction" do
-      block = Block.new("plaza", "The Plaza", :square, %{north: "market"})
-
-      assert Block.exit(block, :north) == {:ok, "market"}
-    end
-
-    test "returns :error for an invalid direction" do
-      block = Block.new("plaza", "The Plaza", :square, %{north: "market"})
-
-      assert Block.exit(block, :south) == :error
-    end
-  end
-
-  describe "list_exits/1" do
-    test "returns all exits as a list of direction-id pairs" do
-      exits = %{north: "market", south: "catacombs"}
-      block = Block.new("plaza", "The Plaza", nil, exits)
-
-      result = Block.list_exits(block)
-
-      assert length(result) == 2
-      assert {:north, "market"} in result
-      assert {:south, "catacombs"} in result
-    end
-
-    test "returns empty list when no exits" do
-      block = Block.new("plaza", "The Plaza", :square)
-
-      assert Block.list_exits(block) == []
-    end
-  end
-
   describe "list_people/1" do
     test "returns an empty list when no people" do
       block = Block.new("plaza", "The Plaza", :square)

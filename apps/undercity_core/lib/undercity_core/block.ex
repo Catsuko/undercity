@@ -43,16 +43,6 @@ defmodule UndercityCore.Block do
     Enum.find(block.people, fn person -> person.name == name end)
   end
 
-  @spec exit(t(), direction()) :: {:ok, String.t()} | :error
-  def exit(%__MODULE__{} = block, direction) do
-    Map.fetch(block.exits, direction)
-  end
-
-  @spec list_exits(t()) :: [{direction(), String.t()}]
-  def list_exits(%__MODULE__{} = block) do
-    Map.to_list(block.exits)
-  end
-
   @spec list_people(t()) :: [Person.t()]
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)

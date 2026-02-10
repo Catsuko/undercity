@@ -3,52 +3,6 @@ defmodule UndercityCore.WorldMapTest do
 
   alias UndercityCore.WorldMap
 
-  describe "neighbourhood/1" do
-    test "returns full grid for center block" do
-      assert {:ok, grid} = WorldMap.neighbourhood("plaza")
-
-      assert grid == [
-               ["Ashwell", "North Alley", "Wormgarden"],
-               ["West Street", "The Plaza", "East Street"],
-               ["The Stray", "South Alley", "The Lame Horse"]
-             ]
-    end
-
-    test "returns nils for out-of-bounds cells at northwest corner" do
-      assert {:ok, grid} = WorldMap.neighbourhood("ashwell")
-
-      assert grid == [
-               [nil, nil, nil],
-               [nil, "Ashwell", "North Alley"],
-               [nil, "West Street", "The Plaza"]
-             ]
-    end
-
-    test "returns nils for out-of-bounds cells at southeast corner" do
-      assert {:ok, grid} = WorldMap.neighbourhood("lame_horse")
-
-      assert grid == [
-               ["The Plaza", "East Street", nil],
-               ["South Alley", "The Lame Horse", nil],
-               [nil, nil, nil]
-             ]
-    end
-
-    test "returns nils for out-of-bounds cells at edge" do
-      assert {:ok, grid} = WorldMap.neighbourhood("north_alley")
-
-      assert grid == [
-               [nil, nil, nil],
-               ["Ashwell", "North Alley", "Wormgarden"],
-               ["West Street", "The Plaza", "East Street"]
-             ]
-    end
-
-    test "returns error for unknown block" do
-      assert :error = WorldMap.neighbourhood("unknown_block")
-    end
-  end
-
   describe "resolve_exit/2" do
     test "returns destination block id for valid exit" do
       assert {:ok, "north_alley"} = WorldMap.resolve_exit("plaza", :north)
@@ -71,12 +25,6 @@ defmodule UndercityCore.WorldMapTest do
     end
   end
 
-  describe "neighbourhood/1 for interior blocks" do
-    test "returns error for off-grid interior block" do
-      assert :error = WorldMap.neighbourhood("lame_horse_interior")
-    end
-  end
-
   describe "building_names/0" do
     test "includes blocks with enter exits" do
       names = WorldMap.building_names()
@@ -88,22 +36,6 @@ defmodule UndercityCore.WorldMapTest do
       names = WorldMap.building_names()
 
       refute MapSet.member?(names, "The Plaza")
-    end
-  end
-
-  describe "parent_block/1" do
-    test "returns parent block id for interior block" do
-      assert {:ok, "lame_horse"} = WorldMap.parent_block("lame_horse_interior")
-    end
-
-    test "returns error for grid block" do
-      assert :error = WorldMap.parent_block("plaza")
-    end
-  end
-
-  describe "block_name/1" do
-    test "returns the name for a block id" do
-      assert "The Plaza" = WorldMap.block_name("plaza")
     end
   end
 

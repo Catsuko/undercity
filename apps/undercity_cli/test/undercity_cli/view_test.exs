@@ -9,7 +9,6 @@ defmodule UndercityCli.ViewTest do
   describe "describe_block/2" do
     test "includes grid, name, type-driven description, and people" do
       block_info = %{
-        name: "The Plaza",
         type: :square,
         people: [Person.new("Grimshaw"), Person.new("Mordecai")],
         neighbourhood: [
@@ -18,7 +17,6 @@ defmodule UndercityCli.ViewTest do
           ["The Stray", "South Alley", "The Lame Horse"]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: nil
       }
 
@@ -35,7 +33,6 @@ defmodule UndercityCli.ViewTest do
 
     test "shows alone message when only current player is present" do
       block_info = %{
-        name: "Ashwell",
         type: :fountain,
         people: [Person.new("Grimshaw")],
         neighbourhood: [
@@ -44,7 +41,6 @@ defmodule UndercityCli.ViewTest do
           [nil, "West Street", "The Plaza"]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: nil
       }
 
@@ -58,7 +54,6 @@ defmodule UndercityCli.ViewTest do
 
     test "uses 'outside' prefix with building-type description for space blocks" do
       block_info = %{
-        name: "The Lame Horse",
         type: :space,
         people: [],
         neighbourhood: [
@@ -67,7 +62,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: nil,
         building_type: :inn
       }
 
@@ -81,7 +75,6 @@ defmodule UndercityCli.ViewTest do
 
     test "falls back to generic space description when no building type" do
       block_info = %{
-        name: "Some Space",
         type: :space,
         people: [],
         neighbourhood: [
@@ -90,7 +83,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: MapSet.new(),
-        inside: nil,
         building_type: nil
       }
 
@@ -101,7 +93,6 @@ defmodule UndercityCli.ViewTest do
 
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
       block_info = %{
-        name: "The Lame Horse Inn",
         type: :inn,
         people: [],
         neighbourhood: [
@@ -110,7 +101,6 @@ defmodule UndercityCli.ViewTest do
           [nil, nil, nil]
         ],
         buildings: @buildings,
-        inside: "The Lame Horse",
         building_type: nil
       }
 

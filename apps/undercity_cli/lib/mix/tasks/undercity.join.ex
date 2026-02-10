@@ -17,7 +17,7 @@ defmodule Mix.Tasks.Undercity.Join do
 
     case UndercityServer.GameServer.connect(server, player) do
       {:ok, block_info} ->
-        Spinner.success("Woke up in #{block_info.name} as #{player}")
+        Spinner.success("Woke up in #{View.display_name(block_info)} as #{player}")
         Spinner.dismiss()
         IO.puts(View.describe_block(block_info, player))
         GameLoop.run(server, player, block_info)
