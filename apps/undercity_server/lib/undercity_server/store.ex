@@ -9,20 +9,18 @@ defmodule UndercityServer.Store do
   # Client API
 
   def start_link(block_id) do
-    GenServer.start_link(__MODULE__, block_id, name: via(block_id))
+    GenServer.start_link(__MODULE__, block_id, name: process_name(block_id))
   end
 
   def save_block(block_id, block) do
-    GenServer.call(via(block_id), {:save, block})
+    GenServer.call(process_name(block_id), {:save, block})
   end
 
   def load_block(block_id) do
-    GenServer.call(via(block_id), :load)
+    GenServer.call(process_name(block_id), :load)
   end
 
-  defp via(block_id) do
-    {:via, Registry, {UndercityServer.Registry, {:store, block_id}}}
-  end
+  defp process_name(block_id), do: :"store_#{block_id}"
 
   # Server callbacks
 
