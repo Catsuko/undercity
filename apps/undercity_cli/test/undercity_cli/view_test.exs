@@ -3,24 +3,23 @@ defmodule UndercityCli.ViewTest do
 
   alias UndercityCli.View
   alias UndercityCore.Person
-
-  @buildings MapSet.new(["The Lame Horse"])
+  alias UndercityServer.Vicinity
 
   describe "describe_block/2" do
     test "includes grid, name, type-driven description, and people" do
-      block_info = %{
+      vicinity = %Vicinity{
+        id: "plaza",
         type: :square,
         people: [Person.new("Grimshaw"), Person.new("Mordecai")],
         neighbourhood: [
-          ["Ashwell", "North Alley", "Wormgarden"],
-          ["West Street", "The Plaza", "East Street"],
-          ["The Stray", "South Alley", "The Lame Horse"]
+          ["ashwell", "north_alley", "wormgarden"],
+          ["west_street", "plaza", "east_street"],
+          ["the_stray", "south_alley", "lame_horse"]
         ],
-        buildings: @buildings,
         building_type: nil
       }
 
-      result = View.describe_block(block_info, "Grimshaw")
+      result = View.describe_block(vicinity, "Grimshaw")
 
       assert result =~ "You are at"
       assert result =~ "The Plaza"
@@ -32,19 +31,19 @@ defmodule UndercityCli.ViewTest do
     end
 
     test "shows alone message when only current player is present" do
-      block_info = %{
+      vicinity = %Vicinity{
+        id: "ashwell",
         type: :fountain,
         people: [Person.new("Grimshaw")],
         neighbourhood: [
           [nil, nil, nil],
-          [nil, "Ashwell", "North Alley"],
-          [nil, "West Street", "The Plaza"]
+          [nil, "ashwell", "north_alley"],
+          [nil, "west_street", "plaza"]
         ],
-        buildings: @buildings,
         building_type: nil
       }
 
-      result = View.describe_block(block_info, "Grimshaw")
+      result = View.describe_block(vicinity, "Grimshaw")
 
       assert result =~ "You are at"
       assert result =~ "Ashwell"
@@ -53,19 +52,19 @@ defmodule UndercityCli.ViewTest do
     end
 
     test "uses 'outside' prefix with building-type description for space blocks" do
-      block_info = %{
+      vicinity = %Vicinity{
+        id: "lame_horse",
         type: :space,
         people: [],
         neighbourhood: [
-          ["The Plaza", "East Street", nil],
-          ["South Alley", "The Lame Horse", nil],
+          ["plaza", "east_street", nil],
+          ["south_alley", "lame_horse", nil],
           [nil, nil, nil]
         ],
-        buildings: @buildings,
         building_type: :inn
       }
 
-      result = View.describe_block(block_info, "Grimshaw")
+      result = View.describe_block(vicinity, "Grimshaw")
 
       assert result =~ "You are outside"
       assert result =~ "The Lame Horse"
@@ -74,37 +73,37 @@ defmodule UndercityCli.ViewTest do
     end
 
     test "falls back to generic space description when no building type" do
-      block_info = %{
+      vicinity = %Vicinity{
+        id: "some_space",
         type: :space,
         people: [],
         neighbourhood: [
           [nil, nil, nil],
-          [nil, "Some Space", nil],
+          [nil, "some_space", nil],
           [nil, nil, nil]
         ],
-        buildings: MapSet.new(),
         building_type: nil
       }
 
-      result = View.describe_block(block_info, "Grimshaw")
+      result = View.describe_block(vicinity, "Grimshaw")
 
       assert result =~ "A patch of open ground"
     end
 
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
-      block_info = %{
+      vicinity = %Vicinity{
+        id: "lame_horse_interior",
         type: :inn,
         people: [],
         neighbourhood: [
-          ["The Plaza", "East Street", nil],
-          ["South Alley", "The Lame Horse", nil],
+          ["plaza", "east_street", nil],
+          ["south_alley", "lame_horse", nil],
           [nil, nil, nil]
         ],
-        buildings: @buildings,
         building_type: nil
       }
 
-      result = View.describe_block(block_info, "Grimshaw")
+      result = View.describe_block(vicinity, "Grimshaw")
 
       assert result =~ "You are inside"
       assert result =~ "The Lame Horse Inn"
@@ -113,12 +112,12 @@ defmodule UndercityCli.ViewTest do
     end
   end
 
-  describe "render_grid/3" do
+  describe "render_grid/2" do
     test "renders center block with all neighbours" do
       neighbourhood = [
-        ["Ashwell", "North Alley", "Wormgarden"],
-        ["West Street", "The Plaza", "East Street"],
-        ["The Stray", "South Alley", "The Lame Horse"]
+        ["ashwell", "north_alley", "wormgarden"],
+        ["west_street", "plaza", "east_street"],
+        ["the_stray", "south_alley", "lame_horse"]
       ]
 
       result = View.render_grid(neighbourhood)
@@ -135,8 +134,8 @@ defmodule UndercityCli.ViewTest do
     test "renders empty cells as blank spaces for corner blocks" do
       neighbourhood = [
         [nil, nil, nil],
-        [nil, "Ashwell", "North Alley"],
-        [nil, "West Street", "The Plaza"]
+        [nil, "ashwell", "north_alley"],
+        [nil, "west_street", "plaza"]
       ]
 
       result = View.render_grid(neighbourhood)
@@ -149,12 +148,12 @@ defmodule UndercityCli.ViewTest do
 
     test "renders building box around building cells" do
       neighbourhood = [
-        ["The Plaza", "East Street", nil],
-        ["South Alley", "The Lame Horse", nil],
+        ["plaza", "east_street", nil],
+        ["south_alley", "lame_horse", nil],
         [nil, nil, nil]
       ]
 
-      result = View.render_grid(neighbourhood, @buildings)
+      result = View.render_grid(neighbourhood)
 
       assert result =~ "╔"
       assert result =~ "║"
@@ -164,12 +163,12 @@ defmodule UndercityCli.ViewTest do
 
     test "does not render building box around normal cells" do
       neighbourhood = [
-        ["Ashwell", "North Alley", "Wormgarden"],
-        ["West Street", "The Plaza", "East Street"],
-        ["The Stray", "South Alley", nil]
+        ["ashwell", "north_alley", "wormgarden"],
+        ["west_street", "plaza", "east_street"],
+        ["the_stray", "south_alley", nil]
       ]
 
-      result = View.render_grid(neighbourhood, MapSet.new())
+      result = View.render_grid(neighbourhood)
 
       refute result =~ "╔"
       refute result =~ "║"
@@ -178,12 +177,12 @@ defmodule UndercityCli.ViewTest do
 
     test "dims grid and fills building box when inside" do
       neighbourhood = [
-        ["The Plaza", "East Street", nil],
-        ["South Alley", "The Lame Horse", nil],
+        ["plaza", "east_street", nil],
+        ["south_alley", "lame_horse", nil],
         [nil, nil, nil]
       ]
 
-      result = View.render_grid(neighbourhood, @buildings, "The Lame Horse")
+      result = View.render_grid(neighbourhood, "lame_horse")
 
       # Dim colour used for grid lines
       assert result =~ "\e[38;5;235m"

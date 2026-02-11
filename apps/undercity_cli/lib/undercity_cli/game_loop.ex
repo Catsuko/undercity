@@ -19,28 +19,28 @@ defmodule UndercityCli.GameLoop do
     "exit" => :exit
   }
 
-  def run(player, block_info) do
-    render(block_info, player)
-    loop(player, block_info)
+  def run(player, vicinity) do
+    render(vicinity, player)
+    loop(player, vicinity)
   end
 
-  defp loop(player, block_info) do
+  defp loop(player, vicinity) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
     case parse(input) do
       :look ->
-        render(block_info, player)
-        loop(player, block_info)
+        render(vicinity, player)
+        loop(player, vicinity)
 
       {:move, direction} ->
-        case Gateway.move(player, direction, block_info.id) do
-          {:ok, new_info} ->
-            render(new_info, player)
-            loop(player, new_info)
+        case Gateway.move(player, direction, vicinity.id) do
+          {:ok, new_vicinity} ->
+            render(new_vicinity, player)
+            loop(player, new_vicinity)
 
           {:error, :no_exit} ->
-            render(block_info, player, "You can't go that way.")
-            loop(player, block_info)
+            render(vicinity, player, "You can't go that way.")
+            loop(player, vicinity)
         end
 
       :quit ->
@@ -48,18 +48,18 @@ defmodule UndercityCli.GameLoop do
 
       :unknown ->
         render(
-          block_info,
+          vicinity,
           player,
           "Unknown command. Try: look, north/south/east/west (or n/s/e/w), enter, exit, quit"
         )
 
-        loop(player, block_info)
+        loop(player, vicinity)
     end
   end
 
-  defp render(block_info, player, message \\ nil) do
+  defp render(vicinity, player, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
-    IO.puts(View.describe_block(block_info, player))
+    IO.puts(View.describe_block(vicinity, player))
     if message, do: IO.puts(message)
   end
 

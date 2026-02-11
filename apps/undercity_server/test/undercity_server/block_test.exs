@@ -22,12 +22,11 @@ defmodule UndercityServer.BlockTest do
   end
 
   describe "info/1" do
-    test "returns block info", %{id: id} do
-      info = Block.info(id)
+    test "returns block id and people", %{id: id} do
+      {block_id, people} = Block.info(id)
 
-      assert info.id == id
-      assert info.type == :street
-      assert info.people == []
+      assert block_id == id
+      assert people == []
     end
   end
 
@@ -37,9 +36,9 @@ defmodule UndercityServer.BlockTest do
 
       assert :ok = Block.join(id, person)
 
-      info = Block.info(id)
-      assert length(info.people) == 1
-      assert hd(info.people).name == "Grimshaw"
+      {_id, people} = Block.info(id)
+      assert length(people) == 1
+      assert hd(people).name == "Grimshaw"
     end
 
     test "multiple people can join", %{id: id} do
@@ -49,8 +48,8 @@ defmodule UndercityServer.BlockTest do
       Block.join(id, person1)
       Block.join(id, person2)
 
-      info = Block.info(id)
-      assert length(info.people) == 2
+      {_id, people} = Block.info(id)
+      assert length(people) == 2
     end
   end
 
@@ -61,8 +60,8 @@ defmodule UndercityServer.BlockTest do
 
       assert :ok = Block.leave(id, person)
 
-      info = Block.info(id)
-      assert info.people == []
+      {_id, people} = Block.info(id)
+      assert people == []
     end
 
     test "other people remain after someone leaves", %{id: id} do
@@ -73,9 +72,9 @@ defmodule UndercityServer.BlockTest do
 
       Block.leave(id, grimshaw)
 
-      info = Block.info(id)
-      assert length(info.people) == 1
-      assert hd(info.people).name == "Mordecai"
+      {_id, people} = Block.info(id)
+      assert length(people) == 1
+      assert hd(people).name == "Mordecai"
     end
   end
 end

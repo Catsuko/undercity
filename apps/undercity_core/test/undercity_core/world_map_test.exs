@@ -25,17 +25,55 @@ defmodule UndercityCore.WorldMapTest do
     end
   end
 
-  describe "building_names/0" do
-    test "includes blocks with enter exits" do
-      names = WorldMap.building_names()
-
-      assert MapSet.member?(names, "The Lame Horse")
+  describe "block_name/1" do
+    test "returns the display name for a block id" do
+      assert "The Plaza" = WorldMap.block_name("plaza")
     end
 
-    test "does not include blocks without enter exits" do
-      names = WorldMap.building_names()
+    test "returns nil for an unknown block id" do
+      assert nil == WorldMap.block_name("unknown")
+    end
+  end
 
-      refute MapSet.member?(names, "The Plaza")
+  describe "block_type/1" do
+    test "returns the type for a block id" do
+      assert :square = WorldMap.block_type("plaza")
+    end
+
+    test "returns nil for an unknown block id" do
+      assert nil == WorldMap.block_type("unknown")
+    end
+  end
+
+  describe "surrounding/1" do
+    test "returns 3x3 grid of block ids for a grid block" do
+      grid = WorldMap.surrounding("plaza")
+
+      assert [
+               ["ashwell", "north_alley", "wormgarden"],
+               ["west_street", "plaza", "east_street"],
+               ["the_stray", "south_alley", "lame_horse"]
+             ] = grid
+    end
+
+    test "returns parent's grid for an interior block" do
+      grid = WorldMap.surrounding("lame_horse_interior")
+
+      assert grid == WorldMap.surrounding("lame_horse")
+    end
+
+    test "returns nil for an unmapped block" do
+      assert nil == WorldMap.surrounding("unknown")
+    end
+
+    test "pads with nils at edges" do
+      grid = WorldMap.surrounding("ashwell")
+
+      assert [
+               [nil, nil, nil],
+               [nil, "ashwell", "north_alley"],
+               [nil, "west_street", "plaza"]
+             ] = grid
     end
   end
 

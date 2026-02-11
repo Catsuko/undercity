@@ -3,6 +3,8 @@ defmodule UndercityCli.View do
   Formats server data for CLI display.
   """
 
+  alias UndercityServer.Vicinity
+
   @cell_width 20
   @box_width 18
 
@@ -21,21 +23,20 @@ defmodule UndercityCli.View do
   @highlight "\e[38;5;103m"
   @bg_fill "\e[48;5;236m"
 
-  def describe_block(block_info, current_player) do
-    description = Map.fetch!(@descriptions, description_key(block_info))
-    prefix = block_prefix(block_info.type)
-    buildings = Map.get(block_info, :buildings, MapSet.new())
-    inside = inside?(block_info)
-    name = display_name(block_info, inside)
+  def describe_block(%Vicinity{} = vicinity, current_player) do
+    description = Map.fetch!(@descriptions, description_key(vicinity))
+    prefix = block_prefix(vicinity.type)
+    inside = Vicinity.inside?(vicinity)
+    name = Vicinity.name(vicinity)
 
     sections =
-      case block_info.neighbourhood do
+      case vicinity.neighbourhood do
         nil ->
           []
 
         neighbourhood ->
-          parent = if inside, do: grid_centre(neighbourhood)
-          [render_grid(neighbourhood, buildings, parent), ""]
+          parent = if inside, do: centre_id(neighbourhood)
+          [render_grid(neighbourhood, parent), ""]
       end
 
     sections =
@@ -52,44 +53,25 @@ defmodule UndercityCli.View do
             IO.ANSI.reset()
           ],
           "",
-          describe_people(block_info.people, current_player)
+          describe_people(vicinity.people, current_player)
         ]
 
     Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
   end
 
-  defp description_key(%{type: :space, building_type: bt}) when bt != nil, do: :"space_#{bt}"
+  defp description_key(%Vicinity{type: :space, building_type: bt}) when bt != nil, do: :"space_#{bt}"
 
-  defp description_key(%{type: type}), do: type
+  defp description_key(%Vicinity{type: type}), do: type
 
   defp block_prefix(:space), do: "outside"
   defp block_prefix(:inn), do: "inside"
   defp block_prefix(_type), do: "at"
 
-  def display_name(block_info, inside \\ nil) do
-    inside = if is_nil(inside), do: inside?(block_info), else: inside
-
-    if inside do
-      centre = grid_centre(block_info.neighbourhood)
-      type_label = block_info.type |> Atom.to_string() |> String.capitalize()
-      "#{centre} #{type_label}"
-    else
-      grid_centre(block_info.neighbourhood)
-    end
-  end
-
-  defp inside?(block_info) do
-    centre = grid_centre(block_info.neighbourhood)
-    buildings = Map.get(block_info, :buildings, MapSet.new())
-
-    MapSet.member?(buildings, centre) and block_info.building_type == nil
-  end
-
-  defp grid_centre(neighbourhood) do
+  defp centre_id(neighbourhood) do
     neighbourhood |> Enum.at(1) |> Enum.at(1)
   end
 
-  def render_grid(neighbourhood, buildings \\ MapSet.new(), inside \\ nil) do
+  def render_grid(neighbourhood, inside \\ nil) do
     line_color = if inside, do: @dim, else: @grid_color
     bar = String.duplicate("─", @cell_width)
     top = "#{line_color}┌#{bar}┬#{bar}┬#{bar}┐#{IO.ANSI.reset()}"
@@ -100,7 +82,7 @@ defmodule UndercityCli.View do
       neighbourhood
       |> Enum.with_index()
       |> Enum.map(fn {row, r} ->
-        render_row(row, r, buildings, inside, line_color)
+        render_row(row, r, inside, line_color)
       end)
 
     [
@@ -116,14 +98,15 @@ defmodule UndercityCli.View do
     |> Enum.join("\n")
   end
 
-  defp render_row(row, r, buildings, inside, line_color) do
+  defp render_row(row, r, inside, line_color) do
     cells =
       row
       |> Enum.with_index()
-      |> Enum.map(fn {name, c} ->
-        is_building = name != nil and MapSet.member?(buildings, name)
+      |> Enum.map(fn {block_id, c} ->
+        name = if block_id, do: Vicinity.name_for(block_id)
+        is_building = block_id != nil and Vicinity.building?(block_id)
         is_current = r == 1 and c == 1
-        is_inside = inside != nil and name == inside
+        is_inside = inside != nil and block_id == inside
         render_cell_lines(name, is_building, is_current, is_inside, inside != nil)
       end)
 

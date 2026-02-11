@@ -2,26 +2,27 @@ defmodule UndercityServer.GatewayTest do
   use ExUnit.Case
 
   alias UndercityServer.Gateway
+  alias UndercityServer.Vicinity
 
   defp unique_name, do: "player_#{:rand.uniform(100_000)}"
 
   describe "enter/1" do
     test "creates a person and spawns them in the plaza" do
       name = unique_name()
-      info = Gateway.enter(name)
+      %Vicinity{} = vicinity = Gateway.enter(name)
 
-      assert info.id == "plaza"
-      assert info.type == :square
-      assert Enum.any?(info.people, fn p -> p.name == name end)
+      assert vicinity.id == "plaza"
+      assert vicinity.type == :square
+      assert Enum.any?(vicinity.people, fn p -> p.name == name end)
     end
 
     test "multiple people can enter" do
       name1 = unique_name()
       name2 = unique_name()
       Gateway.enter(name1)
-      info = Gateway.enter(name2)
+      %Vicinity{} = vicinity = Gateway.enter(name2)
 
-      names = Enum.map(info.people, & &1.name)
+      names = Enum.map(vicinity.people, & &1.name)
       assert name1 in names
       assert name2 in names
     end
@@ -29,9 +30,9 @@ defmodule UndercityServer.GatewayTest do
     test "entering with the same name does not create a duplicate" do
       name = unique_name()
       Gateway.enter(name)
-      info = Gateway.enter(name)
+      %Vicinity{} = vicinity = Gateway.enter(name)
 
-      matches = Enum.filter(info.people, fn p -> p.name == name end)
+      matches = Enum.filter(vicinity.people, fn p -> p.name == name end)
       assert length(matches) == 1
     end
 
@@ -40,9 +41,9 @@ defmodule UndercityServer.GatewayTest do
       Gateway.enter(name)
       {:ok, _} = Gateway.move(name, :north, "plaza")
 
-      info = Gateway.enter(name)
+      %Vicinity{} = vicinity = Gateway.enter(name)
 
-      assert info.id == "north_alley"
+      assert vicinity.id == "north_alley"
     end
   end
 
@@ -51,10 +52,10 @@ defmodule UndercityServer.GatewayTest do
       name = unique_name()
       Gateway.enter(name)
 
-      {:ok, info} = Gateway.move(name, :north, "plaza")
+      {:ok, %Vicinity{} = vicinity} = Gateway.move(name, :north, "plaza")
 
-      assert info.id == "north_alley"
-      assert Enum.any?(info.people, fn p -> p.name == name end)
+      assert vicinity.id == "north_alley"
+      assert Enum.any?(vicinity.people, fn p -> p.name == name end)
     end
 
     test "player is removed from the source block" do
@@ -63,8 +64,8 @@ defmodule UndercityServer.GatewayTest do
 
       {:ok, _} = Gateway.move(name, :north, "plaza")
 
-      plaza_info = UndercityServer.Block.info("plaza")
-      refute Enum.any?(plaza_info.people, fn p -> p.name == name end)
+      {"plaza", people} = UndercityServer.Block.info("plaza")
+      refute Enum.any?(people, fn p -> p.name == name end)
     end
 
     test "returns error for invalid direction" do
