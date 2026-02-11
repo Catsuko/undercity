@@ -35,7 +35,10 @@ defmodule UndercityServer.Gateway do
       (:math.pow(2, attempt) * @retry_rate) |> trunc() |> Process.sleep()
       connect(player_name, retries - 1)
 
-    :exit, {:nodedown, _} ->
+    :exit, {{:nodedown, _}, _} ->
+      {:error, :server_down}
+
+    :exit, {{:noconnection, _}, _} ->
       {:error, :server_down}
   end
 
