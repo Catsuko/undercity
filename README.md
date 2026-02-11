@@ -19,13 +19,13 @@ mix compile
 Start the game server:
 
 ```bash
-elixir --name undercity_server@127.0.0.1 -S mix undercity.server --name my_server
+elixir --name undercity_server@127.0.0.1 -S mix undercity.server
 ```
 
 Join as a player (in a separate terminal):
 
 ```bash
-elixir --name client@127.0.0.1 -S mix undercity.join --server my_server --player your_name
+elixir --name client@127.0.0.1 -S mix undercity.join --player your_name
 ```
 
 ## Project Structure
