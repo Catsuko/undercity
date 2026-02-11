@@ -56,8 +56,8 @@ defmodule UndercityServer.Gateway do
       :not_found ->
         spawn_block = WorldMap.spawn_block()
         person = Person.new(name)
-        :ok = block_call(spawn_block, {:join, person}, server_node)
-        build_vicinity(spawn_block, server_node)
+        {^spawn_block, people} = block_call(spawn_block, {:join, person}, server_node)
+        Vicinity.new(spawn_block, people)
     end
   end
 
@@ -71,8 +71,8 @@ defmodule UndercityServer.Gateway do
     with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
          {:ok, person} <- find_person(from_block_id, player_name, server_node) do
       :ok = block_call(from_block_id, {:leave, person}, server_node)
-      :ok = block_call(destination_id, {:join, person}, server_node)
-      {:ok, build_vicinity(destination_id, server_node)}
+      {^destination_id, people} = block_call(destination_id, {:join, person}, server_node)
+      {:ok, Vicinity.new(destination_id, people)}
     end
   end
 
