@@ -55,7 +55,7 @@ defmodule UndercityServer.Block do
   def handle_call({:join, person}, _from, block) do
     block = CoreBlock.add_person(block, person)
     Store.save_block(block.id, block)
-    {:reply, :ok, block}
+    {:reply, block_info(block), block}
   end
 
   @impl true
@@ -72,6 +72,8 @@ defmodule UndercityServer.Block do
 
   @impl true
   def handle_call(:info, _from, block) do
-    {:reply, {block.id, CoreBlock.list_people(block)}, block}
+    {:reply, block_info(block), block}
   end
+
+  defp block_info(block), do: {block.id, CoreBlock.list_people(block)}
 end

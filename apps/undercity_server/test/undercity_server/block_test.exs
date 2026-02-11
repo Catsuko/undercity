@@ -34,9 +34,9 @@ defmodule UndercityServer.BlockTest do
     test "adds a person to the block", %{id: id} do
       person = Person.new("Grimshaw")
 
-      assert :ok = Block.join(id, person)
+      {block_id, people} = Block.join(id, person)
 
-      {_id, people} = Block.info(id)
+      assert block_id == id
       assert length(people) == 1
       assert hd(people).name == "Grimshaw"
     end
