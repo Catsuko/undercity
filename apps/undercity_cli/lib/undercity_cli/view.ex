@@ -5,8 +5,8 @@ defmodule UndercityCli.View do
 
   alias UndercityServer.Vicinity
 
-  @cell_width 20
-  @box_width 18
+  @cell_width 30
+  @box_width 28
 
   @descriptions %{
     street: "A narrow passage of broken cobblestones winding between crumbling walls.",
