@@ -90,11 +90,14 @@ defmodule UndercityCore.WorldMap do
   end
 
   defp grid_cell(r, c) when r >= 0 and r < 3 and c >= 0 and c < 3 do
-    id = @grid |> Enum.at(r) |> Enum.at(c)
-    Map.fetch!(@block_names, id)
+    @grid |> Enum.at(r) |> Enum.at(c)
   end
 
   defp grid_cell(_r, _c), do: nil
+
+  def block_name(block_id), do: Map.get(@block_names, block_id)
+
+  def block_type(block_id), do: Map.get(@block_types, block_id)
 
   def resolve_exit(block_id, direction) do
     case get_in(@exits, [block_id, direction]) do
@@ -102,14 +105,6 @@ defmodule UndercityCore.WorldMap do
       destination_id -> {:ok, destination_id}
     end
   end
-
-  @building_names (for {block_id, exits} <- @exits,
-                       Map.has_key?(exits, :enter),
-                       into: MapSet.new() do
-                     Map.fetch!(@block_names, block_id)
-                   end)
-
-  def building_names, do: @building_names
 
   def building_type(block_id) do
     case get_in(@exits, [block_id, :enter]) do
@@ -126,13 +121,13 @@ defmodule UndercityCore.WorldMap do
   end
 
   @doc """
-  Returns the neighbourhood grid for a block.
+  Returns the ids of blocks surrounding the given block id.
 
   Grid blocks get their own neighbourhood directly. Interior blocks inherit
   their parent building's neighbourhood.
   """
-  @spec block_context(String.t()) :: [[String.t() | nil]] | nil
-  def block_context(block_id) do
+  @spec surrounding(String.t(), pos_integer()) :: [[String.t() | nil]] | nil
+  def surrounding(block_id, _distance \\ 3) do
     if Map.has_key?(@grid_positions, block_id) do
       {:ok, grid} = neighbourhood(block_id)
       grid

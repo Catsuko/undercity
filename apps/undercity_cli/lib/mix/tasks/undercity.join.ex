@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Undercity.Join do
 
   alias UndercityCli.GameLoop
   alias UndercityCli.Spinner
-  alias UndercityCli.View
+  alias UndercityServer.Vicinity
 
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [player: :string])
@@ -15,11 +15,10 @@ defmodule Mix.Tasks.Undercity.Join do
     Spinner.start()
 
     case UndercityServer.Gateway.connect(player) do
-      {:ok, block_info} ->
-        Spinner.success("Woke up in #{View.display_name(block_info)} as #{player}")
+      {:ok, vicinity} ->
+        Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
-        IO.puts(View.describe_block(block_info, player))
-        GameLoop.run(player, block_info)
+        GameLoop.run(player, vicinity)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")

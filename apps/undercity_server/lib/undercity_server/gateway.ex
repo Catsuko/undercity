@@ -10,6 +10,7 @@ defmodule UndercityServer.Gateway do
   alias UndercityCore.Person
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
+  alias UndercityServer.Vicinity
 
   @connect_retries 5
   @retry_rate 50
@@ -47,13 +48,13 @@ defmodule UndercityServer.Gateway do
 
     case find_player_block(name, server_node) do
       {:ok, block_id} ->
-        block_call(block_id, :info, server_node)
+        build_vicinity(block_id, server_node)
 
       :not_found ->
         spawn_block = WorldMap.spawn_block()
         person = Person.new(name)
         :ok = block_call(spawn_block, {:join, person}, server_node)
-        block_call(spawn_block, :info, server_node)
+        build_vicinity(spawn_block, server_node)
     end
   end
 
@@ -68,8 +69,13 @@ defmodule UndercityServer.Gateway do
          {:ok, person} <- find_person(from_block_id, player_name, server_node) do
       :ok = block_call(from_block_id, {:leave, person}, server_node)
       :ok = block_call(destination_id, {:join, person}, server_node)
-      {:ok, block_call(destination_id, :info, server_node)}
+      {:ok, build_vicinity(destination_id, server_node)}
     end
+  end
+
+  defp build_vicinity(block_id, server_node) do
+    {^block_id, people} = block_call(block_id, :info, server_node)
+    Vicinity.new(block_id, people)
   end
 
   defp block_call(block_id, message, server_node) do
