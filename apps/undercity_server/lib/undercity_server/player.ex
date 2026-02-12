@@ -33,6 +33,11 @@ defmodule UndercityServer.Player do
     GenServer.call(PlayerIdentity.via(player_id), :get_name)
   end
 
+  @spec use_item(String.t(), String.t()) :: {:ok, Item.t()} | :not_found
+  def use_item(player_id, item_name) do
+    GenServer.call(PlayerIdentity.via(player_id), {:use_item, item_name})
+  end
+
   # Server callbacks
 
   @impl true
@@ -65,5 +70,28 @@ defmodule UndercityServer.Player do
   @impl true
   def handle_call(:get_name, _from, state) do
     {:reply, state.name, state}
+  end
+
+  @impl true
+  def handle_call({:use_item, item_name}, _from, state) do
+    case Inventory.find_item(state.inventory, item_name) do
+      {:ok, item, index} ->
+        case Item.use(item) do
+          {:ok, updated_item} ->
+            inventory = Inventory.replace_at(state.inventory, index, updated_item)
+            state = %{state | inventory: inventory}
+            PlayerStore.save(state.id, state)
+            {:reply, {:ok, updated_item}, state}
+
+          :spent ->
+            inventory = Inventory.remove_at(state.inventory, index)
+            state = %{state | inventory: inventory}
+            PlayerStore.save(state.id, state)
+            {:reply, {:ok, item}, state}
+        end
+
+      :not_found ->
+        {:reply, :not_found, state}
+    end
   end
 end
