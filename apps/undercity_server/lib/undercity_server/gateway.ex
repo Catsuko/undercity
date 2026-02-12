@@ -140,13 +140,14 @@ defmodule UndercityServer.Gateway do
   defp build_vicinity(block_id, server_node) do
     {^block_id, player_ids} = block_call(block_id, :info, server_node)
     names = server_call(PlayerStore, {:get_names, player_ids}, server_node)
+    scribble = block_call(block_id, :get_scribble, server_node)
 
     people =
       Enum.map(player_ids, fn id ->
         %{id: id, name: Map.get(names, id, "Unknown")}
       end)
 
-    Vicinity.new(block_id, people)
+    Vicinity.new(block_id, people, scribble: scribble)
   end
 
   defp block_call(block_id, message, server_node) do
