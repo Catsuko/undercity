@@ -56,6 +56,55 @@ defmodule UndercityCore.InventoryTest do
     end
   end
 
+  describe "find_item/2" do
+    test "finds the first item by name" do
+      chalk = Item.new("Chalk", 5)
+
+      inventory =
+        Inventory.new()
+        |> Inventory.add_item(Item.new("Junk"))
+        |> Inventory.add_item(chalk)
+
+      assert {:ok, ^chalk, 1} = Inventory.find_item(inventory, "Chalk")
+    end
+
+    test "returns :not_found when item is not in inventory" do
+      inventory = Inventory.new()
+
+      assert :not_found = Inventory.find_item(inventory, "Chalk")
+    end
+  end
+
+  describe "replace_at/3" do
+    test "replaces the item at the given index" do
+      chalk = Item.new("Chalk", 5)
+      used_chalk = Item.new("Chalk", 4)
+
+      inventory =
+        Inventory.new()
+        |> Inventory.add_item(Item.new("Junk"))
+        |> Inventory.add_item(chalk)
+
+      inventory = Inventory.replace_at(inventory, 1, used_chalk)
+
+      assert {:ok, ^used_chalk, 1} = Inventory.find_item(inventory, "Chalk")
+    end
+  end
+
+  describe "remove_at/2" do
+    test "removes the item at the given index" do
+      inventory =
+        Inventory.new()
+        |> Inventory.add_item(Item.new("Junk"))
+        |> Inventory.add_item(Item.new("Chalk", 5))
+
+      inventory = Inventory.remove_at(inventory, 1)
+
+      assert Inventory.size(inventory) == 1
+      assert :not_found = Inventory.find_item(inventory, "Chalk")
+    end
+  end
+
   describe "full?/1" do
     test "returns false when under capacity" do
       inventory = Inventory.new()

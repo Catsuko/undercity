@@ -51,10 +51,29 @@ defmodule UndercityCli.View do
             ". ",
             description,
             IO.ANSI.reset()
-          ],
-          "",
-          describe_people(vicinity.people, current_player)
+          ]
         ]
+
+    sections =
+      sections ++
+        case vicinity.scribble do
+          nil ->
+            []
+
+          text ->
+            surface = scribble_surface(vicinity)
+
+            [
+              [
+                "\e[38;5;245mSomeone has scribbled \e[3m",
+                text,
+                "\e[23m #{surface}.",
+                IO.ANSI.reset()
+              ]
+            ]
+        end
+
+    sections = sections ++ ["", describe_people(vicinity.people, current_player)]
 
     Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
   end
@@ -185,6 +204,11 @@ defmodule UndercityCli.View do
     right = padding - left
     String.duplicate(" ", left) <> text <> String.duplicate(" ", right)
   end
+
+  def scribble_surface(%Vicinity{type: :graveyard}), do: "on a tombstone"
+  def scribble_surface(%Vicinity{type: :inn}), do: "on the wall"
+  def scribble_surface(%Vicinity{type: :space, building_type: bt}) when bt != nil, do: "on the wall"
+  def scribble_surface(%Vicinity{}), do: "on the ground"
 
   def describe_people(people, current_player) do
     others = Enum.reject(people, fn p -> p.name == current_player end)

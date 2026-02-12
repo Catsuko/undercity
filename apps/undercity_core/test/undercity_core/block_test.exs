@@ -93,6 +93,32 @@ defmodule UndercityCore.BlockTest do
     end
   end
 
+  describe "scribble/2" do
+    test "sets the scribble text on a block" do
+      block = Block.new("plaza", "The Plaza", :square)
+
+      block = Block.scribble(block, "hello world")
+
+      assert block.scribble == "hello world"
+    end
+
+    test "overwrites an existing scribble" do
+      block =
+        "plaza"
+        |> Block.new("The Plaza", :square)
+        |> Block.scribble("first")
+        |> Block.scribble("second")
+
+      assert block.scribble == "second"
+    end
+
+    test "scribble defaults to nil" do
+      block = Block.new("plaza", "The Plaza", :square)
+
+      assert block.scribble == nil
+    end
+  end
+
   describe "list_people/1" do
     test "returns an empty list when no people" do
       block = Block.new("plaza", "The Plaza", :square)

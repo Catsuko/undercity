@@ -7,6 +7,7 @@ defmodule UndercityServer.Gateway do
   to Block processes on the server node.
   """
 
+  alias UndercityCore.Scribble
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.PlayerIdentity
@@ -106,6 +107,29 @@ defmodule UndercityServer.Gateway do
   end
 
   @doc """
+  Scribbles a message on a block using chalk from the player's inventory.
+  Returns :ok, {:error, :no_chalk}, or {:error, :invalid, reason}.
+  """
+  def scribble(player_id, block_id, text) do
+    case Scribble.sanitise(text) do
+      :empty ->
+        :ok
+
+      {:ok, sanitised} ->
+        server_node = UndercityServer.server_node()
+
+        case player_call(player_id, {:use_item, "Chalk"}, server_node) do
+          :not_found ->
+            {:error, :no_chalk}
+
+          {:ok, _item} ->
+            block_call(block_id, {:scribble, sanitised}, server_node)
+            :ok
+        end
+    end
+  end
+
+  @doc """
   Returns the player's current inventory items.
   """
   def get_inventory(player_id) do
@@ -116,13 +140,14 @@ defmodule UndercityServer.Gateway do
   defp build_vicinity(block_id, server_node) do
     {^block_id, player_ids} = block_call(block_id, :info, server_node)
     names = server_call(PlayerStore, {:get_names, player_ids}, server_node)
+    scribble = block_call(block_id, :get_scribble, server_node)
 
     people =
       Enum.map(player_ids, fn id ->
         %{id: id, name: Map.get(names, id, "Unknown")}
       end)
 
-    Vicinity.new(block_id, people)
+    Vicinity.new(block_id, people, scribble: scribble)
   end
 
   defp block_call(block_id, message, server_node) do

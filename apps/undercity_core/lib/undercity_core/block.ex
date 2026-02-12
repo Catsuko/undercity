@@ -4,7 +4,7 @@ defmodule UndercityCore.Block do
   """
 
   @enforce_keys [:id, :name, :type]
-  defstruct [:id, :name, :type, people: MapSet.new(), exits: %{}]
+  defstruct [:id, :name, :type, :scribble, people: MapSet.new(), exits: %{}]
 
   @type direction :: :north | :south | :east | :west | :enter | :exit
   @type block_type :: :street | :square | :fountain | :graveyard | :space | :inn
@@ -13,7 +13,8 @@ defmodule UndercityCore.Block do
           name: String.t(),
           type: block_type(),
           people: MapSet.t(String.t()),
-          exits: %{direction() => String.t()}
+          exits: %{direction() => String.t()},
+          scribble: String.t() | nil
         }
 
   @spec new(String.t(), String.t(), block_type(), %{direction() => String.t()}) :: t()
@@ -44,5 +45,10 @@ defmodule UndercityCore.Block do
   @spec list_people(t()) :: [String.t()]
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)
+  end
+
+  @spec scribble(t(), String.t()) :: t()
+  def scribble(%__MODULE__{} = block, text) when is_binary(text) do
+    %{block | scribble: text}
   end
 end

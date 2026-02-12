@@ -9,18 +9,19 @@ defmodule UndercityServer.Vicinity do
 
   alias UndercityCore.WorldMap
 
-  defstruct [:id, :type, :people, :neighbourhood, :building_type]
+  defstruct [:id, :type, :people, :neighbourhood, :building_type, :scribble]
 
   @doc """
   Returns a new vicinity centred on the given block.
   """
-  def new(block_id, people) do
+  def new(block_id, people, opts \\ []) do
     %__MODULE__{
       id: block_id,
       type: WorldMap.block_type(block_id),
       people: people,
       neighbourhood: WorldMap.surrounding(block_id),
-      building_type: WorldMap.building_type(block_id)
+      building_type: WorldMap.building_type(block_id),
+      scribble: Keyword.get(opts, :scribble)
     }
   end
 

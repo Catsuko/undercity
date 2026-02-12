@@ -31,6 +31,18 @@ defmodule UndercityServer.VicinityTest do
 
       assert interior.neighbourhood == exterior.neighbourhood
     end
+
+    test "includes scribble when provided" do
+      vicinity = Vicinity.new("plaza", [], scribble: "hello world")
+
+      assert vicinity.scribble == "hello world"
+    end
+
+    test "scribble defaults to nil" do
+      vicinity = Vicinity.new("plaza", [])
+
+      assert vicinity.scribble == nil
+    end
   end
 
   describe "name/1" do

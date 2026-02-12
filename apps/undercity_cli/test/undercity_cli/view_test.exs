@@ -89,6 +89,104 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "A patch of open ground"
     end
 
+    test "renders scribble when present" do
+      vicinity = %Vicinity{
+        id: "plaza",
+        type: :square,
+        people: [],
+        neighbourhood: [
+          ["ashwell", "north_alley", "wormgarden"],
+          ["west_street", "plaza", "east_street"],
+          ["the_stray", "south_alley", "lame_horse"]
+        ],
+        building_type: nil,
+        scribble: "beware the dark"
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      assert result =~ "Someone has scribbled"
+      assert result =~ "beware the dark"
+      assert result =~ "on the ground."
+      # Italic ANSI codes
+      assert result =~ "\e[3m"
+    end
+
+    test "does not render scribble line when nil" do
+      vicinity = %Vicinity{
+        id: "plaza",
+        type: :square,
+        people: [],
+        neighbourhood: [
+          ["ashwell", "north_alley", "wormgarden"],
+          ["west_street", "plaza", "east_street"],
+          ["the_stray", "south_alley", "lame_horse"]
+        ],
+        building_type: nil,
+        scribble: nil
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      refute result =~ "scribbled"
+    end
+
+    test "scribble says 'on a tombstone' for graveyard" do
+      vicinity = %Vicinity{
+        id: "graveyard",
+        type: :graveyard,
+        people: [],
+        neighbourhood: [[nil, nil, nil], [nil, "graveyard", nil], [nil, nil, nil]],
+        building_type: nil,
+        scribble: "rest in peace"
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      assert result =~ "rest in peace"
+      assert result =~ "on a tombstone."
+    end
+
+    test "scribble says 'on the wall' for inn blocks" do
+      vicinity = %Vicinity{
+        id: "lame_horse_interior",
+        type: :inn,
+        people: [],
+        neighbourhood: [
+          ["plaza", "east_street", nil],
+          ["south_alley", "lame_horse", nil],
+          [nil, nil, nil]
+        ],
+        building_type: nil,
+        scribble: "free ale"
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      assert result =~ "free ale"
+      assert result =~ "on the wall."
+    end
+
+    test "scribble says 'on the wall' for space with building" do
+      vicinity = %Vicinity{
+        id: "lame_horse",
+        type: :space,
+        people: [],
+        neighbourhood: [
+          ["plaza", "east_street", nil],
+          ["south_alley", "lame_horse", nil],
+          [nil, nil, nil]
+        ],
+        building_type: :inn,
+        scribble: "enter here"
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      assert result =~ "enter here"
+      assert result =~ "on the wall."
+    end
+
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
       vicinity = %Vicinity{
         id: "lame_horse_interior",
