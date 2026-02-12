@@ -5,8 +5,9 @@ defmodule Mix.Tasks.Undercity.Reset do
   use Mix.Task
 
   def run(_args) do
-    data_dir = Path.join(File.cwd!(), "data/blocks")
-    File.rm_rf!(data_dir)
+    data_dir = File.cwd!()
+    File.rm_rf!(Path.join(data_dir, "data/blocks"))
+    File.rm_rf!(Path.join(data_dir, "data/players"))
     IO.puts("Undercity data cleared.")
   end
 end
