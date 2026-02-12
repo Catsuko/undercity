@@ -40,6 +40,10 @@ defmodule UndercityCli.GameLoop do
         handle_search(player, player_id, vicinity)
         loop(player, player_id, vicinity)
 
+      :inventory ->
+        handle_inventory(player, player_id, vicinity)
+        loop(player, player_id, vicinity)
+
       :quit ->
         :ok
 
@@ -48,7 +52,8 @@ defmodule UndercityCli.GameLoop do
           vicinity,
           player,
           player_id,
-          {"Unknown command. Try: look, search, north/south/east/west (or n/s/e/w), enter, exit, quit", :warning}
+          {"Unknown command. Try: look, search, inventory, north/south/east/west (or n/s/e/w), enter, exit, quit",
+           :warning}
         )
 
         loop(player, player_id, vicinity)
@@ -77,6 +82,18 @@ defmodule UndercityCli.GameLoop do
     render(vicinity, player, player_id, message)
   end
 
+  defp handle_inventory(player, player_id, vicinity) do
+    items = Gateway.get_inventory(player_id)
+
+    message =
+      case items do
+        [] -> {"Your inventory is empty.", :info}
+        items -> {"Inventory: #{Enum.map_join(items, ", ", & &1.name)}", :info}
+      end
+
+    render(vicinity, player, player_id, message)
+  end
+
   defp render(vicinity, player, _player_id, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
     IO.puts(View.describe_block(vicinity, player))
@@ -90,6 +107,8 @@ defmodule UndercityCli.GameLoop do
   def parse("look"), do: :look
   def parse("l"), do: :look
   def parse("search"), do: :search
+  def parse("inventory"), do: :inventory
+  def parse("i"), do: :inventory
   def parse("quit"), do: :quit
   def parse("q"), do: :quit
 
