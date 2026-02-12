@@ -9,11 +9,12 @@ defmodule UndercityCore.LootTable do
 
   alias UndercityCore.Item
 
-  @type entry :: {float(), String.t()}
+  @type item_spec :: String.t() | {String.t(), non_neg_integer()}
+  @type entry :: {float(), item_spec()}
   @type t :: [entry()]
 
   @tables %{
-    square: [{0.20, "Chalk"}, {0.05, "Junk"}]
+    square: [{0.20, {"Chalk", 5}}, {0.05, "Junk"}]
   }
 
   @default_table [{0.10, "Junk"}]
@@ -30,13 +31,16 @@ defmodule UndercityCore.LootTable do
 
   defp find_item([], _value, _acc), do: :nothing
 
-  defp find_item([{chance, name} | rest], value, acc) do
+  defp find_item([{chance, spec} | rest], value, acc) do
     threshold = acc + chance
 
     if value < threshold do
-      {:found, Item.new(name)}
+      {:found, build_item(spec)}
     else
       find_item(rest, value, threshold)
     end
   end
+
+  defp build_item({name, uses}), do: Item.new(name, uses)
+  defp build_item(name) when is_binary(name), do: Item.new(name)
 end
