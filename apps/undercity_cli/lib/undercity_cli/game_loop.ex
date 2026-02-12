@@ -44,6 +44,10 @@ defmodule UndercityCli.GameLoop do
         handle_inventory(player, player_id, vicinity)
         loop(player, player_id, vicinity)
 
+      {:scribble, text} ->
+        handle_scribble(player, player_id, vicinity, text)
+        loop(player, player_id, vicinity)
+
       :quit ->
         :ok
 
@@ -52,7 +56,7 @@ defmodule UndercityCli.GameLoop do
           vicinity,
           player,
           player_id,
-          {"Unknown command. Try: look, search, inventory, north/south/east/west (or n/s/e/w), enter, exit, quit",
+          {"Unknown command. Try: look, search, inventory, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
            :warning}
         )
 
@@ -94,6 +98,17 @@ defmodule UndercityCli.GameLoop do
     render(vicinity, player, player_id, message)
   end
 
+  defp handle_scribble(player, player_id, vicinity, text) do
+    message =
+      case Gateway.scribble(player_id, vicinity.id, text) do
+        :ok -> {"You scribble on the wall.", :success}
+        {:error, :no_chalk} -> {"You have no chalk.", :warning}
+        {:error, :invalid, reason} -> {reason, :warning}
+      end
+
+    render(vicinity, player, player_id, message)
+  end
+
   defp render(vicinity, player, _player_id, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
     IO.puts(View.describe_block(vicinity, player))
@@ -111,6 +126,7 @@ defmodule UndercityCli.GameLoop do
   def parse("i"), do: :inventory
   def parse("quit"), do: :quit
   def parse("q"), do: :quit
+  def parse("scribble " <> text), do: {:scribble, text}
 
   def parse(input) do
     case Map.fetch(@directions, input) do

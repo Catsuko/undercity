@@ -51,10 +51,17 @@ defmodule UndercityCli.View do
             ". ",
             description,
             IO.ANSI.reset()
-          ],
-          "",
-          describe_people(vicinity.people, current_player)
+          ]
         ]
+
+    sections =
+      sections ++
+        case vicinity.scribble do
+          nil -> []
+          text -> [["Someone has scribbled: \e[3m", text, "\e[23m"]]
+        end
+
+    sections = sections ++ ["", describe_people(vicinity.people, current_player)]
 
     Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
   end

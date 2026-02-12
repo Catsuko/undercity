@@ -33,6 +33,10 @@ defmodule UndercityCli.GameLoopTest do
       assert GameLoop.parse("exit") == {:move, :exit}
     end
 
+    test "parses scribble command with text" do
+      assert GameLoop.parse("scribble hello world") == {:scribble, "hello world"}
+    end
+
     test "returns unknown for unrecognized input" do
       assert GameLoop.parse("fly") == :unknown
       assert GameLoop.parse("dance") == :unknown

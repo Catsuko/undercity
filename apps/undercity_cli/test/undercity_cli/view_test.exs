@@ -89,6 +89,47 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "A patch of open ground"
     end
 
+    test "renders scribble when present" do
+      vicinity = %Vicinity{
+        id: "plaza",
+        type: :square,
+        people: [],
+        neighbourhood: [
+          ["ashwell", "north_alley", "wormgarden"],
+          ["west_street", "plaza", "east_street"],
+          ["the_stray", "south_alley", "lame_horse"]
+        ],
+        building_type: nil,
+        scribble: "beware the dark"
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      assert result =~ "Someone has scribbled:"
+      assert result =~ "beware the dark"
+      # Italic ANSI codes
+      assert result =~ "\e[3m"
+    end
+
+    test "does not render scribble line when nil" do
+      vicinity = %Vicinity{
+        id: "plaza",
+        type: :square,
+        people: [],
+        neighbourhood: [
+          ["ashwell", "north_alley", "wormgarden"],
+          ["west_street", "plaza", "east_street"],
+          ["the_stray", "south_alley", "lame_horse"]
+        ],
+        building_type: nil,
+        scribble: nil
+      }
+
+      result = View.describe_block(vicinity, "Grimshaw")
+
+      refute result =~ "scribbled"
+    end
+
     test "uses 'inside' prefix for inn blocks with dimmed grid" do
       vicinity = %Vicinity{
         id: "lame_horse_interior",
