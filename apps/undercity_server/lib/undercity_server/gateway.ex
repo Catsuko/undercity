@@ -7,6 +7,7 @@ defmodule UndercityServer.Gateway do
   to Block processes on the server node.
   """
 
+  alias UndercityCore.Scribble
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.PlayerIdentity
@@ -102,6 +103,29 @@ defmodule UndercityServer.Gateway do
 
       :nothing ->
         :nothing
+    end
+  end
+
+  @doc """
+  Scribbles a message on a block using chalk from the player's inventory.
+  Returns :ok, {:error, :no_chalk}, or {:error, :invalid, reason}.
+  """
+  def scribble(player_id, block_id, text) do
+    case Scribble.validate(text) do
+      {:error, reason} ->
+        {:error, :invalid, reason}
+
+      {:ok, text} ->
+        server_node = UndercityServer.server_node()
+
+        case player_call(player_id, {:use_item, "Chalk"}, server_node) do
+          :not_found ->
+            {:error, :no_chalk}
+
+          {:ok, _item} ->
+            block_call(block_id, {:scribble, text}, server_node)
+            :ok
+        end
     end
   end
 

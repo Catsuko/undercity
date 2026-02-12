@@ -90,4 +90,39 @@ defmodule UndercityServer.GatewayTest do
       assert result == :nothing or match?({:found, _item}, result)
     end
   end
+
+  describe "scribble/3" do
+    test "scribbles text on a block when player has chalk" do
+      {player_id, vicinity} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
+      Process.sleep(10)
+
+      assert :ok = Gateway.scribble(player_id, vicinity.id, "hello world")
+
+      assert "hello world" = UndercityServer.Block.get_scribble(vicinity.id)
+    end
+
+    test "returns error when player has no chalk" do
+      {player_id, vicinity} = Gateway.enter(unique_name())
+
+      assert {:error, :no_chalk} = Gateway.scribble(player_id, vicinity.id, "hello")
+    end
+
+    test "returns error for invalid scribble text" do
+      {player_id, vicinity} = Gateway.enter(unique_name())
+
+      assert {:error, :invalid, _reason} = Gateway.scribble(player_id, vicinity.id, "hello!")
+    end
+
+    test "consumes a chalk use" do
+      {player_id, _vicinity} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      Process.sleep(10)
+
+      Gateway.scribble(player_id, "plaza", "first")
+
+      items = Gateway.get_inventory(player_id)
+      assert [%UndercityCore.Item{name: "Chalk", uses: 1}] = items
+    end
+  end
 end
