@@ -194,4 +194,9 @@ defmodule UndercityCli.View do
       people -> "Present: #{Enum.map_join(people, ", ", & &1.name)}"
     end
   end
+
+  def format_message(message, category \\ :info)
+  def format_message(message, :success), do: "\e[38;5;108m▸ #{message}#{IO.ANSI.reset()}"
+  def format_message(message, :info), do: "\e[38;5;67m▸ #{message}#{IO.ANSI.reset()}"
+  def format_message(message, :warning), do: "\e[38;5;131m▸ #{message}#{IO.ANSI.reset()}"
 end

@@ -6,7 +6,6 @@ defmodule UndercityServer.Block do
   use GenServer
 
   alias UndercityCore.Block, as: CoreBlock
-  alias UndercityCore.Person
   alias UndercityServer.Store
 
   # Client API
@@ -20,16 +19,16 @@ defmodule UndercityServer.Block do
     GenServer.start_link(__MODULE__, {id, name, type, exits}, name: process_name(id))
   end
 
-  def join(block_id, %Person{} = person) do
-    GenServer.call(process_name(block_id), {:join, person})
+  def join(block_id, player_id) when is_binary(player_id) do
+    GenServer.call(process_name(block_id), {:join, player_id})
   end
 
-  def find_person(block_id, name) do
-    GenServer.call(process_name(block_id), {:find_person, name})
+  def leave(block_id, player_id) when is_binary(player_id) do
+    GenServer.call(process_name(block_id), {:leave, player_id})
   end
 
-  def leave(block_id, %Person{} = person) do
-    GenServer.call(process_name(block_id), {:leave, person})
+  def has_person?(block_id, player_id) when is_binary(player_id) do
+    GenServer.call(process_name(block_id), {:has_person, player_id})
   end
 
   def info(block_id) do
@@ -52,22 +51,22 @@ defmodule UndercityServer.Block do
   end
 
   @impl true
-  def handle_call({:join, person}, _from, block) do
-    block = CoreBlock.add_person(block, person)
+  def handle_call({:join, player_id}, _from, block) do
+    block = CoreBlock.add_person(block, player_id)
     Store.save_block(block.id, block)
     {:reply, block_info(block), block}
   end
 
   @impl true
-  def handle_call({:leave, person}, _from, block) do
-    block = CoreBlock.remove_person(block, person)
+  def handle_call({:leave, player_id}, _from, block) do
+    block = CoreBlock.remove_person(block, player_id)
     Store.save_block(block.id, block)
     {:reply, :ok, block}
   end
 
   @impl true
-  def handle_call({:find_person, name}, _from, block) do
-    {:reply, CoreBlock.find_person_by_name(block, name), block}
+  def handle_call({:has_person, player_id}, _from, block) do
+    {:reply, CoreBlock.has_person?(block, player_id), block}
   end
 
   @impl true

@@ -2,7 +2,6 @@ defmodule UndercityCore.BlockTest do
   use ExUnit.Case, async: true
 
   alias UndercityCore.Block
-  alias UndercityCore.Person
 
   describe "new/3" do
     test "creates a block with id, name, and type" do
@@ -16,65 +15,59 @@ defmodule UndercityCore.BlockTest do
   end
 
   describe "add_person/2" do
-    test "adds a person to the block" do
+    test "adds a player id to the block" do
       block = Block.new("plaza", "The Plaza", :square)
-      person = Person.new("Grimshaw")
 
-      block = Block.add_person(block, person)
+      block = Block.add_person(block, "player_abc")
 
-      assert MapSet.member?(block.people, person)
+      assert MapSet.member?(block.people, "player_abc")
     end
 
-    test "adding the same person twice does not duplicate" do
+    test "adding the same player id twice does not duplicate" do
       block = Block.new("plaza", "The Plaza", :square)
-      person = Person.new("Grimshaw")
 
       block =
         block
-        |> Block.add_person(person)
-        |> Block.add_person(person)
+        |> Block.add_person("player_abc")
+        |> Block.add_person("player_abc")
 
       assert MapSet.size(block.people) == 1
     end
   end
 
   describe "remove_person/2" do
-    test "removes a person from the block" do
+    test "removes a player id from the block" do
       block = Block.new("plaza", "The Plaza", :square)
-      person = Person.new("Grimshaw")
 
       block =
         block
-        |> Block.add_person(person)
-        |> Block.remove_person(person)
+        |> Block.add_person("player_abc")
+        |> Block.remove_person("player_abc")
 
-      refute MapSet.member?(block.people, person)
+      refute MapSet.member?(block.people, "player_abc")
     end
 
-    test "removing a person not in the block is a no-op" do
+    test "removing a player id not in the block is a no-op" do
       block = Block.new("plaza", "The Plaza", :square)
-      person = Person.new("Grimshaw")
 
-      block = Block.remove_person(block, person)
+      block = Block.remove_person(block, "player_abc")
 
       assert block.people == MapSet.new()
     end
   end
 
-  describe "find_person_by_name/2" do
-    test "returns the person when found" do
+  describe "has_person?/2" do
+    test "returns true when player id is present" do
       block = Block.new("plaza", "The Plaza", :square)
-      person = Person.new("Grimshaw")
+      block = Block.add_person(block, "player_abc")
 
-      block = Block.add_person(block, person)
-
-      assert Block.find_person_by_name(block, "Grimshaw") == person
+      assert Block.has_person?(block, "player_abc")
     end
 
-    test "returns nil when not found" do
+    test "returns false when player id is not present" do
       block = Block.new("plaza", "The Plaza", :square)
 
-      assert Block.find_person_by_name(block, "Nobody") == nil
+      refute Block.has_person?(block, "player_abc")
     end
   end
 
@@ -107,21 +100,19 @@ defmodule UndercityCore.BlockTest do
       assert Block.list_people(block) == []
     end
 
-    test "returns all people in the block" do
+    test "returns all player ids in the block" do
       block = Block.new("plaza", "The Plaza", :square)
-      person1 = Person.new("Grimshaw")
-      person2 = Person.new("Mordecai")
 
       block =
         block
-        |> Block.add_person(person1)
-        |> Block.add_person(person2)
+        |> Block.add_person("player_abc")
+        |> Block.add_person("player_xyz")
 
       people = Block.list_people(block)
 
       assert length(people) == 2
-      assert person1 in people
-      assert person2 in people
+      assert "player_abc" in people
+      assert "player_xyz" in people
     end
   end
 end

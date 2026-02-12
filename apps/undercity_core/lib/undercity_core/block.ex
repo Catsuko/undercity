@@ -3,8 +3,6 @@ defmodule UndercityCore.Block do
   A block is a location in the undercity where people can gather.
   """
 
-  alias UndercityCore.Person
-
   @enforce_keys [:id, :name, :type]
   defstruct [:id, :name, :type, people: MapSet.new(), exits: %{}]
 
@@ -14,7 +12,7 @@ defmodule UndercityCore.Block do
           id: String.t(),
           name: String.t(),
           type: block_type(),
-          people: MapSet.t(Person.t()),
+          people: MapSet.t(String.t()),
           exits: %{direction() => String.t()}
         }
 
@@ -28,22 +26,22 @@ defmodule UndercityCore.Block do
     }
   end
 
-  @spec add_person(t(), Person.t()) :: t()
-  def add_person(%__MODULE__{} = block, %Person{} = person) do
-    %{block | people: MapSet.put(block.people, person)}
+  @spec add_person(t(), String.t()) :: t()
+  def add_person(%__MODULE__{} = block, player_id) when is_binary(player_id) do
+    %{block | people: MapSet.put(block.people, player_id)}
   end
 
-  @spec remove_person(t(), Person.t()) :: t()
-  def remove_person(%__MODULE__{} = block, %Person{} = person) do
-    %{block | people: MapSet.delete(block.people, person)}
+  @spec remove_person(t(), String.t()) :: t()
+  def remove_person(%__MODULE__{} = block, player_id) when is_binary(player_id) do
+    %{block | people: MapSet.delete(block.people, player_id)}
   end
 
-  @spec find_person_by_name(t(), String.t()) :: Person.t() | nil
-  def find_person_by_name(%__MODULE__{} = block, name) when is_binary(name) do
-    Enum.find(block.people, fn person -> person.name == name end)
+  @spec has_person?(t(), String.t()) :: boolean()
+  def has_person?(%__MODULE__{} = block, player_id) when is_binary(player_id) do
+    MapSet.member?(block.people, player_id)
   end
 
-  @spec list_people(t()) :: [Person.t()]
+  @spec list_people(t()) :: [String.t()]
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)
   end

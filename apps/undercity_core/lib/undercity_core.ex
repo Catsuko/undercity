@@ -10,18 +10,23 @@ defmodule UndercityCore do
 
   ## Models
 
-  ### Person
-
-  A person is an inhabitant of the undercity. Each person has a unique id and a name.
-  Names are used to identify returning players when they reconnect.
-
-  See `UndercityCore.Person`.
-
   ### Block
 
   A block is a location in the undercity where people can gather. Each block has an id,
-  a name, a description, and a set of people currently present.
+  a name, a type, and a set of player IDs currently present.
 
   See `UndercityCore.Block`.
+
+  ### Inventory
+
+  A bounded collection of items a player can carry.
+
+  See `UndercityCore.Inventory`.
+
+  ### Item
+
+  An item that can be found and carried.
+
+  See `UndercityCore.Item`.
   """
 end

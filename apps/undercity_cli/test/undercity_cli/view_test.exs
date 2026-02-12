@@ -2,7 +2,6 @@ defmodule UndercityCli.ViewTest do
   use ExUnit.Case, async: true
 
   alias UndercityCli.View
-  alias UndercityCore.Person
   alias UndercityServer.Vicinity
 
   describe "describe_block/2" do
@@ -10,7 +9,7 @@ defmodule UndercityCli.ViewTest do
       vicinity = %Vicinity{
         id: "plaza",
         type: :square,
-        people: [Person.new("Grimshaw"), Person.new("Mordecai")],
+        people: [%{id: "1", name: "Grimshaw"}, %{id: "2", name: "Mordecai"}],
         neighbourhood: [
           ["ashwell", "north_alley", "wormgarden"],
           ["west_street", "plaza", "east_street"],
@@ -34,7 +33,7 @@ defmodule UndercityCli.ViewTest do
       vicinity = %Vicinity{
         id: "ashwell",
         type: :fountain,
-        people: [Person.new("Grimshaw")],
+        people: [%{id: "1", name: "Grimshaw"}],
         neighbourhood: [
           [nil, nil, nil],
           [nil, "ashwell", "north_alley"],
@@ -196,7 +195,7 @@ defmodule UndercityCli.ViewTest do
 
   describe "describe_people/2" do
     test "shows alone message when only the current player is present" do
-      people = [Person.new("Grimshaw")]
+      people = [%{id: "1", name: "Grimshaw"}]
 
       assert View.describe_people(people, "Grimshaw") == "You are alone here."
     end
@@ -206,19 +205,42 @@ defmodule UndercityCli.ViewTest do
     end
 
     test "lists other players, excluding the current player" do
-      people = [Person.new("Grimshaw"), Person.new("Mordecai")]
+      people = [%{id: "1", name: "Grimshaw"}, %{id: "2", name: "Mordecai"}]
 
       assert View.describe_people(people, "Grimshaw") == "Present: Mordecai"
     end
 
     test "lists multiple other players" do
-      people = [Person.new("Grimshaw"), Person.new("Mordecai"), Person.new("Vesper")]
+      people = [%{id: "1", name: "Grimshaw"}, %{id: "2", name: "Mordecai"}, %{id: "3", name: "Vesper"}]
 
       result = View.describe_people(people, "Grimshaw")
 
       assert result =~ "Mordecai"
       assert result =~ "Vesper"
       refute result =~ "Grimshaw"
+    end
+  end
+
+  describe "format_message/2" do
+    test "formats info message with icon" do
+      result = View.format_message("You find nothing.")
+
+      assert result =~ "▸ You find nothing."
+      assert result =~ "\e[38;5;67m"
+    end
+
+    test "formats success message in green" do
+      result = View.format_message("You found Junk!", :success)
+
+      assert result =~ "▸ You found Junk!"
+      assert result =~ "\e[38;5;108m"
+    end
+
+    test "formats warning message in red" do
+      result = View.format_message("You can't go that way.", :warning)
+
+      assert result =~ "▸ You can't go that way."
+      assert result =~ "\e[38;5;131m"
     end
   end
 end

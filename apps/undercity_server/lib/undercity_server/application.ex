@@ -13,7 +13,11 @@ defmodule UndercityServer.Application do
         )
       end)
 
-    children = block_children
+    children =
+      [
+        UndercityServer.PlayerStore,
+        UndercityServer.PlayerSupervisor
+      ] ++ block_children
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
     Supervisor.start_link(children, opts)
