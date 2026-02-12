@@ -19,29 +19,26 @@ defmodule UndercityCli.GameLoop do
     "exit" => :exit
   }
 
-  def run(player, vicinity) do
-    render(vicinity, player)
-    loop(player, vicinity)
+  def run(player, player_id, vicinity) do
+    render(vicinity, player, player_id)
+    loop(player, player_id, vicinity)
   end
 
-  defp loop(player, vicinity) do
+  defp loop(player, player_id, vicinity) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
     case parse(input) do
       :look ->
-        render(vicinity, player)
-        loop(player, vicinity)
+        render(vicinity, player, player_id)
+        loop(player, player_id, vicinity)
 
       {:move, direction} ->
-        case Gateway.move(player, direction, vicinity.id) do
-          {:ok, new_vicinity} ->
-            render(new_vicinity, player)
-            loop(player, new_vicinity)
+        vicinity = handle_move(player, player_id, vicinity, direction)
+        loop(player, player_id, vicinity)
 
-          {:error, :no_exit} ->
-            render(vicinity, player, "You can't go that way.")
-            loop(player, vicinity)
-        end
+      :search ->
+        handle_search(player, player_id, vicinity)
+        loop(player, player_id, vicinity)
 
       :quit ->
         :ok
@@ -50,21 +47,49 @@ defmodule UndercityCli.GameLoop do
         render(
           vicinity,
           player,
-          "Unknown command. Try: look, north/south/east/west (or n/s/e/w), enter, exit, quit"
+          player_id,
+          {"Unknown command. Try: look, search, north/south/east/west (or n/s/e/w), enter, exit, quit", :warning}
         )
 
-        loop(player, vicinity)
+        loop(player, player_id, vicinity)
     end
   end
 
-  defp render(vicinity, player, message \\ nil) do
+  defp handle_move(player, player_id, vicinity, direction) do
+    case Gateway.move(player_id, direction, vicinity.id) do
+      {:ok, new_vicinity} ->
+        render(new_vicinity, player, player_id)
+        new_vicinity
+
+      {:error, :no_exit} ->
+        render(vicinity, player, player_id, {"You can't go that way.", :warning})
+        vicinity
+    end
+  end
+
+  defp handle_search(player, player_id, vicinity) do
+    message =
+      case Gateway.search(player_id) do
+        {:found, item} -> {"You found #{item.name}!", :success}
+        :nothing -> {"You find nothing.", :warning}
+      end
+
+    render(vicinity, player, player_id, message)
+  end
+
+  defp render(vicinity, player, _player_id, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
     IO.puts(View.describe_block(vicinity, player))
-    if message, do: IO.puts(message)
+
+    case message do
+      {text, category} -> IO.puts("\n" <> View.format_message(text, category))
+      nil -> :ok
+    end
   end
 
   def parse("look"), do: :look
   def parse("l"), do: :look
+  def parse("search"), do: :search
   def parse("quit"), do: :quit
   def parse("q"), do: :quit
 

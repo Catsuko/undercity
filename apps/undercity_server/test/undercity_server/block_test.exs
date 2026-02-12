@@ -1,7 +1,6 @@
 defmodule UndercityServer.BlockTest do
   use ExUnit.Case, async: true
 
-  alias UndercityCore.Person
   alias UndercityServer.Block
   alias UndercityServer.BlockSupervisor
 
@@ -31,22 +30,22 @@ defmodule UndercityServer.BlockTest do
   end
 
   describe "join/2" do
-    test "adds a person to the block", %{id: id} do
-      person = Person.new("Grimshaw")
+    test "adds a player id to the block", %{id: id} do
+      player_id = "player_#{:rand.uniform(100_000)}"
 
-      {block_id, people} = Block.join(id, person)
+      {block_id, people} = Block.join(id, player_id)
 
       assert block_id == id
       assert length(people) == 1
-      assert hd(people).name == "Grimshaw"
+      assert player_id in people
     end
 
-    test "multiple people can join", %{id: id} do
-      person1 = Person.new("Grimshaw")
-      person2 = Person.new("Mordecai")
+    test "multiple players can join", %{id: id} do
+      player1 = "player_#{:rand.uniform(100_000)}"
+      player2 = "player_#{:rand.uniform(100_000)}"
 
-      Block.join(id, person1)
-      Block.join(id, person2)
+      Block.join(id, player1)
+      Block.join(id, player2)
 
       {_id, people} = Block.info(id)
       assert length(people) == 2
@@ -54,27 +53,40 @@ defmodule UndercityServer.BlockTest do
   end
 
   describe "leave/2" do
-    test "removes a person from the block", %{id: id} do
-      person = Person.new("Grimshaw")
-      Block.join(id, person)
+    test "removes a player id from the block", %{id: id} do
+      player_id = "player_#{:rand.uniform(100_000)}"
+      Block.join(id, player_id)
 
-      assert :ok = Block.leave(id, person)
+      assert :ok = Block.leave(id, player_id)
 
       {_id, people} = Block.info(id)
       assert people == []
     end
 
-    test "other people remain after someone leaves", %{id: id} do
-      grimshaw = Person.new("Grimshaw")
-      mordecai = Person.new("Mordecai")
-      Block.join(id, grimshaw)
-      Block.join(id, mordecai)
+    test "other players remain after someone leaves", %{id: id} do
+      player1 = "player_#{:rand.uniform(100_000)}"
+      player2 = "player_#{:rand.uniform(100_000)}"
+      Block.join(id, player1)
+      Block.join(id, player2)
 
-      Block.leave(id, grimshaw)
+      Block.leave(id, player1)
 
       {_id, people} = Block.info(id)
       assert length(people) == 1
-      assert hd(people).name == "Mordecai"
+      assert player2 in people
+    end
+  end
+
+  describe "has_person?/2" do
+    test "returns true when player is in the block", %{id: id} do
+      player_id = "player_#{:rand.uniform(100_000)}"
+      Block.join(id, player_id)
+
+      assert Block.has_person?(id, player_id)
+    end
+
+    test "returns false when player is not in the block", %{id: id} do
+      refute Block.has_person?(id, "nonexistent")
     end
   end
 end
