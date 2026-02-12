@@ -81,11 +81,11 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
-  describe "search/1" do
+  describe "search/2" do
     test "returns :nothing or {:found, item}" do
-      {player_id, _vicinity} = Gateway.enter(unique_name())
+      {player_id, vicinity} = Gateway.enter(unique_name())
 
-      result = Gateway.search(player_id)
+      result = Gateway.search(player_id, vicinity.id)
 
       assert result == :nothing or match?({:found, _item}, result)
     end

@@ -1,37 +1,34 @@
 defmodule UndercityCore.SearchTest do
   use ExUnit.Case, async: true
 
-  alias UndercityCore.Inventory
   alias UndercityCore.Item
   alias UndercityCore.Search
 
   describe "search/2" do
-    test "returns {:found, item, inventory} when roll is below threshold" do
-      inventory = Inventory.new()
+    test "returns {:found, item} when roll is below threshold" do
+      loot_table = [{0.10, "Junk"}]
 
-      assert {:found, %Item{name: "Junk"}, updated} = Search.search(inventory, 0.05)
-      assert Inventory.size(updated) == 1
+      assert {:found, %Item{name: "Junk"}} = Search.search(loot_table, 0.05)
     end
 
     test "returns :nothing when roll is above threshold" do
-      inventory = Inventory.new()
+      loot_table = [{0.10, "Junk"}]
 
-      assert :nothing = Search.search(inventory, 0.5)
+      assert :nothing = Search.search(loot_table, 0.5)
     end
 
     test "returns :nothing when roll is exactly at threshold" do
-      inventory = Inventory.new()
+      loot_table = [{0.10, "Junk"}]
 
-      assert :nothing = Search.search(inventory, 0.1)
+      assert :nothing = Search.search(loot_table, 0.1)
     end
 
-    test "returns :nothing when inventory is full even on successful roll" do
-      inventory =
-        Enum.reduce(1..5, Inventory.new(), fn _, inv ->
-          Inventory.add_item(inv, Item.new("Junk"))
-        end)
+    test "selects the correct item from a multi-entry table" do
+      loot_table = [{0.20, "Chalk"}, {0.05, "Junk"}]
 
-      assert :nothing = Search.search(inventory, 0.05)
+      assert {:found, %Item{name: "Chalk"}} = Search.search(loot_table, 0.10)
+      assert {:found, %Item{name: "Junk"}} = Search.search(loot_table, 0.22)
+      assert :nothing = Search.search(loot_table, 0.30)
     end
   end
 end

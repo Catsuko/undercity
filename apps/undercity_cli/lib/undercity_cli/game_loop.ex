@@ -74,7 +74,7 @@ defmodule UndercityCli.GameLoop do
 
   defp handle_search(player, player_id, vicinity) do
     message =
-      case Gateway.search(player_id) do
+      case Gateway.search(player_id, vicinity.id) do
         {:found, item} -> {"You found #{item.name}!", :success}
         :nothing -> {"You find nothing.", :warning}
       end

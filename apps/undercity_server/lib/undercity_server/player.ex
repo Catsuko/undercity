@@ -6,7 +6,7 @@ defmodule UndercityServer.Player do
   use GenServer
 
   alias UndercityCore.Inventory
-  alias UndercityCore.Search
+  alias UndercityCore.Item
   alias UndercityServer.PlayerIdentity
   alias UndercityServer.PlayerStore
 
@@ -18,12 +18,12 @@ defmodule UndercityServer.Player do
     GenServer.start_link(__MODULE__, {id, name}, name: PlayerIdentity.via(id))
   end
 
-  @spec search(String.t()) :: {:found, UndercityCore.Item.t()} | :nothing | :inventory_full
-  def search(player_id) do
-    GenServer.call(PlayerIdentity.via(player_id), :search)
+  @spec add_item(String.t(), Item.t()) :: :ok
+  def add_item(player_id, %Item{} = item) do
+    GenServer.cast(PlayerIdentity.via(player_id), {:add_item, item})
   end
 
-  @spec get_inventory(String.t()) :: [UndercityCore.Item.t()]
+  @spec get_inventory(String.t()) :: [Item.t()]
   def get_inventory(player_id) do
     GenServer.call(PlayerIdentity.via(player_id), :get_inventory)
   end
@@ -50,16 +50,11 @@ defmodule UndercityServer.Player do
   end
 
   @impl true
-  def handle_call(:search, _from, state) do
-    case Search.search(state.inventory) do
-      {:found, item, new_inventory} ->
-        state = %{state | inventory: new_inventory}
-        PlayerStore.save(state.id, state)
-        {:reply, {:found, item}, state}
-
-      :nothing ->
-        {:reply, :nothing, state}
-    end
+  def handle_cast({:add_item, %Item{} = item}, state) do
+    new_inventory = Inventory.add_item(state.inventory, item)
+    state = %{state | inventory: new_inventory}
+    PlayerStore.save(state.id, state)
+    {:noreply, state}
   end
 
   @impl true

@@ -77,6 +77,14 @@ defmodule UndercityServer.BlockTest do
     end
   end
 
+  describe "search/1" do
+    test "returns :nothing or {:found, item}", %{id: id} do
+      result = Block.search(id)
+
+      assert result == :nothing or match?({:found, _item}, result)
+    end
+  end
+
   describe "has_person?/2" do
     test "returns true when player is in the block", %{id: id} do
       player_id = "player_#{:rand.uniform(100_000)}"

@@ -89,12 +89,20 @@ defmodule UndercityServer.Gateway do
   end
 
   @doc """
-  Performs a search action for the given player.
+  Performs a search action for the given player in the given block.
   Returns {:found, item} or :nothing.
   """
-  def search(player_id) do
+  def search(player_id, block_id) do
     server_node = UndercityServer.server_node()
-    player_call(player_id, :search, server_node)
+
+    case block_call(block_id, :search, server_node) do
+      {:found, item} ->
+        GenServer.cast({PlayerIdentity.via(player_id), server_node}, {:add_item, item})
+        {:found, item}
+
+      :nothing ->
+        :nothing
+    end
   end
 
   @doc """

@@ -3,31 +3,18 @@ defmodule UndercityCore.Search do
   Search logic for finding items in the undercity.
   """
 
-  alias UndercityCore.Inventory
   alias UndercityCore.Item
-
-  @find_chance 0.1
+  alias UndercityCore.LootTable
 
   @doc """
-  Performs a search with a chance to find an item.
+  Performs a search against a loot table.
 
-  Returns `{:found, item, updated_inventory}` if something is found and
-  the inventory has space, or `:nothing` otherwise.
+  Returns `{:found, item}` if something is found, or `:nothing` otherwise.
 
   Accepts an optional random value (0.0..1.0) for testability.
   """
-  @spec search(Inventory.t(), float()) :: {:found, Item.t(), Inventory.t()} | :nothing
-  def search(%Inventory{} = inventory, roll \\ :rand.uniform()) do
-    if roll < @find_chance do
-      item = Item.new("Junk")
-
-      if Inventory.full?(inventory) do
-        :nothing
-      else
-        {:found, item, Inventory.add_item(inventory, item)}
-      end
-    else
-      :nothing
-    end
+  @spec search(LootTable.t(), float()) :: {:found, Item.t()} | :nothing
+  def search(loot_table, roll \\ :rand.uniform()) do
+    LootTable.roll(loot_table, roll)
   end
 end

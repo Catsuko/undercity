@@ -6,6 +6,8 @@ defmodule UndercityServer.Block do
   use GenServer
 
   alias UndercityCore.Block, as: CoreBlock
+  alias UndercityCore.LootTable
+  alias UndercityCore.Search
   alias UndercityServer.Store
 
   # Client API
@@ -33,6 +35,10 @@ defmodule UndercityServer.Block do
 
   def info(block_id) do
     GenServer.call(process_name(block_id), :info)
+  end
+
+  def search(block_id) do
+    GenServer.call(process_name(block_id), :search)
   end
 
   def process_name(id), do: :"block_#{id}"
@@ -72,6 +78,12 @@ defmodule UndercityServer.Block do
   @impl true
   def handle_call(:info, _from, block) do
     {:reply, block_info(block), block}
+  end
+
+  @impl true
+  def handle_call(:search, _from, block) do
+    loot_table = LootTable.for_block_type(block.type)
+    {:reply, Search.search(loot_table), block}
   end
 
   defp block_info(block), do: {block.id, CoreBlock.list_people(block)}
