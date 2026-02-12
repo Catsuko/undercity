@@ -85,6 +85,24 @@ defmodule UndercityServer.BlockTest do
     end
   end
 
+  describe "scribble/2" do
+    test "sets a scribble on the block", %{id: id} do
+      assert :ok = Block.scribble(id, "hello world")
+      assert "hello world" = Block.get_scribble(id)
+    end
+
+    test "overwrites an existing scribble", %{id: id} do
+      Block.scribble(id, "first")
+      Block.scribble(id, "second")
+
+      assert "second" = Block.get_scribble(id)
+    end
+
+    test "scribble defaults to nil", %{id: id} do
+      assert nil == Block.get_scribble(id)
+    end
+  end
+
   describe "has_person?/2" do
     test "returns true when player is in the block", %{id: id} do
       player_id = "player_#{:rand.uniform(100_000)}"

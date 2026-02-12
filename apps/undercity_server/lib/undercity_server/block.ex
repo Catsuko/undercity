@@ -41,6 +41,14 @@ defmodule UndercityServer.Block do
     GenServer.call(process_name(block_id), :search)
   end
 
+  def scribble(block_id, text) when is_binary(text) do
+    GenServer.call(process_name(block_id), {:scribble, text})
+  end
+
+  def get_scribble(block_id) do
+    GenServer.call(process_name(block_id), :get_scribble)
+  end
+
   def process_name(id), do: :"block_#{id}"
 
   # Server callbacks
@@ -84,6 +92,18 @@ defmodule UndercityServer.Block do
   def handle_call(:search, _from, block) do
     loot_table = LootTable.for_block_type(block.type)
     {:reply, Search.search(loot_table), block}
+  end
+
+  @impl true
+  def handle_call({:scribble, text}, _from, block) do
+    block = CoreBlock.scribble(block, text)
+    Store.save_block(block.id, block)
+    {:reply, :ok, block}
+  end
+
+  @impl true
+  def handle_call(:get_scribble, _from, block) do
+    {:reply, block.scribble, block}
   end
 
   defp block_info(block), do: {block.id, CoreBlock.list_people(block)}
