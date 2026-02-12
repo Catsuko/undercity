@@ -111,11 +111,11 @@ defmodule UndercityServer.Gateway do
   Returns :ok, {:error, :no_chalk}, or {:error, :invalid, reason}.
   """
   def scribble(player_id, block_id, text) do
-    case Scribble.validate(text) do
-      {:error, reason} ->
-        {:error, :invalid, reason}
+    case Scribble.sanitise(text) do
+      :empty ->
+        :ok
 
-      {:ok, text} ->
+      {:ok, sanitised} ->
         server_node = UndercityServer.server_node()
 
         case player_call(player_id, {:use_item, "Chalk"}, server_node) do
@@ -123,7 +123,7 @@ defmodule UndercityServer.Gateway do
             {:error, :no_chalk}
 
           {:ok, _item} ->
-            block_call(block_id, {:scribble, text}, server_node)
+            block_call(block_id, {:scribble, sanitised}, server_node)
             :ok
         end
     end

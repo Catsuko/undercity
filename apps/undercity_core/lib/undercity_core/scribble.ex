@@ -1,24 +1,26 @@
 defmodule UndercityCore.Scribble do
   @moduledoc """
-  Validation for scribble text written on blocks.
+  Sanitisation for scribble text written on blocks.
   """
 
   @max_length 80
 
-  @spec validate(String.t()) :: {:ok, String.t()} | {:error, String.t()}
-  def validate(text) when is_binary(text) do
-    cond do
-      String.length(text) == 0 ->
-        {:error, "scribble cannot be empty"}
+  @doc """
+  Sanitises scribble text by stripping invalid characters and truncating.
+  Returns `{:ok, text}` or `:empty` if nothing remains.
+  """
+  @spec sanitise(String.t()) :: {:ok, String.t()} | :empty
+  def sanitise(text) when is_binary(text) do
+    sanitised =
+      text
+      |> String.replace(~r/[^a-zA-Z0-9 ]/, "")
+      |> String.trim()
+      |> String.slice(0, @max_length)
 
-      String.length(text) > @max_length ->
-        {:error, "scribble must be #{@max_length} characters or fewer"}
-
-      not Regex.match?(~r/^[a-zA-Z0-9 ]+$/, text) ->
-        {:error, "scribble can only contain letters, numbers, and spaces"}
-
-      true ->
-        {:ok, text}
+    if sanitised == "" do
+      :empty
+    else
+      {:ok, sanitised}
     end
   end
 end

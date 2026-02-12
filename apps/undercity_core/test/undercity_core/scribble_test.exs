@@ -3,37 +3,39 @@ defmodule UndercityCore.ScribbleTest do
 
   alias UndercityCore.Scribble
 
-  describe "validate/1" do
-    test "accepts valid alphanumeric text with spaces" do
-      assert {:ok, "hello world"} = Scribble.validate("hello world")
+  describe "sanitise/1" do
+    test "passes through valid alphanumeric text with spaces" do
+      assert {:ok, "hello world"} = Scribble.sanitise("hello world")
     end
 
-    test "accepts single character" do
-      assert {:ok, "x"} = Scribble.validate("x")
+    test "strips invalid characters" do
+      assert {:ok, "hello world"} = Scribble.sanitise("hello! @world#")
     end
 
-    test "accepts text at the 80 character limit" do
-      text = String.duplicate("a", 80)
-      assert {:ok, ^text} = Scribble.validate(text)
+    test "returns :empty for text with only invalid characters" do
+      assert :empty = Scribble.sanitise("@#$!")
     end
 
-    test "rejects text over 80 characters" do
-      text = String.duplicate("a", 81)
-      assert {:error, "scribble must be 80 characters or fewer"} = Scribble.validate(text)
+    test "returns :empty for empty string" do
+      assert :empty = Scribble.sanitise("")
     end
 
-    test "rejects empty text" do
-      assert {:error, "scribble cannot be empty"} = Scribble.validate("")
+    test "returns :empty for whitespace only" do
+      assert :empty = Scribble.sanitise("   ")
     end
 
-    test "rejects special characters" do
-      assert {:error, _} = Scribble.validate("hello!")
-      assert {:error, _} = Scribble.validate("@#$")
-      assert {:error, _} = Scribble.validate("hello\nworld")
+    test "trims leading and trailing whitespace" do
+      assert {:ok, "hello"} = Scribble.sanitise("  hello  ")
+    end
+
+    test "truncates to 80 characters" do
+      long = String.duplicate("a", 100)
+      assert {:ok, truncated} = Scribble.sanitise(long)
+      assert String.length(truncated) == 80
     end
 
     test "accepts numbers" do
-      assert {:ok, "room 42"} = Scribble.validate("room 42")
+      assert {:ok, "room 42"} = Scribble.sanitise("room 42")
     end
   end
 end

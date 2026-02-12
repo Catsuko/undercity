@@ -103,7 +103,6 @@ defmodule UndercityCli.GameLoop do
       case Gateway.scribble(player_id, vicinity.id, text) do
         :ok -> {"You scribble #{View.scribble_surface(vicinity)}.", :success}
         {:error, :no_chalk} -> {"You have no chalk.", :warning}
-        {:error, :invalid, reason} -> {reason, :warning}
       end
 
     render(vicinity, player, player_id, message)

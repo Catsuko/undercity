@@ -108,10 +108,25 @@ defmodule UndercityServer.GatewayTest do
       assert {:error, :no_chalk} = Gateway.scribble(player_id, vicinity.id, "hello")
     end
 
-    test "returns error for invalid scribble text" do
+    test "strips invalid characters from scribble text" do
       {player_id, vicinity} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
+      Process.sleep(10)
 
-      assert {:error, :invalid, _reason} = Gateway.scribble(player_id, vicinity.id, "hello!")
+      assert :ok = Gateway.scribble(player_id, vicinity.id, "hello!")
+
+      assert "hello" = UndercityServer.Block.get_scribble(vicinity.id)
+    end
+
+    test "noops for empty scribble without consuming chalk" do
+      {player_id, vicinity} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      Process.sleep(10)
+
+      assert :ok = Gateway.scribble(player_id, vicinity.id, "!!!")
+
+      items = Gateway.get_inventory(player_id)
+      assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items
     end
 
     test "consumes a chalk use" do
