@@ -10,7 +10,6 @@ defmodule UndercityServer.Session do
 
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
-  alias UndercityServer.Player.Identity
   alias UndercityServer.Player.Store, as: PlayerStore
   alias UndercityServer.Player.Supervisor, as: PlayerSupervisor
   alias UndercityServer.Vicinity
@@ -57,7 +56,7 @@ defmodule UndercityServer.Session do
         {player_id, Vicinity.build(block_id)}
 
       :error ->
-        player_id = Identity.generate_id()
+        player_id = generate_player_id()
         PlayerSupervisor.start_player(player_id, name)
 
         player_data = %{id: player_id, name: name, inventory: UndercityCore.Inventory.new()}
@@ -75,6 +74,10 @@ defmodule UndercityServer.Session do
         block.id
       end
     end)
+  end
+
+  defp generate_player_id do
+    8 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)
   end
 
   defp ensure_player_process(player_id, name) do

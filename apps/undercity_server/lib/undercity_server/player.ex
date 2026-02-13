@@ -5,13 +5,16 @@ defmodule UndercityServer.Player do
   Each connected player runs as a dynamically supervised process. Currently
   manages inventory (add, use, list items). Player processes are started on
   demand by `Player.Supervisor` and persist state through `Player.Store`.
+
+  Owns its own process naming — player IDs are mapped to registered atom
+  names internally. ID generation lives in `Session` where new players are
+  created.
   """
 
   use GenServer
 
   alias UndercityCore.Inventory
   alias UndercityCore.Item
-  alias UndercityServer.Player.Identity
   alias UndercityServer.Player.Store, as: PlayerStore
 
   # Client API
@@ -19,7 +22,7 @@ defmodule UndercityServer.Player do
   def start_link(opts) do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, {id, name}, name: Identity.via(id))
+    GenServer.start_link(__MODULE__, {id, name}, name: process_name(id))
   end
 
   @spec add_item(String.t(), Item.t()) :: :ok
@@ -42,7 +45,9 @@ defmodule UndercityServer.Player do
     GenServer.call(via(player_id), {:use_item, item_name})
   end
 
-  defp via(player_id), do: {Identity.via(player_id), UndercityServer.server_node()}
+  defp process_name(player_id), do: :"player_#{player_id}"
+
+  defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
 
   # Server callbacks
 
