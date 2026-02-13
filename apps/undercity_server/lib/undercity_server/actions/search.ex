@@ -11,16 +11,18 @@ defmodule UndercityServer.Actions.Search do
 
   @doc """
   Performs a search action for the given player in the given block.
-  Returns {:found, item} or :nothing.
+  Returns `{:ok, result, ap}` or `{:error, :exhausted}`.
   """
   def search(player_id, block_id) do
-    case Block.search(block_id) do
-      {:found, item} ->
-        Player.add_item(player_id, item)
-        {:found, item}
+    Player.perform(player_id, fn ->
+      case Block.search(block_id) do
+        {:found, item} ->
+          Player.add_item(player_id, item)
+          {:found, item}
 
-      :nothing ->
-        :nothing
-    end
+        :nothing ->
+          :nothing
+      end
+    end)
   end
 end

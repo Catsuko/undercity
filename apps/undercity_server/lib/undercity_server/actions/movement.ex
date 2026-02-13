@@ -9,22 +9,25 @@ defmodule UndercityServer.Actions.Movement do
 
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
+  alias UndercityServer.Player
   alias UndercityServer.Vicinity
 
   @doc """
   Moves a player in a given direction from their current block.
-  Returns {:ok, vicinity} on success or {:error, reason} on failure.
+  Returns `{:ok, result, ap}` or `{:error, :exhausted}`.
   """
   def move(player_id, direction, from_block_id) do
-    with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
-         true <- Block.has_person?(from_block_id, player_id) do
-      :ok = Block.leave(from_block_id, player_id)
-      Block.join(destination_id, player_id)
-      {:ok, Vicinity.build(destination_id)}
-    else
-      false -> {:error, :not_found}
-      {:error, _} = error -> error
-    end
+    Player.perform(player_id, fn ->
+      with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
+           true <- Block.has_person?(from_block_id, player_id) do
+        :ok = Block.leave(from_block_id, player_id)
+        Block.join(destination_id, player_id)
+        {:ok, Vicinity.build(destination_id)}
+      else
+        false -> {:error, :not_found}
+        {:error, _} = error -> error
+      end
+    end)
   end
 
   defp resolve_exit(block_id, direction) do
