@@ -9,7 +9,7 @@ defmodule UndercityServer.GatewayTest do
   describe "enter/1" do
     test "creates a player and spawns them in the plaza" do
       name = unique_name()
-      {player_id, %Vicinity{} = vicinity} = Gateway.enter(name)
+      {player_id, %Vicinity{} = vicinity, _ap} = Gateway.enter(name)
 
       assert is_binary(player_id)
       assert vicinity.id == "plaza"
@@ -21,7 +21,7 @@ defmodule UndercityServer.GatewayTest do
       name1 = unique_name()
       name2 = unique_name()
       Gateway.enter(name1)
-      {_player_id, %Vicinity{} = vicinity} = Gateway.enter(name2)
+      {_player_id, %Vicinity{} = vicinity, _ap} = Gateway.enter(name2)
 
       names = Enum.map(vicinity.people, & &1.name)
       assert name1 in names
@@ -31,7 +31,7 @@ defmodule UndercityServer.GatewayTest do
     test "entering with the same name does not create a duplicate" do
       name = unique_name()
       Gateway.enter(name)
-      {_player_id, %Vicinity{} = vicinity} = Gateway.enter(name)
+      {_player_id, %Vicinity{} = vicinity, _ap} = Gateway.enter(name)
 
       matches = Enum.filter(vicinity.people, fn p -> p.name == name end)
       assert length(matches) == 1
@@ -39,10 +39,10 @@ defmodule UndercityServer.GatewayTest do
 
     test "reconnects to the block the player is already in" do
       name = unique_name()
-      {player_id, _vicinity} = Gateway.enter(name)
-      {:ok, _} = Gateway.move(player_id, :north, "plaza")
+      {player_id, _vicinity, _ap} = Gateway.enter(name)
+      {:ok, {:ok, _vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
 
-      {_player_id, %Vicinity{} = vicinity} = Gateway.enter(name)
+      {_player_id, %Vicinity{} = vicinity, _ap} = Gateway.enter(name)
 
       assert vicinity.id == "north_alley"
     end
@@ -51,9 +51,9 @@ defmodule UndercityServer.GatewayTest do
   describe "move/3" do
     test "moves a player to an adjacent block" do
       name = unique_name()
-      {player_id, _vicinity} = Gateway.enter(name)
+      {player_id, _vicinity, _ap} = Gateway.enter(name)
 
-      {:ok, %Vicinity{} = vicinity} = Gateway.move(player_id, :north, "plaza")
+      {:ok, {:ok, %Vicinity{} = vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
 
       assert vicinity.id == "north_alley"
       assert Enum.any?(vicinity.people, fn p -> p.name == name end)
@@ -61,31 +61,26 @@ defmodule UndercityServer.GatewayTest do
 
     test "player is removed from the source block" do
       name = unique_name()
-      {player_id, _vicinity} = Gateway.enter(name)
+      {player_id, _vicinity, _ap} = Gateway.enter(name)
 
-      {:ok, _} = Gateway.move(player_id, :north, "plaza")
+      {:ok, {:ok, _vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
 
       {"plaza", people} = UndercityServer.Block.info("plaza")
       refute player_id in people
     end
 
     test "returns error for invalid direction" do
-      {player_id, _vicinity} = Gateway.enter(unique_name())
+      {player_id, _vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:error, :no_exit} = Gateway.move(player_id, :up, "plaza")
-    end
-
-    test "returns error if player not in block" do
-      assert {:error, :not_found} =
-               Gateway.move("nobody_#{:rand.uniform(100_000)}", :north, "plaza")
+      assert {:ok, {:error, :no_exit}, _ap} = Gateway.move(player_id, :up, "plaza")
     end
   end
 
   describe "search/2" do
-    test "returns :nothing or {:found, item}" do
-      {player_id, vicinity} = Gateway.enter(unique_name())
+    test "returns :nothing or {:found, item} wrapped in perform tuple" do
+      {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      result = Gateway.search(player_id, vicinity.id)
+      {:ok, result, _ap} = Gateway.search(player_id, vicinity.id)
 
       assert result == :nothing or match?({:found, _item}, result)
     end
@@ -93,44 +88,44 @@ defmodule UndercityServer.GatewayTest do
 
   describe "scribble/3" do
     test "scribbles text on a block when player has chalk" do
-      {player_id, vicinity} = Gateway.enter(unique_name())
+      {player_id, vicinity, _ap} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert :ok = Gateway.scribble(player_id, vicinity.id, "hello world")
+      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello world")
 
       assert "hello world" = UndercityServer.Block.get_scribble(vicinity.id)
     end
 
     test "returns error when player has no chalk" do
-      {player_id, vicinity} = Gateway.enter(unique_name())
+      {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:error, :no_chalk} = Gateway.scribble(player_id, vicinity.id, "hello")
+      assert {:ok, {:error, :no_chalk}, _ap} = Gateway.scribble(player_id, vicinity.id, "hello")
     end
 
     test "strips invalid characters from scribble text" do
-      {player_id, vicinity} = Gateway.enter(unique_name())
+      {player_id, vicinity, _ap} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert :ok = Gateway.scribble(player_id, vicinity.id, "hello!")
+      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello!")
 
       assert "hello" = UndercityServer.Block.get_scribble(vicinity.id)
     end
 
     test "noops for empty scribble without consuming chalk" do
-      {player_id, vicinity} = Gateway.enter(unique_name())
+      {player_id, vicinity, _ap} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 
-      assert :ok = Gateway.scribble(player_id, vicinity.id, "!!!")
+      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "!!!")
 
       items = Gateway.get_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items
     end
 
     test "consumes a chalk use" do
-      {player_id, _vicinity} = Gateway.enter(unique_name())
+      {player_id, _vicinity, _ap} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 

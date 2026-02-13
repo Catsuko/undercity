@@ -2,9 +2,10 @@ defmodule UndercityServer.Player do
   @moduledoc """
   GenServer managing a single player's runtime state.
 
-  Each connected player runs as a dynamically supervised process. Currently
-  manages inventory (add, use, list items). Player processes are started on
-  demand by `Player.Supervisor` and persist state through `Player.Store`.
+  Each connected player runs as a dynamically supervised process. Manages
+  inventory (add, use, list items) and action points (AP). Player processes
+  are started on demand by `Player.Supervisor` and persist state through
+  `Player.Store`.
 
   Owns its own process naming — player IDs are mapped to registered atom
   names internally. ID generation lives in `Session` where new players are
@@ -13,6 +14,7 @@ defmodule UndercityServer.Player do
 
   use GenServer
 
+  alias UndercityCore.ActionPoints
   alias UndercityCore.Inventory
   alias UndercityCore.Item
   alias UndercityServer.Player.Store, as: PlayerStore
@@ -45,6 +47,19 @@ defmodule UndercityServer.Player do
     GenServer.call(via(player_id), {:use_item, item_name})
   end
 
+  @spec perform(String.t(), pos_integer(), (-> any())) :: {:ok, any(), non_neg_integer()} | {:error, :exhausted}
+  def perform(player_id, cost \\ 1, action_fn) do
+    case GenServer.call(via(player_id), {:spend_ap, cost}) do
+      {:ok, ap} -> {:ok, action_fn.(), ap}
+      {:error, :exhausted} -> {:error, :exhausted}
+    end
+  end
+
+  @spec get_ap(String.t()) :: non_neg_integer()
+  def get_ap(player_id) do
+    GenServer.call(via(player_id), :get_ap)
+  end
+
   defp process_name(player_id), do: :"player_#{player_id}"
 
   defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
@@ -59,7 +74,7 @@ defmodule UndercityServer.Player do
           data
 
         :error ->
-          %{id: id, name: name, inventory: Inventory.new()}
+          %{id: id, name: name, inventory: Inventory.new(), action_points: ActionPoints.new()}
       end
 
     {:ok, state}
@@ -104,5 +119,27 @@ defmodule UndercityServer.Player do
       :not_found ->
         {:reply, :not_found, state}
     end
+  end
+
+  @impl true
+  def handle_call({:spend_ap, cost}, _from, state) do
+    action_points = ActionPoints.regenerate(state.action_points)
+
+    case ActionPoints.spend(action_points, cost) do
+      {:ok, action_points} ->
+        state = %{state | action_points: action_points}
+        PlayerStore.save(state.id, state)
+        {:reply, {:ok, ActionPoints.current(action_points)}, state}
+
+      {:error, :exhausted} ->
+        {:reply, {:error, :exhausted}, state}
+    end
+  end
+
+  @impl true
+  def handle_call(:get_ap, _from, state) do
+    action_points = ActionPoints.regenerate(state.action_points)
+    state = %{state | action_points: action_points}
+    {:reply, ActionPoints.current(action_points), state}
   end
 end
