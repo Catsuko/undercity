@@ -1,6 +1,9 @@
 defmodule UndercityServer.Actions.Search do
   @moduledoc """
   Handles searching blocks for items.
+
+  Delegates the loot roll to the Block process, then adds any found item
+  to the player's inventory.
   """
 
   alias UndercityServer.Block

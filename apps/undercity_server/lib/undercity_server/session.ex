@@ -1,7 +1,11 @@
 defmodule UndercityServer.Session do
   @moduledoc """
-  Manages player sessions: connecting to the server, entering the world,
+  Manages player sessions: connecting to the server node, entering the world,
   and reconnecting existing players.
+
+  Handles the connection lifecycle including retry logic with exponential
+  backoff. New players are created and spawned at the default block; returning
+  players are reconnected to whichever block they were last in.
   """
 
   alias UndercityCore.WorldMap

@@ -1,6 +1,10 @@
 defmodule UndercityServer.Actions.Scribble do
   @moduledoc """
   Handles scribbling messages on blocks.
+
+  Sanitises the input text, consumes a use of chalk from the player's
+  inventory, and writes the message to the block. Empty input after
+  sanitisation is a no-op that does not consume chalk.
   """
 
   alias UndercityCore.Scribble

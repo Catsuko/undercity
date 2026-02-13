@@ -1,7 +1,11 @@
 defmodule UndercityServer.Player.Store do
   @moduledoc """
   Shared DETS-backed persistence for player state.
-  Single table stores all player records keyed by player ID.
+
+  A single DETS table (`data/players/players.dets`) stores all player records
+  keyed by player ID. Also provides lookup operations for identity resolution
+  (find by name, get display names). Used by both the Player GenServer for
+  persistence and by Session/Vicinity for player lookups.
   """
 
   use GenServer

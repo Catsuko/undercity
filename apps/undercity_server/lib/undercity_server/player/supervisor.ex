@@ -1,6 +1,10 @@
 defmodule UndercityServer.Player.Supervisor do
   @moduledoc """
   DynamicSupervisor for player processes.
+
+  Player processes are started on demand when a player connects or
+  reconnects. Unlike blocks (which are statically supervised at boot),
+  players come and go dynamically.
   """
 
   use DynamicSupervisor

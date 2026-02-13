@@ -1,7 +1,10 @@
 defmodule UndercityServer.Block.Supervisor do
   @moduledoc """
   Supervises a block's Store and GenServer as a unit.
-  If either crashes, both are restarted together.
+
+  Uses `:rest_for_one` strategy so that if the Store crashes, the Block
+  process is also restarted (ensuring it re-reads persisted state). One
+  instance per block in the world map, started statically at application boot.
   """
 
   use Elixir.Supervisor

@@ -1,6 +1,10 @@
 defmodule UndercityServer.Actions.Movement do
   @moduledoc """
   Handles player movement between blocks.
+
+  Orchestrates the multi-step process of leaving one block and joining
+  another, including exit resolution and presence validation. This logic
+  lives here rather than in Block because movement spans two blocks.
   """
 
   alias UndercityCore.WorldMap

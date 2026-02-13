@@ -1,6 +1,10 @@
 defmodule UndercityServer.Player do
   @moduledoc """
-  GenServer managing a single player's mutable state (inventory, etc.).
+  GenServer managing a single player's runtime state.
+
+  Each connected player runs as a dynamically supervised process. Currently
+  manages inventory (add, use, list items). Player processes are started on
+  demand by `Player.Supervisor` and persist state through `Player.Store`.
   """
 
   use GenServer

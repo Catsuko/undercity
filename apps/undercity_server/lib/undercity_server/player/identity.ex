@@ -1,6 +1,9 @@
 defmodule UndercityServer.Player.Identity do
   @moduledoc """
-  Owns player identity concerns: ID generation, process lookup, and name resolution.
+  Owns player identity concerns: ID generation and process naming.
+
+  Generates unique hex IDs for new players and maps player IDs to
+  process names for GenServer registration and lookup.
   """
 
   @doc """

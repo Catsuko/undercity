@@ -5,6 +5,10 @@ defmodule UndercityServer.Vicinity do
   Represents what the player perceives from where they stand — the
   block they occupy and the blocks around it. Moves with the player
   as they travel through the world.
+
+  Use `build/1` to construct a vicinity from live server state (fetches
+  block info, player names, and scribble). Use `new/3` directly when
+  assembling from known data (e.g. in tests).
   """
 
   alias UndercityCore.WorldMap

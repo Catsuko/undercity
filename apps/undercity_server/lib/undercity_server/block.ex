@@ -1,6 +1,11 @@
 defmodule UndercityServer.Block do
   @moduledoc """
-  A GenServer that manages a Block in the undercity.
+  GenServer managing a single block's runtime state.
+
+  Each block in the world map runs as a named process. The client API
+  provides operations for joining, leaving, searching, and scribbling.
+  Persistence is handled by `Block.Store`; pure domain logic lives in
+  `UndercityCore.Block`.
   """
 
   use GenServer

@@ -1,10 +1,13 @@
 defmodule UndercityServer.Gateway do
   @moduledoc """
-  Client SDK for the undercity game server.
+  Public API for interacting with the game server.
 
-  Gateway is the public API for interacting with the game world. It acts as
-  a thin facade, delegating to Session for player lifecycle and to Action
-  modules for gameplay operations.
+  Gateway is a thin facade that delegates to domain modules. It serves as a
+  table of contents for what clients can do — each function is a one-line
+  delegation to a Session or Actions module.
+
+  To add a new client operation: implement it in the appropriate Actions
+  module (or create a new one under Actions), then add a `defdelegate` here.
   """
 
   defdelegate connect(player_name), to: UndercityServer.Session
