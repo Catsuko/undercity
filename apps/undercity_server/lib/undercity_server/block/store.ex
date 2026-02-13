@@ -1,7 +1,10 @@
-defmodule UndercityServer.Store do
+defmodule UndercityServer.Block.Store do
   @moduledoc """
   Per-block disk-backed persistence using DETS.
-  Each block gets its own DETS file under data/blocks/.
+
+  Each block gets its own DETS file under `data/blocks/`. Supervised
+  alongside its Block GenServer by `Block.Supervisor` with a `:rest_for_one`
+  strategy — if the store crashes, the block process restarts too.
   """
 
   use GenServer

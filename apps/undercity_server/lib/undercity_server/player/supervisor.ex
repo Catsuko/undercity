@@ -1,6 +1,10 @@
-defmodule UndercityServer.PlayerSupervisor do
+defmodule UndercityServer.Player.Supervisor do
   @moduledoc """
   DynamicSupervisor for player processes.
+
+  Player processes are started on demand when a player connects or
+  reconnects. Unlike blocks (which are statically supervised at boot),
+  players come and go dynamically.
   """
 
   use DynamicSupervisor
@@ -18,6 +22,9 @@ defmodule UndercityServer.PlayerSupervisor do
   Starts a new Player process under this supervisor.
   """
   def start_player(id, name) do
-    DynamicSupervisor.start_child(__MODULE__, {UndercityServer.Player, id: id, name: name})
+    DynamicSupervisor.start_child(
+      {__MODULE__, UndercityServer.server_node()},
+      {UndercityServer.Player, id: id, name: name}
+    )
   end
 end

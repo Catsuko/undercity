@@ -1,7 +1,11 @@
-defmodule UndercityServer.PlayerStore do
+defmodule UndercityServer.Player.Store do
   @moduledoc """
   Shared DETS-backed persistence for player state.
-  Single table stores all player records keyed by player ID.
+
+  A single DETS table (`data/players/players.dets`) stores all player records
+  keyed by player ID. Also provides lookup operations for identity resolution
+  (find by name, get display names). Used by both the Player GenServer for
+  persistence and by Session/Vicinity for player lookups.
   """
 
   use GenServer
@@ -14,23 +18,25 @@ defmodule UndercityServer.PlayerStore do
 
   @spec save(String.t(), map()) :: :ok
   def save(player_id, player_data) do
-    GenServer.call(__MODULE__, {:save, player_id, player_data})
+    GenServer.call(via(), {:save, player_id, player_data})
   end
 
   @spec load(String.t()) :: {:ok, map()} | :error
   def load(player_id) do
-    GenServer.call(__MODULE__, {:load, player_id})
+    GenServer.call(via(), {:load, player_id})
   end
 
   @spec get_names([String.t()]) :: %{String.t() => String.t()}
   def get_names(player_ids) do
-    GenServer.call(__MODULE__, {:get_names, player_ids})
+    GenServer.call(via(), {:get_names, player_ids})
   end
 
   @spec find_id_by_name(String.t()) :: {:ok, String.t()} | :error
   def find_id_by_name(name) do
-    GenServer.call(__MODULE__, {:find_id_by_name, name})
+    GenServer.call(via(), {:find_id_by_name, name})
   end
+
+  defp via, do: {__MODULE__, UndercityServer.server_node()}
 
   # Server callbacks
 

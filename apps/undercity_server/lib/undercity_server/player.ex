@@ -1,42 +1,53 @@
 defmodule UndercityServer.Player do
   @moduledoc """
-  GenServer managing a single player's mutable state (inventory, etc.).
+  GenServer managing a single player's runtime state.
+
+  Each connected player runs as a dynamically supervised process. Currently
+  manages inventory (add, use, list items). Player processes are started on
+  demand by `Player.Supervisor` and persist state through `Player.Store`.
+
+  Owns its own process naming — player IDs are mapped to registered atom
+  names internally. ID generation lives in `Session` where new players are
+  created.
   """
 
   use GenServer
 
   alias UndercityCore.Inventory
   alias UndercityCore.Item
-  alias UndercityServer.PlayerIdentity
-  alias UndercityServer.PlayerStore
+  alias UndercityServer.Player.Store, as: PlayerStore
 
   # Client API
 
   def start_link(opts) do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, {id, name}, name: PlayerIdentity.via(id))
+    GenServer.start_link(__MODULE__, {id, name}, name: process_name(id))
   end
 
   @spec add_item(String.t(), Item.t()) :: :ok
   def add_item(player_id, %Item{} = item) do
-    GenServer.cast(PlayerIdentity.via(player_id), {:add_item, item})
+    GenServer.cast(via(player_id), {:add_item, item})
   end
 
   @spec get_inventory(String.t()) :: [Item.t()]
   def get_inventory(player_id) do
-    GenServer.call(PlayerIdentity.via(player_id), :get_inventory)
+    GenServer.call(via(player_id), :get_inventory)
   end
 
   @spec get_name(String.t()) :: String.t()
   def get_name(player_id) do
-    GenServer.call(PlayerIdentity.via(player_id), :get_name)
+    GenServer.call(via(player_id), :get_name)
   end
 
   @spec use_item(String.t(), String.t()) :: {:ok, Item.t()} | :not_found
   def use_item(player_id, item_name) do
-    GenServer.call(PlayerIdentity.via(player_id), {:use_item, item_name})
+    GenServer.call(via(player_id), {:use_item, item_name})
   end
+
+  defp process_name(player_id), do: :"player_#{player_id}"
+
+  defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
 
   # Server callbacks
 

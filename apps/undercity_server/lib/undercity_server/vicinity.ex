@@ -5,11 +5,34 @@ defmodule UndercityServer.Vicinity do
   Represents what the player perceives from where they stand — the
   block they occupy and the blocks around it. Moves with the player
   as they travel through the world.
+
+  Use `build/1` to construct a vicinity from live server state (fetches
+  block info, player names, and scribble). Use `new/3` directly when
+  assembling from known data (e.g. in tests).
   """
 
   alias UndercityCore.WorldMap
+  alias UndercityServer.Block
+  alias UndercityServer.Player.Store, as: PlayerStore
 
   defstruct [:id, :type, :people, :neighbourhood, :building_type, :scribble]
+
+  @doc """
+  Builds a vicinity by fetching block info, player names, and scribble
+  from the running server processes.
+  """
+  def build(block_id) do
+    {^block_id, player_ids} = Block.info(block_id)
+    names = PlayerStore.get_names(player_ids)
+    scribble = Block.get_scribble(block_id)
+
+    people =
+      Enum.map(player_ids, fn id ->
+        %{id: id, name: Map.get(names, id, "Unknown")}
+      end)
+
+    new(block_id, people, scribble: scribble)
+  end
 
   @doc """
   Returns a new vicinity centred on the given block.

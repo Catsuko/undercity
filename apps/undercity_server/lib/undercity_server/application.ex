@@ -8,15 +8,15 @@ defmodule UndercityServer.Application do
     block_children =
       Enum.map(UndercityCore.WorldMap.blocks(), fn block ->
         Supervisor.child_spec(
-          {UndercityServer.BlockSupervisor, block},
+          {UndercityServer.Block.Supervisor, block},
           id: {:block, block.id}
         )
       end)
 
     children =
       [
-        UndercityServer.PlayerStore,
-        UndercityServer.PlayerSupervisor
+        UndercityServer.Player.Store,
+        UndercityServer.Player.Supervisor
       ] ++ block_children
 
     opts = [strategy: :one_for_one, name: UndercityServer.Supervisor]
