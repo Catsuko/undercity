@@ -23,6 +23,7 @@ defmodule UndercityCli.GameLoop do
 
   def run(player, player_id, vicinity, ap) do
     render(vicinity, player, player_id)
+    show_status(ap)
     loop(player, player_id, vicinity, ap)
   end
 
@@ -69,11 +70,12 @@ defmodule UndercityCli.GameLoop do
   defp handle_move(player, player_id, vicinity, ap, direction) do
     case Gateway.move(player_id, direction, vicinity.id) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
-        render(new_vicinity, player, player_id)
+        render(new_vicinity, player, player_id, View.threshold_message(ap, new_ap))
         {new_vicinity, new_ap}
 
       {:ok, {:error, :no_exit}, new_ap} ->
         render(vicinity, player, player_id, {"You can't go that way.", :warning})
+        show_threshold(ap, new_ap)
         {vicinity, new_ap}
 
       {:error, :exhausted} ->
@@ -86,10 +88,12 @@ defmodule UndercityCli.GameLoop do
     case Gateway.search(player_id, vicinity.id) do
       {:ok, {:found, item}, new_ap} ->
         render(vicinity, player, player_id, {"You found #{item.name}!", :success})
+        show_threshold(ap, new_ap)
         new_ap
 
       {:ok, :nothing, new_ap} ->
         render(vicinity, player, player_id, {"You find nothing.", :warning})
+        show_threshold(ap, new_ap)
         new_ap
 
       {:error, :exhausted} ->
@@ -114,15 +118,29 @@ defmodule UndercityCli.GameLoop do
     case Gateway.scribble(player_id, vicinity.id, text) do
       {:ok, :ok, new_ap} ->
         render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
+        show_threshold(ap, new_ap)
         new_ap
 
       {:ok, {:error, :no_chalk}, new_ap} ->
         render(vicinity, player, player_id, {"You have no chalk.", :warning})
+        show_threshold(ap, new_ap)
         new_ap
 
       {:error, :exhausted} ->
         render(vicinity, player, player_id, @exhausted_message)
         ap
+    end
+  end
+
+  defp show_status(ap) do
+    {text, category} = View.status_message(ap)
+    IO.puts("\n" <> View.format_message(text, category))
+  end
+
+  defp show_threshold(old_ap, new_ap) do
+    case View.threshold_message(old_ap, new_ap) do
+      {text, category} -> IO.puts(View.format_message(text, category))
+      nil -> :ok
     end
   end
 

@@ -223,4 +223,34 @@ defmodule UndercityCli.View do
   def format_message(message, :success), do: "\e[38;5;108m▸ #{message}#{IO.ANSI.reset()}"
   def format_message(message, :info), do: "\e[38;5;67m▸ #{message}#{IO.ANSI.reset()}"
   def format_message(message, :warning), do: "\e[38;5;131m▸ #{message}#{IO.ANSI.reset()}"
+
+  @doc """
+  Returns the awareness tier for a given AP value.
+  """
+  def awareness_tier(0), do: :spent
+  def awareness_tier(ap) when ap >= 40, do: :rested
+  def awareness_tier(ap) when ap >= 16, do: :weary
+  def awareness_tier(_ap), do: :exhausted
+
+  @doc """
+  Returns a status message for the current AP tier.
+  """
+  def status_message(ap), do: tier_message(awareness_tier(ap))
+
+  @doc """
+  Returns a threshold crossing message if AP dropped into a new tier, or nil.
+  """
+  def threshold_message(old_ap, new_ap) do
+    old_tier = awareness_tier(old_ap)
+    new_tier = awareness_tier(new_ap)
+
+    if old_tier != new_tier do
+      tier_message(new_tier)
+    end
+  end
+
+  defp tier_message(:rested), do: {"You feel rested.", :success}
+  defp tier_message(:weary), do: {"You feel weary.", :warning}
+  defp tier_message(:exhausted), do: {"You can barely keep your eyes open.", :warning}
+  defp tier_message(:spent), do: {"You are completely exhausted.", :warning}
 end

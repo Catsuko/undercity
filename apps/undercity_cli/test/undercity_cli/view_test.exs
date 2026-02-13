@@ -341,4 +341,66 @@ defmodule UndercityCli.ViewTest do
       assert result =~ "\e[38;5;131m"
     end
   end
+
+  describe "awareness_tier/1" do
+    test "40+ is rested" do
+      assert :rested = View.awareness_tier(50)
+      assert :rested = View.awareness_tier(40)
+    end
+
+    test "16-39 is weary" do
+      assert :weary = View.awareness_tier(39)
+      assert :weary = View.awareness_tier(16)
+    end
+
+    test "1-15 is exhausted" do
+      assert :exhausted = View.awareness_tier(15)
+      assert :exhausted = View.awareness_tier(1)
+    end
+
+    test "0 is spent" do
+      assert :spent = View.awareness_tier(0)
+    end
+  end
+
+  describe "status_message/1" do
+    test "rested is a success message" do
+      assert {"You feel rested.", :success} = View.status_message(50)
+    end
+
+    test "weary is a warning message" do
+      assert {"You feel weary.", :warning} = View.status_message(30)
+    end
+
+    test "exhausted is a warning message" do
+      assert {"You can barely keep your eyes open.", :warning} = View.status_message(10)
+    end
+
+    test "spent is a warning message" do
+      assert {"You are completely exhausted.", :warning} = View.status_message(0)
+    end
+  end
+
+  describe "threshold_message/2" do
+    test "returns message when crossing into weary" do
+      assert {"You feel weary.", :warning} = View.threshold_message(40, 39)
+    end
+
+    test "returns message when crossing into exhausted" do
+      assert {"You can barely keep your eyes open.", :warning} = View.threshold_message(16, 15)
+    end
+
+    test "returns message when crossing into spent" do
+      assert {"You are completely exhausted.", :warning} = View.threshold_message(1, 0)
+    end
+
+    test "returns message when recovering to rested" do
+      assert {"You feel rested.", :success} = View.threshold_message(39, 40)
+    end
+
+    test "returns nil when staying in same tier" do
+      assert nil == View.threshold_message(50, 49)
+      assert nil == View.threshold_message(30, 20)
+    end
+  end
 end
