@@ -19,34 +19,36 @@ defmodule UndercityCli.GameLoop do
     "exit" => :exit
   }
 
-  def run(player, player_id, vicinity) do
+  @exhausted_message {"You are too exhausted to act.", :warning}
+
+  def run(player, player_id, vicinity, ap) do
     render(vicinity, player, player_id)
-    loop(player, player_id, vicinity)
+    loop(player, player_id, vicinity, ap)
   end
 
-  defp loop(player, player_id, vicinity) do
+  defp loop(player, player_id, vicinity, ap) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
     case parse(input) do
       :look ->
         render(vicinity, player, player_id)
-        loop(player, player_id, vicinity)
+        loop(player, player_id, vicinity, ap)
 
       {:move, direction} ->
-        vicinity = handle_move(player, player_id, vicinity, direction)
-        loop(player, player_id, vicinity)
+        {vicinity, ap} = handle_move(player, player_id, vicinity, ap, direction)
+        loop(player, player_id, vicinity, ap)
 
       :search ->
-        handle_search(player, player_id, vicinity)
-        loop(player, player_id, vicinity)
+        ap = handle_search(player, player_id, vicinity, ap)
+        loop(player, player_id, vicinity, ap)
 
       :inventory ->
         handle_inventory(player, player_id, vicinity)
-        loop(player, player_id, vicinity)
+        loop(player, player_id, vicinity, ap)
 
       {:scribble, text} ->
-        handle_scribble(player, player_id, vicinity, text)
-        loop(player, player_id, vicinity)
+        ap = handle_scribble(player, player_id, vicinity, ap, text)
+        loop(player, player_id, vicinity, ap)
 
       :quit ->
         :ok
@@ -60,30 +62,40 @@ defmodule UndercityCli.GameLoop do
            :warning}
         )
 
-        loop(player, player_id, vicinity)
+        loop(player, player_id, vicinity, ap)
     end
   end
 
-  defp handle_move(player, player_id, vicinity, direction) do
+  defp handle_move(player, player_id, vicinity, ap, direction) do
     case Gateway.move(player_id, direction, vicinity.id) do
-      {:ok, new_vicinity} ->
+      {:ok, {:ok, new_vicinity}, new_ap} ->
         render(new_vicinity, player, player_id)
-        new_vicinity
+        {new_vicinity, new_ap}
 
-      {:error, :no_exit} ->
+      {:ok, {:error, :no_exit}, new_ap} ->
         render(vicinity, player, player_id, {"You can't go that way.", :warning})
-        vicinity
+        {vicinity, new_ap}
+
+      {:error, :exhausted} ->
+        render(vicinity, player, player_id, @exhausted_message)
+        {vicinity, ap}
     end
   end
 
-  defp handle_search(player, player_id, vicinity) do
-    message =
-      case Gateway.search(player_id, vicinity.id) do
-        {:found, item} -> {"You found #{item.name}!", :success}
-        :nothing -> {"You find nothing.", :warning}
-      end
+  defp handle_search(player, player_id, vicinity, ap) do
+    case Gateway.search(player_id, vicinity.id) do
+      {:ok, {:found, item}, new_ap} ->
+        render(vicinity, player, player_id, {"You found #{item.name}!", :success})
+        new_ap
 
-    render(vicinity, player, player_id, message)
+      {:ok, :nothing, new_ap} ->
+        render(vicinity, player, player_id, {"You find nothing.", :warning})
+        new_ap
+
+      {:error, :exhausted} ->
+        render(vicinity, player, player_id, @exhausted_message)
+        ap
+    end
   end
 
   defp handle_inventory(player, player_id, vicinity) do
@@ -98,14 +110,20 @@ defmodule UndercityCli.GameLoop do
     render(vicinity, player, player_id, message)
   end
 
-  defp handle_scribble(player, player_id, vicinity, text) do
-    message =
-      case Gateway.scribble(player_id, vicinity.id, text) do
-        :ok -> {"You scribble #{View.scribble_surface(vicinity)}.", :success}
-        {:error, :no_chalk} -> {"You have no chalk.", :warning}
-      end
+  defp handle_scribble(player, player_id, vicinity, ap, text) do
+    case Gateway.scribble(player_id, vicinity.id, text) do
+      {:ok, :ok, new_ap} ->
+        render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
+        new_ap
 
-    render(vicinity, player, player_id, message)
+      {:ok, {:error, :no_chalk}, new_ap} ->
+        render(vicinity, player, player_id, {"You have no chalk.", :warning})
+        new_ap
+
+      {:error, :exhausted} ->
+        render(vicinity, player, player_id, @exhausted_message)
+        ap
+    end
   end
 
   defp render(vicinity, player, _player_id, message \\ nil) do

@@ -10,6 +10,7 @@ defmodule UndercityServer.Session do
 
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
+  alias UndercityServer.Player
   alias UndercityServer.Player.Store, as: PlayerStore
   alias UndercityServer.Player.Supervisor, as: PlayerSupervisor
   alias UndercityServer.Vicinity
@@ -30,7 +31,8 @@ defmodule UndercityServer.Session do
   defp connect(_player_name, 0), do: {:error, :server_not_found}
 
   defp connect(player_name, retries) do
-    {:ok, enter(player_name)}
+    {player_id, vicinity, ap} = enter(player_name)
+    {:ok, {player_id, vicinity, ap}}
   catch
     :exit, {:noproc, _} ->
       attempt = @connect_retries + 1 - retries
@@ -46,25 +48,31 @@ defmodule UndercityServer.Session do
 
   @doc """
   Creates a new player and spawns them in the default block.
-  Returns a tuple of {player_id, vicinity}.
+  Returns a tuple of {player_id, vicinity, ap}.
   """
   def enter(name) when is_binary(name) do
     case PlayerStore.find_id_by_name(name) do
       {:ok, player_id} ->
         ensure_player_process(player_id, name)
         block_id = find_player_block(player_id)
-        {player_id, Vicinity.build(block_id)}
+        {player_id, Vicinity.build(block_id), Player.get_ap(player_id)}
 
       :error ->
         player_id = generate_player_id()
         PlayerSupervisor.start_player(player_id, name)
 
-        player_data = %{id: player_id, name: name, inventory: UndercityCore.Inventory.new()}
+        player_data = %{
+          id: player_id,
+          name: name,
+          inventory: UndercityCore.Inventory.new(),
+          action_points: UndercityCore.ActionPoints.new()
+        }
+
         PlayerStore.save(player_id, player_data)
 
         spawn_block = WorldMap.spawn_block()
         Block.join(spawn_block, player_id)
-        {player_id, Vicinity.build(spawn_block)}
+        {player_id, Vicinity.build(spawn_block), Player.get_ap(player_id)}
     end
   end
 

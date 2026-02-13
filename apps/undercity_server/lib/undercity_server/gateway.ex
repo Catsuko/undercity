@@ -16,4 +16,5 @@ defmodule UndercityServer.Gateway do
   defdelegate search(player_id, block_id), to: UndercityServer.Actions.Search
   defdelegate scribble(player_id, block_id, text), to: UndercityServer.Actions.Scribble
   defdelegate get_inventory(player_id), to: UndercityServer.Actions.Inventory
+  defdelegate get_ap(player_id), to: UndercityServer.Player
 end
