@@ -2,7 +2,7 @@ defmodule UndercityServer.BlockTest do
   use ExUnit.Case, async: true
 
   alias UndercityServer.Block
-  alias UndercityServer.BlockSupervisor
+  alias UndercityServer.Block.Supervisor, as: BlockSupervisor
 
   setup do
     id = "block_#{:rand.uniform(100_000)}"

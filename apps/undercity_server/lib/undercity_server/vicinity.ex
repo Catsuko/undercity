@@ -8,8 +8,27 @@ defmodule UndercityServer.Vicinity do
   """
 
   alias UndercityCore.WorldMap
+  alias UndercityServer.Block
+  alias UndercityServer.Player.Store, as: PlayerStore
 
   defstruct [:id, :type, :people, :neighbourhood, :building_type, :scribble]
+
+  @doc """
+  Builds a vicinity by fetching block info, player names, and scribble
+  from the running server processes.
+  """
+  def build(block_id) do
+    {^block_id, player_ids} = Block.info(block_id)
+    names = PlayerStore.get_names(player_ids)
+    scribble = Block.get_scribble(block_id)
+
+    people =
+      Enum.map(player_ids, fn id ->
+        %{id: id, name: Map.get(names, id, "Unknown")}
+      end)
+
+    new(block_id, people, scribble: scribble)
+  end
 
   @doc """
   Returns a new vicinity centred on the given block.

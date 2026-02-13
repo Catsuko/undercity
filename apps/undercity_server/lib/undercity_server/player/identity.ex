@@ -1,4 +1,4 @@
-defmodule UndercityServer.PlayerIdentity do
+defmodule UndercityServer.Player.Identity do
   @moduledoc """
   Owns player identity concerns: ID generation, process lookup, and name resolution.
   """

@@ -7,36 +7,38 @@ defmodule UndercityServer.Player do
 
   alias UndercityCore.Inventory
   alias UndercityCore.Item
-  alias UndercityServer.PlayerIdentity
-  alias UndercityServer.PlayerStore
+  alias UndercityServer.Player.Identity
+  alias UndercityServer.Player.Store, as: PlayerStore
 
   # Client API
 
   def start_link(opts) do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, {id, name}, name: PlayerIdentity.via(id))
+    GenServer.start_link(__MODULE__, {id, name}, name: Identity.via(id))
   end
 
   @spec add_item(String.t(), Item.t()) :: :ok
   def add_item(player_id, %Item{} = item) do
-    GenServer.cast(PlayerIdentity.via(player_id), {:add_item, item})
+    GenServer.cast(via(player_id), {:add_item, item})
   end
 
   @spec get_inventory(String.t()) :: [Item.t()]
   def get_inventory(player_id) do
-    GenServer.call(PlayerIdentity.via(player_id), :get_inventory)
+    GenServer.call(via(player_id), :get_inventory)
   end
 
   @spec get_name(String.t()) :: String.t()
   def get_name(player_id) do
-    GenServer.call(PlayerIdentity.via(player_id), :get_name)
+    GenServer.call(via(player_id), :get_name)
   end
 
   @spec use_item(String.t(), String.t()) :: {:ok, Item.t()} | :not_found
   def use_item(player_id, item_name) do
-    GenServer.call(PlayerIdentity.via(player_id), {:use_item, item_name})
+    GenServer.call(via(player_id), {:use_item, item_name})
   end
+
+  defp via(player_id), do: {Identity.via(player_id), UndercityServer.server_node()}
 
   # Server callbacks
 

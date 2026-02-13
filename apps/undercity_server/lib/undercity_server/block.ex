@@ -8,7 +8,7 @@ defmodule UndercityServer.Block do
   alias UndercityCore.Block, as: CoreBlock
   alias UndercityCore.LootTable
   alias UndercityCore.Search
-  alias UndercityServer.Store
+  alias UndercityServer.Block.Store
 
   # Client API
 
@@ -22,34 +22,36 @@ defmodule UndercityServer.Block do
   end
 
   def join(block_id, player_id) when is_binary(player_id) do
-    GenServer.call(process_name(block_id), {:join, player_id})
+    GenServer.call(via(block_id), {:join, player_id})
   end
 
   def leave(block_id, player_id) when is_binary(player_id) do
-    GenServer.call(process_name(block_id), {:leave, player_id})
+    GenServer.call(via(block_id), {:leave, player_id})
   end
 
   def has_person?(block_id, player_id) when is_binary(player_id) do
-    GenServer.call(process_name(block_id), {:has_person, player_id})
+    GenServer.call(via(block_id), {:has_person, player_id})
   end
 
   def info(block_id) do
-    GenServer.call(process_name(block_id), :info)
+    GenServer.call(via(block_id), :info)
   end
 
   def search(block_id) do
-    GenServer.call(process_name(block_id), :search)
+    GenServer.call(via(block_id), :search)
   end
 
   def scribble(block_id, text) when is_binary(text) do
-    GenServer.call(process_name(block_id), {:scribble, text})
+    GenServer.call(via(block_id), {:scribble, text})
   end
 
   def get_scribble(block_id) do
-    GenServer.call(process_name(block_id), :get_scribble)
+    GenServer.call(via(block_id), :get_scribble)
   end
 
   def process_name(id), do: :"block_#{id}"
+
+  defp via(block_id), do: {process_name(block_id), UndercityServer.server_node()}
 
   # Server callbacks
 

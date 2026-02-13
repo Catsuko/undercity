@@ -1,4 +1,4 @@
-defmodule UndercityServer.PlayerSupervisor do
+defmodule UndercityServer.Player.Supervisor do
   @moduledoc """
   DynamicSupervisor for player processes.
   """
@@ -18,6 +18,9 @@ defmodule UndercityServer.PlayerSupervisor do
   Starts a new Player process under this supervisor.
   """
   def start_player(id, name) do
-    DynamicSupervisor.start_child(__MODULE__, {UndercityServer.Player, id: id, name: name})
+    DynamicSupervisor.start_child(
+      {__MODULE__, UndercityServer.server_node()},
+      {UndercityServer.Player, id: id, name: name}
+    )
   end
 end
