@@ -54,6 +54,54 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
+  describe "use_item/3 (atomic AP + item)" do
+    test "spends AP and consumes item atomically", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 3))
+      Process.sleep(10)
+
+      assert {:ok, %Item{name: "Chalk", uses: 2}, 49} = Player.use_item(id, "Chalk", 1)
+
+      assert [%Item{name: "Chalk", uses: 2}] = Player.get_inventory(id)
+      assert 49 = Player.get_ap(id)
+    end
+
+    test "removes item on last use", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 1))
+      Process.sleep(10)
+
+      assert {:ok, %Item{name: "Chalk", uses: 1}, 49} = Player.use_item(id, "Chalk", 1)
+
+      assert [] = Player.get_inventory(id)
+    end
+
+    test "returns :exhausted when AP insufficient, item untouched", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 3))
+      Process.sleep(10)
+
+      # Drain all AP
+      for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
+
+      assert {:error, :exhausted} = Player.use_item(id, "Chalk", 1)
+
+      assert [%Item{name: "Chalk", uses: 3}] = Player.get_inventory(id)
+    end
+
+    test "returns :not_found when item missing, AP untouched", %{id: id} do
+      assert {:error, :not_found} = Player.use_item(id, "Chalk", 1)
+
+      assert 50 = Player.get_ap(id)
+    end
+
+    test "spends custom AP cost", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 5))
+      Process.sleep(10)
+
+      assert {:ok, _item, 47} = Player.use_item(id, "Chalk", 3)
+
+      assert 47 = Player.get_ap(id)
+    end
+  end
+
   describe "get_ap/1" do
     test "new player starts with 50 AP", %{id: id} do
       assert 50 = Player.get_ap(id)
