@@ -100,7 +100,7 @@ defmodule UndercityServer.GatewayTest do
     test "returns error when player has no chalk" do
       {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:error, :no_chalk} = Gateway.scribble(player_id, vicinity.id, "hello")
+      assert {:error, :item_missing} = Gateway.scribble(player_id, vicinity.id, "hello")
     end
 
     test "strips invalid characters from scribble text" do

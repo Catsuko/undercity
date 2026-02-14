@@ -124,7 +124,7 @@ defmodule UndercityCli.GameLoop do
       :ok ->
         ap
 
-      {:error, :no_chalk} ->
+      {:error, :item_missing} ->
         render(vicinity, player, player_id, {"You have no chalk.", :warning})
         ap
 

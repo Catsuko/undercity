@@ -24,7 +24,7 @@ defmodule UndercityServer.PlayerTest do
       # Small sleep to ensure cast completes before call
       Process.sleep(10)
 
-      assert {:ok, %Item{name: "Chalk", uses: 2}} = Player.use_item(id, "Chalk")
+      assert :ok = Player.use_item(id, "Chalk")
 
       items = Player.get_inventory(id)
       assert [%Item{name: "Chalk", uses: 2}] = items
@@ -34,7 +34,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Chalk", 1))
       Process.sleep(10)
 
-      assert {:ok, %Item{name: "Chalk", uses: 1}} = Player.use_item(id, "Chalk")
+      assert :ok = Player.use_item(id, "Chalk")
 
       assert [] = Player.get_inventory(id)
     end
@@ -47,7 +47,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Junk"))
       Process.sleep(10)
 
-      assert {:ok, %Item{name: "Junk", uses: nil}} = Player.use_item(id, "Junk")
+      assert :ok = Player.use_item(id, "Junk")
 
       items = Player.get_inventory(id)
       assert [%Item{name: "Junk"}] = items
@@ -59,7 +59,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Chalk", 3))
       Process.sleep(10)
 
-      assert {:ok, %Item{name: "Chalk", uses: 2}, 49} = Player.use_item(id, "Chalk", 1)
+      assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
       assert [%Item{name: "Chalk", uses: 2}] = Player.get_inventory(id)
       assert 49 = Player.get_ap(id)
@@ -69,7 +69,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Chalk", 1))
       Process.sleep(10)
 
-      assert {:ok, %Item{name: "Chalk", uses: 1}, 49} = Player.use_item(id, "Chalk", 1)
+      assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
       assert [] = Player.get_inventory(id)
     end
@@ -86,8 +86,8 @@ defmodule UndercityServer.PlayerTest do
       assert [%Item{name: "Chalk", uses: 3}] = Player.get_inventory(id)
     end
 
-    test "returns :not_found when item missing, AP untouched", %{id: id} do
-      assert {:error, :not_found} = Player.use_item(id, "Chalk", 1)
+    test "returns :item_missing when item not in inventory, AP untouched", %{id: id} do
+      assert {:error, :item_missing} = Player.use_item(id, "Chalk", 1)
 
       assert 50 = Player.get_ap(id)
     end
@@ -96,7 +96,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert {:ok, _item, 47} = Player.use_item(id, "Chalk", 3)
+      assert {:ok, 47} = Player.use_item(id, "Chalk", 3)
 
       assert 47 = Player.get_ap(id)
     end

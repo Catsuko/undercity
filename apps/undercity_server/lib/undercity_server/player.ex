@@ -42,13 +42,13 @@ defmodule UndercityServer.Player do
     GenServer.call(via(player_id), :get_name)
   end
 
-  @spec use_item(String.t(), String.t()) :: {:ok, Item.t()} | :not_found
+  @spec use_item(String.t(), String.t()) :: :ok | :not_found
   def use_item(player_id, item_name) do
     GenServer.call(via(player_id), {:use_item, item_name})
   end
 
   @spec use_item(String.t(), String.t(), pos_integer()) ::
-          {:ok, Item.t(), non_neg_integer()} | {:error, :exhausted} | {:error, :not_found}
+          {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :item_missing}
   def use_item(player_id, item_name, cost) do
     GenServer.call(via(player_id), {:use_item, item_name, cost})
   end
@@ -107,12 +107,12 @@ defmodule UndercityServer.Player do
   @impl true
   def handle_call({:use_item, item_name}, _from, state) do
     case consume_item(state.inventory, item_name) do
-      {:ok, inventory, item} ->
+      {:ok, inventory} ->
         state = %{state | inventory: inventory}
         PlayerStore.save(state.id, state)
-        {:reply, {:ok, item}, state}
+        {:reply, :ok, state}
 
-      {:error, :not_found} ->
+      {:error, :item_missing} ->
         {:reply, :not_found, state}
     end
   end
@@ -122,13 +122,13 @@ defmodule UndercityServer.Player do
     action_points = ActionPoints.regenerate(state.action_points)
 
     with {:ok, action_points} <- ActionPoints.spend(action_points, cost),
-         {:ok, inventory, item} <- consume_item(state.inventory, item_name) do
+         {:ok, inventory} <- consume_item(state.inventory, item_name) do
       state = %{state | action_points: action_points, inventory: inventory}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, item, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, ActionPoints.current(action_points)}, state}
     else
       {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
-      {:error, :not_found} -> {:reply, {:error, :not_found}, state}
+      {:error, :item_missing} -> {:reply, {:error, :item_missing}, state}
     end
   end
 
@@ -158,12 +158,12 @@ defmodule UndercityServer.Player do
     case Inventory.find_item(inventory, item_name) do
       {:ok, item, index} ->
         case Item.use(item) do
-          {:ok, updated} -> {:ok, Inventory.replace_at(inventory, index, updated), updated}
-          :spent -> {:ok, Inventory.remove_at(inventory, index), item}
+          {:ok, updated} -> {:ok, Inventory.replace_at(inventory, index, updated)}
+          :spent -> {:ok, Inventory.remove_at(inventory, index)}
         end
 
       :not_found ->
-        {:error, :not_found}
+        {:error, :item_missing}
     end
   end
 end
