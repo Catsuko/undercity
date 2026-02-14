@@ -116,15 +116,18 @@ defmodule UndercityCli.GameLoop do
 
   defp handle_scribble(player, player_id, vicinity, ap, text) do
     case Gateway.scribble(player_id, vicinity.id, text) do
-      {:ok, :ok, new_ap} ->
+      {:ok, new_ap} ->
         render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
         show_threshold(ap, new_ap)
         new_ap
 
-      {:ok, {:error, :no_chalk}, new_ap} ->
+      {:error, :empty_message} ->
+        render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
+        ap
+
+      {:error, :item_missing} ->
         render(vicinity, player, player_id, {"You have no chalk.", :warning})
-        show_threshold(ap, new_ap)
-        new_ap
+        ap
 
       {:error, :exhausted} ->
         render(vicinity, player, player_id, @exhausted_message)

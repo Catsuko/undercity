@@ -92,7 +92,7 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello world")
+      assert {:ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello world")
 
       assert "hello world" = UndercityServer.Block.get_scribble(vicinity.id)
     end
@@ -100,7 +100,7 @@ defmodule UndercityServer.GatewayTest do
     test "returns error when player has no chalk" do
       {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:ok, {:error, :no_chalk}, _ap} = Gateway.scribble(player_id, vicinity.id, "hello")
+      assert {:error, :item_missing} = Gateway.scribble(player_id, vicinity.id, "hello")
     end
 
     test "strips invalid characters from scribble text" do
@@ -108,7 +108,7 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello!")
+      assert {:ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello!")
 
       assert "hello" = UndercityServer.Block.get_scribble(vicinity.id)
     end
@@ -118,7 +118,7 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 
-      assert {:ok, :ok, _ap} = Gateway.scribble(player_id, vicinity.id, "!!!")
+      assert {:error, :empty_message} = Gateway.scribble(player_id, vicinity.id, "!!!")
 
       items = Gateway.get_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items

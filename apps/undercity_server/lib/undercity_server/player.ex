@@ -42,9 +42,15 @@ defmodule UndercityServer.Player do
     GenServer.call(via(player_id), :get_name)
   end
 
-  @spec use_item(String.t(), String.t()) :: {:ok, Item.t()} | :not_found
+  @spec use_item(String.t(), String.t()) :: :ok | :not_found
   def use_item(player_id, item_name) do
     GenServer.call(via(player_id), {:use_item, item_name})
+  end
+
+  @spec use_item(String.t(), String.t(), pos_integer()) ::
+          {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :item_missing}
+  def use_item(player_id, item_name, cost) do
+    GenServer.call(via(player_id), {:use_item, item_name, cost})
   end
 
   @spec perform(String.t(), pos_integer(), (-> any())) :: {:ok, any(), non_neg_integer()} | {:error, :exhausted}
@@ -100,24 +106,29 @@ defmodule UndercityServer.Player do
 
   @impl true
   def handle_call({:use_item, item_name}, _from, state) do
-    case Inventory.find_item(state.inventory, item_name) do
-      {:ok, item, index} ->
-        case Item.use(item) do
-          {:ok, updated_item} ->
-            inventory = Inventory.replace_at(state.inventory, index, updated_item)
-            state = %{state | inventory: inventory}
-            PlayerStore.save(state.id, state)
-            {:reply, {:ok, updated_item}, state}
+    case consume_item(state.inventory, item_name) do
+      {:ok, inventory} ->
+        state = %{state | inventory: inventory}
+        PlayerStore.save(state.id, state)
+        {:reply, :ok, state}
 
-          :spent ->
-            inventory = Inventory.remove_at(state.inventory, index)
-            state = %{state | inventory: inventory}
-            PlayerStore.save(state.id, state)
-            {:reply, {:ok, item}, state}
-        end
-
-      :not_found ->
+      {:error, :item_missing} ->
         {:reply, :not_found, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:use_item, item_name, cost}, _from, state) do
+    action_points = ActionPoints.regenerate(state.action_points)
+
+    with {:ok, action_points} <- ActionPoints.spend(action_points, cost),
+         {:ok, inventory} <- consume_item(state.inventory, item_name) do
+      state = %{state | action_points: action_points, inventory: inventory}
+      PlayerStore.save(state.id, state)
+      {:reply, {:ok, ActionPoints.current(action_points)}, state}
+    else
+      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
+      {:error, :item_missing} -> {:reply, {:error, :item_missing}, state}
     end
   end
 
@@ -141,5 +152,18 @@ defmodule UndercityServer.Player do
     action_points = ActionPoints.regenerate(state.action_points)
     state = %{state | action_points: action_points}
     {:reply, ActionPoints.current(action_points), state}
+  end
+
+  defp consume_item(inventory, item_name) do
+    case Inventory.find_item(inventory, item_name) do
+      {:ok, item, index} ->
+        case Item.use(item) do
+          {:ok, updated} -> {:ok, Inventory.replace_at(inventory, index, updated)}
+          :spent -> {:ok, Inventory.remove_at(inventory, index)}
+        end
+
+      :not_found ->
+        {:error, :item_missing}
+    end
   end
 end
