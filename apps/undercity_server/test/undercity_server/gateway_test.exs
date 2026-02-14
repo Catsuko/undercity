@@ -118,7 +118,7 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 
-      assert :ok = Gateway.scribble(player_id, vicinity.id, "!!!")
+      assert {:error, :empty_message} = Gateway.scribble(player_id, vicinity.id, "!!!")
 
       items = Gateway.get_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items

@@ -13,12 +13,12 @@ defmodule UndercityServer.Actions.Scribble do
 
   @doc """
   Scribbles a message on a block using chalk from the player's inventory.
-  Returns `{:ok, ap}`, `:ok`, `{:error, :item_missing}`, or `{:error, :exhausted}`.
+  Returns `{:ok, ap}`, `{:error, :empty_message}`, `{:error, :item_missing}`, or `{:error, :exhausted}`.
   """
   def scribble(player_id, block_id, text) do
     case Scribble.sanitise(text) do
       :empty ->
-        :ok
+        {:error, :empty_message}
 
       {:ok, sanitised} ->
         with {:ok, ap} <- Player.use_item(player_id, "Chalk", 1) do

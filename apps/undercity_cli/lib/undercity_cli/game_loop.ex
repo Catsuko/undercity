@@ -121,7 +121,8 @@ defmodule UndercityCli.GameLoop do
         show_threshold(ap, new_ap)
         new_ap
 
-      :ok ->
+      {:error, :empty_message} ->
+        render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
         ap
 
       {:error, :item_missing} ->
