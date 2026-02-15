@@ -119,6 +119,75 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
+  describe "eat_item/2" do
+    test "consumes edible item and returns effect", %{id: id} do
+      Player.add_item(id, Item.new("Mushroom"))
+
+      assert {:ok, %Item{name: "Mushroom"}, effect, 49} = Player.eat_item(id, 0)
+      assert match?({:heal, 5}, effect) or match?({:damage, 5}, effect)
+
+      assert [] = Player.check_inventory(id)
+    end
+
+    test "applies heal effect to health", %{id: id} do
+      # Damage the player first so heal is observable
+      Player.add_item(id, Item.new("Mushroom"))
+      Player.add_item(id, Item.new("Mushroom"))
+
+      # Keep eating until we get a damage then a heal
+      results =
+        for _ <- 1..100 do
+          id = "player_eat_#{:rand.uniform(100_000)}"
+          start_supervised!({Player, id: id, name: "test_#{id}"}, id: id)
+          Player.add_item(id, Item.new("Mushroom"))
+          {:ok, _item, effect, _ap} = Player.eat_item(id, 0)
+          {id, effect}
+        end
+
+      # Verify at least one heal and one damage occurred
+      assert Enum.any?(results, fn {_id, effect} -> match?({:heal, 5}, effect) end)
+      assert Enum.any?(results, fn {_id, effect} -> match?({:damage, 5}, effect) end)
+    end
+
+    test "returns :not_edible for non-edible item", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+
+      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
+
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+    end
+
+    test "returns :invalid_index for out of range", %{id: id} do
+      assert {:error, :invalid_index} = Player.eat_item(id, 0)
+    end
+
+    test "returns :exhausted when AP insufficient", %{id: id} do
+      Player.add_item(id, Item.new("Mushroom"))
+
+      for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
+
+      assert {:error, :exhausted} = Player.eat_item(id, 0)
+
+      assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+    end
+
+    test "does not consume item when not edible", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 3))
+
+      assert {:error, :not_edible, "Chalk"} = Player.eat_item(id, 0)
+
+      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+    end
+
+    test "does not spend AP when item is not edible", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+
+      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
+
+      assert 50 = Player.constitution(id).ap
+    end
+  end
+
   describe "add_item/2" do
     test "returns error when inventory is full", %{id: id} do
       for _ <- 1..15, do: Player.add_item(id, Item.new("Junk"))

@@ -31,4 +31,12 @@ defmodule UndercityCore.Health do
   """
   @spec current(t()) :: non_neg_integer()
   def current(%__MODULE__{hp: hp}), do: hp
+
+  @doc """
+  Applies a health effect. Heals or damages, clamped to 0..max.
+  """
+  @spec apply_effect(t(), {:heal, pos_integer()} | {:damage, pos_integer()}) :: t()
+  def apply_effect(%__MODULE__{hp: hp} = health, {:heal, amount}), do: %{health | hp: min(hp + amount, @max)}
+
+  def apply_effect(%__MODULE__{hp: hp} = health, {:damage, amount}), do: %{health | hp: max(hp - amount, 0)}
 end
