@@ -68,7 +68,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp handle_move(player, player_id, vicinity, ap, direction) do
-    case Gateway.move(player_id, direction, vicinity.id) do
+    case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
         render(new_vicinity, player, player_id, View.threshold_message(ap, new_ap))
         {new_vicinity, new_ap}
@@ -85,7 +85,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp handle_search(player, player_id, vicinity, ap) do
-    case Gateway.search(player_id, vicinity.id) do
+    case Gateway.perform(player_id, vicinity.id, :search, nil) do
       {:ok, {:found, item}, new_ap} ->
         render(vicinity, player, player_id, {"You found #{item.name}!", :success})
         show_threshold(ap, new_ap)
@@ -103,7 +103,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp handle_inventory(player, player_id, vicinity) do
-    items = Gateway.get_inventory(player_id)
+    items = Gateway.check_inventory(player_id)
 
     message =
       case items do
@@ -115,7 +115,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp handle_scribble(player, player_id, vicinity, ap, text) do
-    case Gateway.scribble(player_id, vicinity.id, text) do
+    case Gateway.perform(player_id, vicinity.id, :scribble, text) do
       {:ok, new_ap} ->
         render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
         show_threshold(ap, new_ap)

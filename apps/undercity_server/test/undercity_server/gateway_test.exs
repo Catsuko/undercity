@@ -40,7 +40,7 @@ defmodule UndercityServer.GatewayTest do
     test "reconnects to the block the player is already in" do
       name = unique_name()
       {player_id, _vicinity, _ap} = Gateway.enter(name)
-      {:ok, {:ok, _vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
+      {:ok, {:ok, _vicinity}, _ap} = Gateway.perform(player_id, "plaza", :move, :north)
 
       {_player_id, %Vicinity{} = vicinity, _ap} = Gateway.enter(name)
 
@@ -48,12 +48,12 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
-  describe "move/3" do
+  describe "perform/4 :move" do
     test "moves a player to an adjacent block" do
       name = unique_name()
       {player_id, _vicinity, _ap} = Gateway.enter(name)
 
-      {:ok, {:ok, %Vicinity{} = vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
+      {:ok, {:ok, %Vicinity{} = vicinity}, _ap} = Gateway.perform(player_id, "plaza", :move, :north)
 
       assert vicinity.id == "north_alley"
       assert Enum.any?(vicinity.people, fn p -> p.name == name end)
@@ -63,7 +63,7 @@ defmodule UndercityServer.GatewayTest do
       name = unique_name()
       {player_id, _vicinity, _ap} = Gateway.enter(name)
 
-      {:ok, {:ok, _vicinity}, _ap} = Gateway.move(player_id, :north, "plaza")
+      {:ok, {:ok, _vicinity}, _ap} = Gateway.perform(player_id, "plaza", :move, :north)
 
       {"plaza", people} = UndercityServer.Block.info("plaza")
       refute player_id in people
@@ -72,27 +72,27 @@ defmodule UndercityServer.GatewayTest do
     test "returns error for invalid direction" do
       {player_id, _vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:ok, {:error, :no_exit}, _ap} = Gateway.move(player_id, :up, "plaza")
+      assert {:ok, {:error, :no_exit}, _ap} = Gateway.perform(player_id, "plaza", :move, :up)
     end
   end
 
-  describe "search/2" do
+  describe "perform/4 :search" do
     test "returns :nothing or {:found, item} wrapped in perform tuple" do
       {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      {:ok, result, _ap} = Gateway.search(player_id, vicinity.id)
+      {:ok, result, _ap} = Gateway.perform(player_id, vicinity.id, :search, nil)
 
       assert result == :nothing or match?({:found, _item}, result)
     end
   end
 
-  describe "scribble/3" do
+  describe "perform/4 :scribble" do
     test "scribbles text on a block when player has chalk" do
       {player_id, vicinity, _ap} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert {:ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello world")
+      assert {:ok, _ap} = Gateway.perform(player_id, vicinity.id, :scribble, "hello world")
 
       assert "hello world" = UndercityServer.Block.get_scribble(vicinity.id)
     end
@@ -100,7 +100,7 @@ defmodule UndercityServer.GatewayTest do
     test "returns error when player has no chalk" do
       {player_id, vicinity, _ap} = Gateway.enter(unique_name())
 
-      assert {:error, :item_missing} = Gateway.scribble(player_id, vicinity.id, "hello")
+      assert {:error, :item_missing} = Gateway.perform(player_id, vicinity.id, :scribble, "hello")
     end
 
     test "strips invalid characters from scribble text" do
@@ -108,7 +108,7 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
       Process.sleep(10)
 
-      assert {:ok, _ap} = Gateway.scribble(player_id, vicinity.id, "hello!")
+      assert {:ok, _ap} = Gateway.perform(player_id, vicinity.id, :scribble, "hello!")
 
       assert "hello" = UndercityServer.Block.get_scribble(vicinity.id)
     end
@@ -118,9 +118,9 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 
-      assert {:error, :empty_message} = Gateway.scribble(player_id, vicinity.id, "!!!")
+      assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
-      items = Gateway.get_inventory(player_id)
+      items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items
     end
 
@@ -129,9 +129,9 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
       Process.sleep(10)
 
-      Gateway.scribble(player_id, "plaza", "first")
+      Gateway.perform(player_id, "plaza", :scribble, "first")
 
-      items = Gateway.get_inventory(player_id)
+      items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 1}] = items
     end
   end

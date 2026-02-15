@@ -26,7 +26,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert :ok = Player.use_item(id, "Chalk")
 
-      items = Player.get_inventory(id)
+      items = Player.check_inventory(id)
       assert [%Item{name: "Chalk", uses: 2}] = items
     end
 
@@ -36,7 +36,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert :ok = Player.use_item(id, "Chalk")
 
-      assert [] = Player.get_inventory(id)
+      assert [] = Player.check_inventory(id)
     end
 
     test "returns :not_found when item is not in inventory", %{id: id} do
@@ -49,7 +49,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert :ok = Player.use_item(id, "Junk")
 
-      items = Player.get_inventory(id)
+      items = Player.check_inventory(id)
       assert [%Item{name: "Junk"}] = items
     end
   end
@@ -61,7 +61,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
-      assert [%Item{name: "Chalk", uses: 2}] = Player.get_inventory(id)
+      assert [%Item{name: "Chalk", uses: 2}] = Player.check_inventory(id)
       assert 49 = Player.get_ap(id)
     end
 
@@ -71,7 +71,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
-      assert [] = Player.get_inventory(id)
+      assert [] = Player.check_inventory(id)
     end
 
     test "returns :exhausted when AP insufficient, item untouched", %{id: id} do
@@ -83,7 +83,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert {:error, :exhausted} = Player.use_item(id, "Chalk", 1)
 
-      assert [%Item{name: "Chalk", uses: 3}] = Player.get_inventory(id)
+      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
     test "returns :item_missing when item not in inventory, AP untouched", %{id: id} do

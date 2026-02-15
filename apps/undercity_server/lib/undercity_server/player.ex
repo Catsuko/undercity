@@ -32,9 +32,9 @@ defmodule UndercityServer.Player do
     GenServer.cast(via(player_id), {:add_item, item})
   end
 
-  @spec get_inventory(String.t()) :: [Item.t()]
-  def get_inventory(player_id) do
-    GenServer.call(via(player_id), :get_inventory)
+  @spec check_inventory(String.t()) :: [Item.t()]
+  def check_inventory(player_id) do
+    GenServer.call(via(player_id), :check_inventory)
   end
 
   @spec get_name(String.t()) :: String.t()
@@ -95,7 +95,7 @@ defmodule UndercityServer.Player do
   end
 
   @impl true
-  def handle_call(:get_inventory, _from, state) do
+  def handle_call(:check_inventory, _from, state) do
     {:reply, Inventory.list_items(state.inventory), state}
   end
 
