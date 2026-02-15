@@ -18,4 +18,5 @@ defmodule UndercityServer.Gateway do
   def perform(player_id, block_id, :move, direction), do: Actions.Movement.move(player_id, block_id, direction)
   def perform(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
   def perform(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
+  def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
 end

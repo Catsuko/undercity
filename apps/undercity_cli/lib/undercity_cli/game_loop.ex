@@ -30,45 +30,54 @@ defmodule UndercityCli.GameLoop do
   defp loop(player, player_id, vicinity, ap) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
-    case parse(input) do
-      :look ->
-        render(vicinity, player, player_id)
-        loop(player, player_id, vicinity, ap)
-
-      {:move, direction} ->
-        {vicinity, ap} = handle_move(player, player_id, vicinity, ap, direction)
-        loop(player, player_id, vicinity, ap)
-
-      :search ->
-        ap = handle_search(player, player_id, vicinity, ap)
-        loop(player, player_id, vicinity, ap)
-
-      :inventory ->
-        handle_inventory(player, player_id, vicinity)
-        loop(player, player_id, vicinity, ap)
-
-      {:drop, index} ->
-        ap = handle_drop(player, player_id, vicinity, ap, index)
-        loop(player, player_id, vicinity, ap)
-
-      {:scribble, text} ->
-        ap = handle_scribble(player, player_id, vicinity, ap, text)
-        loop(player, player_id, vicinity, ap)
-
-      :quit ->
-        :ok
-
-      :unknown ->
-        render(
-          vicinity,
-          player,
-          player_id,
-          {"Unknown command. Try: look, search, inventory, drop <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
-           :warning}
-        )
-
-        loop(player, player_id, vicinity, ap)
+    case dispatch(parse(input), player, player_id, vicinity, ap) do
+      :quit -> :ok
+      {vicinity, ap} -> loop(player, player_id, vicinity, ap)
     end
+  end
+
+  defp dispatch(:look, player, player_id, vicinity, ap) do
+    render(vicinity, player, player_id)
+    {vicinity, ap}
+  end
+
+  defp dispatch({:move, direction}, player, player_id, vicinity, ap) do
+    handle_move(player, player_id, vicinity, ap, direction)
+  end
+
+  defp dispatch(:search, player, player_id, vicinity, ap) do
+    {vicinity, handle_search(player, player_id, vicinity, ap)}
+  end
+
+  defp dispatch(:inventory, player, player_id, vicinity, ap) do
+    handle_inventory(player, player_id, vicinity)
+    {vicinity, ap}
+  end
+
+  defp dispatch({:drop, index}, player, player_id, vicinity, ap) do
+    {vicinity, handle_drop(player, player_id, vicinity, ap, index)}
+  end
+
+  defp dispatch({:eat, index}, player, player_id, vicinity, ap) do
+    {vicinity, handle_eat(player, player_id, vicinity, ap, index)}
+  end
+
+  defp dispatch({:scribble, text}, player, player_id, vicinity, ap) do
+    {vicinity, handle_scribble(player, player_id, vicinity, ap, text)}
+  end
+
+  defp dispatch(:quit, _player, _player_id, _vicinity, _ap), do: :quit
+
+  defp dispatch(:unknown, player, player_id, vicinity, ap) do
+    render(
+      vicinity,
+      player,
+      player_id,
+      {"Unknown command. Try: look, search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
+       :warning}
+    )
+
+    {vicinity, ap}
   end
 
   defp handle_move(player, player_id, vicinity, ap, direction) do
@@ -119,7 +128,28 @@ defmodule UndercityCli.GameLoop do
         new_ap
 
       {:error, :invalid_index} ->
-        render(vicinity, player, player_id, {"Nothing to drop at that position.", :warning})
+        render(vicinity, player, player_id, {"Invalid item selection.", :warning})
+        ap
+
+      {:error, :exhausted} ->
+        render(vicinity, player, player_id, @exhausted_message)
+        ap
+    end
+  end
+
+  defp handle_eat(player, player_id, vicinity, ap, index) do
+    case Gateway.perform(player_id, vicinity.id, :eat, index) do
+      {:ok, item, _effect, new_ap} ->
+        render(vicinity, player, player_id, {"Ate a #{item.name}.", :success})
+        show_threshold(ap, new_ap)
+        new_ap
+
+      {:error, :not_edible, item_name} ->
+        render(vicinity, player, player_id, {"You can't eat #{item_name}.", :warning})
+        ap
+
+      {:error, :invalid_index} ->
+        render(vicinity, player, player_id, {"Invalid item selection.", :warning})
         ap
 
       {:error, :exhausted} ->
@@ -194,6 +224,13 @@ defmodule UndercityCli.GameLoop do
   def parse("drop " <> index_str) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 -> {:drop, n - 1}
+      _ -> :unknown
+    end
+  end
+
+  def parse("eat " <> index_str) do
+    case Integer.parse(index_str) do
+      {n, ""} when n >= 1 -> {:eat, n - 1}
       _ -> :unknown
     end
   end

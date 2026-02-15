@@ -15,6 +15,7 @@ defmodule UndercityServer.Player do
   use GenServer
 
   alias UndercityCore.ActionPoints
+  alias UndercityCore.Food
   alias UndercityCore.Health
   alias UndercityCore.Inventory
   alias UndercityCore.Item
@@ -37,6 +38,15 @@ defmodule UndercityServer.Player do
           {:ok, String.t(), non_neg_integer()} | {:error, :invalid_index} | {:error, :exhausted}
   def drop_item(player_id, index) do
     GenServer.call(via(player_id), {:drop_item, index})
+  end
+
+  @spec eat_item(String.t(), non_neg_integer()) ::
+          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer()}
+          | {:error, :invalid_index}
+          | {:error, :not_edible, String.t()}
+          | {:error, :exhausted}
+  def eat_item(player_id, index) do
+    GenServer.call(via(player_id), {:eat_item, index})
   end
 
   @spec check_inventory(String.t()) :: [Item.t()]
@@ -127,6 +137,27 @@ defmodule UndercityServer.Player do
     else
       {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
       false -> {:reply, {:error, :invalid_index}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:eat_item, index}, _from, state) do
+    items = Inventory.list_items(state.inventory)
+
+    with {:index, true} <- {:index, index >= 0 and index < length(items)},
+         item = Enum.at(items, index),
+         {:edible, effect} when effect != :not_edible <- {:edible, Food.effect(item.name)},
+         action_points = ActionPoints.regenerate(state.action_points),
+         {:ok, action_points} <- ActionPoints.spend(action_points, 1) do
+      health = Health.apply_effect(state.health, effect)
+      inventory = Inventory.remove_at(state.inventory, index)
+      state = %{state | inventory: inventory, action_points: action_points, health: health}
+      PlayerStore.save(state.id, state)
+      {:reply, {:ok, item, effect, ActionPoints.current(action_points)}, state}
+    else
+      {:index, false} -> {:reply, {:error, :invalid_index}, state}
+      {:edible, :not_edible} -> {:reply, {:error, :not_edible, Enum.at(items, index).name}, state}
+      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
     end
   end
 

@@ -37,6 +37,18 @@ defmodule UndercityCli.GameLoopTest do
       assert GameLoop.parse("scribble hello world") == {:scribble, "hello world"}
     end
 
+    test "parses eat command with index" do
+      assert GameLoop.parse("eat 1") == {:eat, 0}
+      assert GameLoop.parse("eat 3") == {:eat, 2}
+    end
+
+    test "eat with invalid index returns unknown" do
+      assert GameLoop.parse("eat 0") == :unknown
+      assert GameLoop.parse("eat -1") == :unknown
+      assert GameLoop.parse("eat abc") == :unknown
+      assert GameLoop.parse("eat") == :unknown
+    end
+
     test "returns unknown for unrecognized input" do
       assert GameLoop.parse("fly") == :unknown
       assert GameLoop.parse("dance") == :unknown
