@@ -8,6 +8,7 @@ defmodule UndercityServer.Session do
   players are reconnected to whichever block they were last in.
   """
 
+  alias UndercityCore.ActionPoints
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.Player
@@ -65,14 +66,14 @@ defmodule UndercityServer.Session do
           id: player_id,
           name: name,
           inventory: UndercityCore.Inventory.new(),
-          action_points: UndercityCore.ActionPoints.new()
+          action_points: ActionPoints.new()
         }
 
         PlayerStore.save(player_id, player_data)
 
         spawn_block = WorldMap.spawn_block()
         Block.join(spawn_block, player_id)
-        {player_id, Vicinity.build(spawn_block), Player.get_ap(player_id)}
+        {player_id, Vicinity.build(spawn_block), ActionPoints.max()}
     end
   end
 
