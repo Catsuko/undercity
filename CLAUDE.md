@@ -28,4 +28,5 @@ Use 'bd' for task tracking.
 
 ## Workflow
 
+- When starting a bead, work through design questions and concerns one by one with the user before moving to implementation.
 - Always ask for review before closing/completing tasks or committing to git, unless explicitly told otherwise.
