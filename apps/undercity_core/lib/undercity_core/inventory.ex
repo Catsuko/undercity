@@ -5,7 +5,7 @@ defmodule UndercityCore.Inventory do
 
   alias UndercityCore.Item
 
-  @max_size 5
+  @max_size 15
 
   defstruct items: []
 
@@ -17,14 +17,15 @@ defmodule UndercityCore.Inventory do
   def new, do: %__MODULE__{}
 
   @doc """
-  Adds an item to the inventory. Returns the inventory unchanged if full.
+  Adds an item to the inventory. Returns `{:ok, inventory}` on success
+  or `{:error, :full}` if the inventory is at capacity.
   """
-  @spec add_item(t(), Item.t()) :: t()
+  @spec add_item(t(), Item.t()) :: {:ok, t()} | {:error, :full}
   def add_item(%__MODULE__{items: items} = inventory, %Item{} = item) do
     if full?(inventory) do
-      inventory
+      {:error, :full}
     else
-      %{inventory | items: items ++ [item]}
+      {:ok, %{inventory | items: items ++ [item]}}
     end
   end
 
