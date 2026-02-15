@@ -8,6 +8,7 @@ defmodule UndercityServer.Session do
   players are reconnected to whichever block they were last in.
   """
 
+  alias UndercityCore.ActionPoints
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.Player
@@ -48,14 +49,14 @@ defmodule UndercityServer.Session do
 
   @doc """
   Creates a new player and spawns them in the default block.
-  Returns a tuple of {player_id, vicinity, ap}.
+  Returns a tuple of {player_id, vicinity, constitution}.
   """
   def enter(name) when is_binary(name) do
     case PlayerStore.find_id_by_name(name) do
       {:ok, player_id} ->
         ensure_player_process(player_id, name)
         block_id = find_player_block(player_id)
-        {player_id, Vicinity.build(block_id), Player.get_ap(player_id)}
+        {player_id, Vicinity.build(block_id), Player.constitution(player_id)}
 
       :error ->
         player_id = generate_player_id()
@@ -65,14 +66,14 @@ defmodule UndercityServer.Session do
           id: player_id,
           name: name,
           inventory: UndercityCore.Inventory.new(),
-          action_points: UndercityCore.ActionPoints.new()
+          action_points: ActionPoints.new()
         }
 
         PlayerStore.save(player_id, player_data)
 
         spawn_block = WorldMap.spawn_block()
         Block.join(spawn_block, player_id)
-        {player_id, Vicinity.build(spawn_block), Player.get_ap(player_id)}
+        {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max()}}
     end
   end
 

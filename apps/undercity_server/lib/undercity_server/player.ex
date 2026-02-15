@@ -61,6 +61,16 @@ defmodule UndercityServer.Player do
     end
   end
 
+  @doc """
+  Returns the player's physical state — attributes that reflect their
+  current condition in the world (e.g. action points, and eventually
+  health, stamina, or status effects).
+  """
+  @spec constitution(String.t()) :: %{ap: non_neg_integer()}
+  def constitution(player_id) do
+    GenServer.call(via(player_id), :constitution)
+  end
+
   @spec get_ap(String.t()) :: non_neg_integer()
   def get_ap(player_id) do
     GenServer.call(via(player_id), :get_ap)
@@ -145,6 +155,13 @@ defmodule UndercityServer.Player do
       {:error, :exhausted} ->
         {:reply, {:error, :exhausted}, state}
     end
+  end
+
+  @impl true
+  def handle_call(:constitution, _from, state) do
+    action_points = ActionPoints.regenerate(state.action_points)
+    state = %{state | action_points: action_points}
+    {:reply, %{ap: ActionPoints.current(action_points)}, state}
   end
 
   @impl true
