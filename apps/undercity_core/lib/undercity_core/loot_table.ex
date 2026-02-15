@@ -14,7 +14,8 @@ defmodule UndercityCore.LootTable do
   @type t :: [entry()]
 
   @tables %{
-    square: [{0.20, {"Chalk", 5}}, {0.05, "Junk"}]
+    square: [{0.20, {"Chalk", 5}}, {0.05, "Junk"}],
+    graveyard: [{0.20, "Mushroom"}]
   }
 
   @default_table [{0.10, "Junk"}]

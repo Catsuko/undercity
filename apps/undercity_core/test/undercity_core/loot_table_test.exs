@@ -11,10 +11,15 @@ defmodule UndercityCore.LootTableTest do
       assert [{0.20, {"Chalk", 5}}, {0.05, "Junk"}] = table
     end
 
+    test "returns graveyard loot table for :graveyard" do
+      table = LootTable.for_block_type(:graveyard)
+
+      assert [{0.20, "Mushroom"}] = table
+    end
+
     test "returns default loot table for other types" do
       assert [{0.10, "Junk"}] = LootTable.for_block_type(:street)
       assert [{0.10, "Junk"}] = LootTable.for_block_type(:fountain)
-      assert [{0.10, "Junk"}] = LootTable.for_block_type(:graveyard)
     end
   end
 
