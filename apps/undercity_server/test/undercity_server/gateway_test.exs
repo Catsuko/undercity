@@ -120,7 +120,7 @@ defmodule UndercityServer.GatewayTest do
 
       assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
-      items = Gateway.get_inventory(player_id)
+      items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items
     end
 
@@ -131,7 +131,7 @@ defmodule UndercityServer.GatewayTest do
 
       Gateway.perform(player_id, "plaza", :scribble, "first")
 
-      items = Gateway.get_inventory(player_id)
+      items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 1}] = items
     end
   end

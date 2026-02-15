@@ -103,7 +103,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp handle_inventory(player, player_id, vicinity) do
-    items = Gateway.get_inventory(player_id)
+    items = Gateway.check_inventory(player_id)
 
     message =
       case items do

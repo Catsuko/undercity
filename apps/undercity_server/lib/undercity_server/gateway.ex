@@ -12,7 +12,7 @@ defmodule UndercityServer.Gateway do
 
   defdelegate connect(player_name), to: UndercityServer.Session
   defdelegate enter(name), to: UndercityServer.Session
-  defdelegate get_inventory(player_id), to: Actions.Inventory
+  defdelegate check_inventory(player_id), to: UndercityServer.Player
   defdelegate get_ap(player_id), to: UndercityServer.Player
 
   def perform(player_id, block_id, :move, direction), do: Actions.Movement.move(player_id, block_id, direction)
