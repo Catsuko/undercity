@@ -16,7 +16,7 @@ defmodule UndercityServer.Actions.Movement do
   Moves a player in a given direction from their current block.
   Returns `{:ok, result, ap}` or `{:error, :exhausted}`.
   """
-  def move(player_id, direction, from_block_id) do
+  def move(player_id, from_block_id, direction) do
     Player.perform(player_id, fn ->
       with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
            true <- Block.has_person?(from_block_id, player_id) do
