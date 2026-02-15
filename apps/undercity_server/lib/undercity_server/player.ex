@@ -27,9 +27,15 @@ defmodule UndercityServer.Player do
     GenServer.start_link(__MODULE__, {id, name}, name: process_name(id))
   end
 
-  @spec add_item(String.t(), Item.t()) :: :ok
+  @spec add_item(String.t(), Item.t()) :: :ok | {:error, :full}
   def add_item(player_id, %Item{} = item) do
-    GenServer.cast(via(player_id), {:add_item, item})
+    GenServer.call(via(player_id), {:add_item, item})
+  end
+
+  @spec drop_item(String.t(), non_neg_integer()) ::
+          {:ok, String.t(), non_neg_integer()} | {:error, :invalid_index} | {:error, :exhausted}
+  def drop_item(player_id, index) do
+    GenServer.call(via(player_id), {:drop_item, index})
   end
 
   @spec check_inventory(String.t()) :: [Item.t()]
@@ -97,11 +103,35 @@ defmodule UndercityServer.Player do
   end
 
   @impl true
-  def handle_cast({:add_item, %Item{} = item}, state) do
-    new_inventory = Inventory.add_item(state.inventory, item)
-    state = %{state | inventory: new_inventory}
-    PlayerStore.save(state.id, state)
-    {:noreply, state}
+  def handle_call({:add_item, %Item{} = item}, _from, state) do
+    case Inventory.add_item(state.inventory, item) do
+      {:ok, new_inventory} ->
+        state = %{state | inventory: new_inventory}
+        PlayerStore.save(state.id, state)
+        {:reply, :ok, state}
+
+      {:error, :full} ->
+        {:reply, {:error, :full}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:drop_item, index}, _from, state) do
+    action_points = ActionPoints.regenerate(state.action_points)
+
+    items = Inventory.list_items(state.inventory)
+
+    with {:ok, action_points} <- ActionPoints.spend(action_points, 1),
+         true <- index >= 0 and index < length(items) do
+      item_name = Enum.at(items, index).name
+      new_inventory = Inventory.remove_at(state.inventory, index)
+      state = %{state | inventory: new_inventory, action_points: action_points}
+      PlayerStore.save(state.id, state)
+      {:reply, {:ok, item_name, ActionPoints.current(action_points)}, state}
+    else
+      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
+      false -> {:reply, {:error, :invalid_index}, state}
+    end
   end
 
   @impl true

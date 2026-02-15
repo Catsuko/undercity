@@ -47,6 +47,10 @@ defmodule UndercityCli.GameLoop do
         handle_inventory(player, player_id, vicinity)
         loop(player, player_id, vicinity, ap)
 
+      {:drop, index} ->
+        ap = handle_drop(player, player_id, vicinity, ap, index)
+        loop(player, player_id, vicinity, ap)
+
       {:scribble, text} ->
         ap = handle_scribble(player, player_id, vicinity, ap, text)
         loop(player, player_id, vicinity, ap)
@@ -59,7 +63,7 @@ defmodule UndercityCli.GameLoop do
           vicinity,
           player,
           player_id,
-          {"Unknown command. Try: look, search, inventory, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
+          {"Unknown command. Try: look, search, inventory, drop <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
            :warning}
         )
 
@@ -91,10 +95,32 @@ defmodule UndercityCli.GameLoop do
         show_threshold(ap, new_ap)
         new_ap
 
+      {:ok, {:found_but_full, item}, new_ap} ->
+        render(vicinity, player, player_id, {"You found #{item.name}, but your inventory is full.", :warning})
+        show_threshold(ap, new_ap)
+        new_ap
+
       {:ok, :nothing, new_ap} ->
         render(vicinity, player, player_id, {"You find nothing.", :warning})
         show_threshold(ap, new_ap)
         new_ap
+
+      {:error, :exhausted} ->
+        render(vicinity, player, player_id, @exhausted_message)
+        ap
+    end
+  end
+
+  defp handle_drop(player, player_id, vicinity, ap, index) do
+    case Gateway.drop_item(player_id, index) do
+      {:ok, item_name, new_ap} ->
+        render(vicinity, player, player_id, {"You dropped #{item_name}.", :info})
+        show_threshold(ap, new_ap)
+        new_ap
+
+      {:error, :invalid_index} ->
+        render(vicinity, player, player_id, {"Nothing to drop at that position.", :warning})
+        ap
 
       {:error, :exhausted} ->
         render(vicinity, player, player_id, @exhausted_message)
@@ -164,6 +190,14 @@ defmodule UndercityCli.GameLoop do
   def parse("i"), do: :inventory
   def parse("quit"), do: :quit
   def parse("q"), do: :quit
+
+  def parse("drop " <> index_str) do
+    case Integer.parse(index_str) do
+      {n, ""} when n >= 1 -> {:drop, n - 1}
+      _ -> :unknown
+    end
+  end
+
   def parse("scribble " <> text), do: {:scribble, text}
 
   def parse(input) do

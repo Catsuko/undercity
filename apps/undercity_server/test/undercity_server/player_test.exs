@@ -21,8 +21,6 @@ defmodule UndercityServer.PlayerTest do
   describe "use_item/2" do
     test "decrements uses on a consumable item", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
-      # Small sleep to ensure cast completes before call
-      Process.sleep(10)
 
       assert :ok = Player.use_item(id, "Chalk")
 
@@ -32,7 +30,6 @@ defmodule UndercityServer.PlayerTest do
 
     test "removes item when last use is spent", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 1))
-      Process.sleep(10)
 
       assert :ok = Player.use_item(id, "Chalk")
 
@@ -45,7 +42,6 @@ defmodule UndercityServer.PlayerTest do
 
     test "non-consumable items are not removed", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
-      Process.sleep(10)
 
       assert :ok = Player.use_item(id, "Junk")
 
@@ -57,7 +53,6 @@ defmodule UndercityServer.PlayerTest do
   describe "use_item/3 (atomic AP + item)" do
     test "spends AP and consumes item atomically", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
-      Process.sleep(10)
 
       assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
@@ -67,7 +62,6 @@ defmodule UndercityServer.PlayerTest do
 
     test "removes item on last use", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 1))
-      Process.sleep(10)
 
       assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
@@ -76,7 +70,6 @@ defmodule UndercityServer.PlayerTest do
 
     test "returns :exhausted when AP insufficient, item untouched", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
-      Process.sleep(10)
 
       # Drain all AP
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
@@ -94,11 +87,43 @@ defmodule UndercityServer.PlayerTest do
 
     test "spends custom AP cost", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 5))
-      Process.sleep(10)
 
       assert {:ok, 47} = Player.use_item(id, "Chalk", 3)
 
       assert 47 = Player.get_ap(id)
+    end
+  end
+
+  describe "drop_item/2" do
+    test "removes item at index and spends AP", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.new("Chalk", 3))
+
+      assert {:ok, "Junk", 49} = Player.drop_item(id, 0)
+
+      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+    end
+
+    test "returns :invalid_index for out of range", %{id: id} do
+      assert {:error, :invalid_index} = Player.drop_item(id, 0)
+    end
+
+    test "returns :exhausted when AP insufficient", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+
+      for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
+
+      assert {:error, :exhausted} = Player.drop_item(id, 0)
+
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+    end
+  end
+
+  describe "add_item/2" do
+    test "returns error when inventory is full", %{id: id} do
+      for _ <- 1..15, do: Player.add_item(id, Item.new("Junk"))
+
+      assert {:error, :full} = Player.add_item(id, Item.new("Extra"))
     end
   end
 

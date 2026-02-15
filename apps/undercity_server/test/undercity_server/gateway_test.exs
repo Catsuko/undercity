@@ -90,7 +90,6 @@ defmodule UndercityServer.GatewayTest do
     test "scribbles text on a block when player has chalk" do
       {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
-      Process.sleep(10)
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello world")
 
@@ -106,7 +105,6 @@ defmodule UndercityServer.GatewayTest do
     test "strips invalid characters from scribble text" do
       {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
-      Process.sleep(10)
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello!")
 
@@ -116,7 +114,6 @@ defmodule UndercityServer.GatewayTest do
     test "noops for empty scribble without consuming chalk" do
       {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
-      Process.sleep(10)
 
       assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
@@ -127,7 +124,6 @@ defmodule UndercityServer.GatewayTest do
     test "consumes a chalk use" do
       {player_id, _vicinity, _constitution} = Gateway.enter(unique_name())
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
-      Process.sleep(10)
 
       Gateway.perform(player_id, "plaza", :scribble, "first")
 

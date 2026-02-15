@@ -15,14 +15,16 @@ defmodule UndercityServer.Actions.Search do
   """
   def search(player_id, block_id) do
     Player.perform(player_id, fn ->
-      case Block.search(block_id) do
-        {:found, item} ->
-          Player.add_item(player_id, item)
-          {:found, item}
-
-        :nothing ->
-          :nothing
-      end
+      block_id |> Block.search() |> pick_up(player_id)
     end)
   end
+
+  defp pick_up({:found, item}, player_id) do
+    case Player.add_item(player_id, item) do
+      :ok -> {:found, item}
+      {:error, :full} -> {:found_but_full, item}
+    end
+  end
+
+  defp pick_up(:nothing, _player_id), do: :nothing
 end

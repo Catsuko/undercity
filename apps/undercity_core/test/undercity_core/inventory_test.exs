@@ -19,7 +19,7 @@ defmodule UndercityCore.InventoryTest do
       inventory = Inventory.new()
       item = Item.new("Junk")
 
-      inventory = Inventory.add_item(inventory, item)
+      assert {:ok, inventory} = Inventory.add_item(inventory, item)
 
       assert Inventory.list_items(inventory) == [item]
       assert Inventory.size(inventory) == 1
@@ -30,29 +30,25 @@ defmodule UndercityCore.InventoryTest do
       junk = Item.new("Junk")
       bone = Item.new("Bone")
 
-      inventory =
-        inventory
-        |> Inventory.add_item(junk)
-        |> Inventory.add_item(bone)
+      {:ok, inventory} = Inventory.add_item(inventory, junk)
+      {:ok, inventory} = Inventory.add_item(inventory, bone)
 
       assert Inventory.list_items(inventory) == [junk, bone]
     end
 
-    test "does nothing when inventory is full" do
-      inventory = Inventory.new()
+    test "returns error when inventory is full" do
       junk = Item.new("Junk")
 
       inventory =
-        Enum.reduce(1..5, inventory, fn _, inv ->
-          Inventory.add_item(inv, junk)
+        Enum.reduce(1..15, Inventory.new(), fn _, inv ->
+          {:ok, inv} = Inventory.add_item(inv, junk)
+          inv
         end)
 
       assert Inventory.full?(inventory)
-      assert Inventory.size(inventory) == 5
+      assert Inventory.size(inventory) == 15
 
-      inventory = Inventory.add_item(inventory, Item.new("Extra"))
-
-      assert Inventory.size(inventory) == 5
+      assert {:error, :full} = Inventory.add_item(inventory, Item.new("Extra"))
     end
   end
 
@@ -60,10 +56,8 @@ defmodule UndercityCore.InventoryTest do
     test "finds the first item by name" do
       chalk = Item.new("Chalk", 5)
 
-      inventory =
-        Inventory.new()
-        |> Inventory.add_item(Item.new("Junk"))
-        |> Inventory.add_item(chalk)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.new("Junk"))
+      {:ok, inventory} = Inventory.add_item(inventory, chalk)
 
       assert {:ok, ^chalk, 1} = Inventory.find_item(inventory, "Chalk")
     end
@@ -80,10 +74,8 @@ defmodule UndercityCore.InventoryTest do
       chalk = Item.new("Chalk", 5)
       used_chalk = Item.new("Chalk", 4)
 
-      inventory =
-        Inventory.new()
-        |> Inventory.add_item(Item.new("Junk"))
-        |> Inventory.add_item(chalk)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.new("Junk"))
+      {:ok, inventory} = Inventory.add_item(inventory, chalk)
 
       inventory = Inventory.replace_at(inventory, 1, used_chalk)
 
@@ -93,10 +85,8 @@ defmodule UndercityCore.InventoryTest do
 
   describe "remove_at/2" do
     test "removes the item at the given index" do
-      inventory =
-        Inventory.new()
-        |> Inventory.add_item(Item.new("Junk"))
-        |> Inventory.add_item(Item.new("Chalk", 5))
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.new("Junk"))
+      {:ok, inventory} = Inventory.add_item(inventory, Item.new("Chalk", 5))
 
       inventory = Inventory.remove_at(inventory, 1)
 
@@ -113,8 +103,9 @@ defmodule UndercityCore.InventoryTest do
 
     test "returns true when at capacity" do
       inventory =
-        Enum.reduce(1..5, Inventory.new(), fn _, inv ->
-          Inventory.add_item(inv, Item.new("Junk"))
+        Enum.reduce(1..15, Inventory.new(), fn _, inv ->
+          {:ok, inv} = Inventory.add_item(inv, Item.new("Junk"))
+          inv
         end)
 
       assert Inventory.full?(inventory)
