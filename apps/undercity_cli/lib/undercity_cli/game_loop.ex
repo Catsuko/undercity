@@ -113,8 +113,8 @@ defmodule UndercityCli.GameLoop do
 
   defp handle_drop(player, player_id, vicinity, ap, index) do
     case Gateway.drop_item(player_id, index) do
-      {:ok, new_ap} ->
-        render(vicinity, player, player_id, {"Dropped.", :info})
+      {:ok, item_name, new_ap} ->
+        render(vicinity, player, player_id, {"You dropped #{item_name}.", :info})
         show_threshold(ap, new_ap)
         new_ap
 

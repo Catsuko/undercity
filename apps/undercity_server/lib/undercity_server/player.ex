@@ -33,7 +33,7 @@ defmodule UndercityServer.Player do
   end
 
   @spec drop_item(String.t(), non_neg_integer()) ::
-          {:ok, non_neg_integer()} | {:error, :invalid_index} | {:error, :exhausted}
+          {:ok, String.t(), non_neg_integer()} | {:error, :invalid_index} | {:error, :exhausted}
   def drop_item(player_id, index) do
     GenServer.call(via(player_id), {:drop_item, index})
   end
@@ -119,12 +119,15 @@ defmodule UndercityServer.Player do
   def handle_call({:drop_item, index}, _from, state) do
     action_points = ActionPoints.regenerate(state.action_points)
 
+    items = Inventory.list_items(state.inventory)
+
     with {:ok, action_points} <- ActionPoints.spend(action_points, 1),
-         true <- index >= 0 and index < Inventory.size(state.inventory) do
+         true <- index >= 0 and index < length(items) do
+      item_name = Enum.at(items, index).name
       new_inventory = Inventory.remove_at(state.inventory, index)
       state = %{state | inventory: new_inventory, action_points: action_points}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, item_name, ActionPoints.current(action_points)}, state}
     else
       {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
       false -> {:reply, {:error, :invalid_index}, state}

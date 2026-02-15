@@ -99,7 +99,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Junk"))
       Player.add_item(id, Item.new("Chalk", 3))
 
-      assert {:ok, 49} = Player.drop_item(id, 0)
+      assert {:ok, "Junk", 49} = Player.drop_item(id, 0)
 
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
