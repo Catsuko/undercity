@@ -57,7 +57,7 @@ defmodule UndercityServer.PlayerTest do
       assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
 
       assert [%Item{name: "Chalk", uses: 2}] = Player.check_inventory(id)
-      assert 49 = Player.get_ap(id)
+      assert 49 = Player.constitution(id).ap
     end
 
     test "removes item on last use", %{id: id} do
@@ -82,7 +82,7 @@ defmodule UndercityServer.PlayerTest do
     test "returns :item_missing when item not in inventory, AP untouched", %{id: id} do
       assert {:error, :item_missing} = Player.use_item(id, "Chalk", 1)
 
-      assert 50 = Player.get_ap(id)
+      assert 50 = Player.constitution(id).ap
     end
 
     test "spends custom AP cost", %{id: id} do
@@ -90,7 +90,7 @@ defmodule UndercityServer.PlayerTest do
 
       assert {:ok, 47} = Player.use_item(id, "Chalk", 3)
 
-      assert 47 = Player.get_ap(id)
+      assert 47 = Player.constitution(id).ap
     end
   end
 
@@ -127,21 +127,25 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
-  describe "get_ap/1" do
+  describe "constitution/1" do
     test "new player starts with 50 AP", %{id: id} do
-      assert 50 = Player.get_ap(id)
+      assert 50 = Player.constitution(id).ap
+    end
+
+    test "new player starts with 50 HP", %{id: id} do
+      assert 50 = Player.constitution(id).hp
     end
   end
 
   describe "spend_ap via perform/3" do
     test "spends AP and runs action", %{id: id} do
       assert {:ok, :acted, 49} = Player.perform(id, fn -> :acted end)
-      assert 49 = Player.get_ap(id)
+      assert 49 = Player.constitution(id).ap
     end
 
     test "spends custom cost", %{id: id} do
       assert {:ok, :ok, 45} = Player.perform(id, 5, fn -> :ok end)
-      assert 45 = Player.get_ap(id)
+      assert 45 = Player.constitution(id).ap
     end
 
     test "returns exhausted when not enough AP", %{id: id} do
@@ -155,24 +159,24 @@ defmodule UndercityServer.PlayerTest do
       Player.perform(id, fn -> :ok end)
       Player.perform(id, fn -> :ok end)
       Player.perform(id, fn -> :ok end)
-      assert 47 = Player.get_ap(id)
+      assert 47 = Player.constitution(id).ap
     end
 
     test "spending exactly remaining AP succeeds", %{id: id} do
       # Drain to 3 AP
       for _ <- 1..47, do: Player.perform(id, fn -> :ok end)
-      assert 3 = Player.get_ap(id)
+      assert 3 = Player.constitution(id).ap
 
       assert {:ok, :ok, 0} = Player.perform(id, 3, fn -> :ok end)
-      assert 0 = Player.get_ap(id)
+      assert 0 = Player.constitution(id).ap
     end
 
     test "spending one more than remaining AP fails", %{id: id} do
       for _ <- 1..48, do: Player.perform(id, fn -> :ok end)
-      assert 2 = Player.get_ap(id)
+      assert 2 = Player.constitution(id).ap
 
       assert {:error, :exhausted} = Player.perform(id, 3, fn -> :ok end)
-      assert 2 = Player.get_ap(id)
+      assert 2 = Player.constitution(id).ap
     end
 
     test "action fn is not called when exhausted", %{id: id} do
