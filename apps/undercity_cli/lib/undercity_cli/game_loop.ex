@@ -196,6 +196,11 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
+  defp show_status(_ap, 0) do
+    {hp_text, hp_category} = View.health_status_message(0)
+    IO.puts("\n" <> View.format_message(hp_text, hp_category))
+  end
+
   defp show_status(ap, hp) do
     {ap_text, ap_category} = View.status_message(ap)
     {hp_text, hp_category} = View.health_status_message(hp)
