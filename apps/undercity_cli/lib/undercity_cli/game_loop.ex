@@ -19,8 +19,10 @@ defmodule UndercityCli.GameLoop do
     "exit" => :exit
   }
 
-  @exhausted_message {"You are too exhausted to act.", :warning}
-  @collapsed_message {"Your body has given out.", :warning}
+  @inability_messages %{
+    exhausted: {"You are too exhausted to act.", :warning},
+    collapsed: {"Your body has given out.", :warning}
+  }
 
   def run(player, player_id, vicinity, ap, hp) do
     render(vicinity, player, player_id)
@@ -42,23 +44,12 @@ defmodule UndercityCli.GameLoop do
     {vicinity, ap, hp}
   end
 
-  defp dispatch({:move, _direction}, player, player_id, vicinity, ap, 0) do
-    render(vicinity, player, player_id, @collapsed_message)
-    {vicinity, ap, 0}
-  end
-
   defp dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
     handle_move(player, player_id, vicinity, ap, hp, direction)
   end
 
-  defp dispatch(:search, player, player_id, vicinity, ap, 0) do
-    render(vicinity, player, player_id, @collapsed_message)
-    {vicinity, ap, 0}
-  end
-
   defp dispatch(:search, player, player_id, vicinity, ap, hp) do
-    {vicinity, new_ap} = {vicinity, handle_search(player, player_id, vicinity, ap)}
-    {vicinity, new_ap, hp}
+    {vicinity, handle_search(player, player_id, vicinity, ap), hp}
   end
 
   defp dispatch(:inventory, player, player_id, vicinity, ap, hp) do
@@ -66,28 +57,13 @@ defmodule UndercityCli.GameLoop do
     {vicinity, ap, hp}
   end
 
-  defp dispatch({:drop, _index}, player, player_id, vicinity, ap, 0) do
-    render(vicinity, player, player_id, @collapsed_message)
-    {vicinity, ap, 0}
-  end
-
   defp dispatch({:drop, index}, player, player_id, vicinity, ap, hp) do
     {vicinity, handle_drop(player, player_id, vicinity, ap, index), hp}
-  end
-
-  defp dispatch({:eat, _index}, player, player_id, vicinity, ap, 0) do
-    render(vicinity, player, player_id, @collapsed_message)
-    {vicinity, ap, 0}
   end
 
   defp dispatch({:eat, index}, player, player_id, vicinity, ap, hp) do
     {new_ap, new_hp} = handle_eat(player, player_id, vicinity, ap, hp, index)
     {vicinity, new_ap, new_hp}
-  end
-
-  defp dispatch({:scribble, _text}, player, player_id, vicinity, ap, 0) do
-    render(vicinity, player, player_id, @collapsed_message)
-    {vicinity, ap, 0}
   end
 
   defp dispatch({:scribble, text}, player, player_id, vicinity, ap, hp) do
@@ -119,8 +95,8 @@ defmodule UndercityCli.GameLoop do
         show_threshold(ap, new_ap)
         {vicinity, new_ap, hp}
 
-      {:error, :exhausted} ->
-        render(vicinity, player, player_id, @exhausted_message)
+      {:error, reason} ->
+        render(vicinity, player, player_id, inability_message(reason))
         {vicinity, ap, hp}
     end
   end
@@ -142,8 +118,8 @@ defmodule UndercityCli.GameLoop do
         show_threshold(ap, new_ap)
         new_ap
 
-      {:error, :exhausted} ->
-        render(vicinity, player, player_id, @exhausted_message)
+      {:error, reason} ->
+        render(vicinity, player, player_id, inability_message(reason))
         ap
     end
   end
@@ -159,8 +135,8 @@ defmodule UndercityCli.GameLoop do
         render(vicinity, player, player_id, {"Invalid item selection.", :warning})
         ap
 
-      {:error, :exhausted} ->
-        render(vicinity, player, player_id, @exhausted_message)
+      {:error, reason} ->
+        render(vicinity, player, player_id, inability_message(reason))
         ap
     end
   end
@@ -181,8 +157,8 @@ defmodule UndercityCli.GameLoop do
         render(vicinity, player, player_id, {"Invalid item selection.", :warning})
         {ap, hp}
 
-      {:error, :exhausted} ->
-        render(vicinity, player, player_id, @exhausted_message)
+      {:error, reason} ->
+        render(vicinity, player, player_id, inability_message(reason))
         {ap, hp}
     end
   end
@@ -214,8 +190,8 @@ defmodule UndercityCli.GameLoop do
         render(vicinity, player, player_id, {"You have no chalk.", :warning})
         ap
 
-      {:error, :exhausted} ->
-        render(vicinity, player, player_id, @exhausted_message)
+      {:error, reason} ->
+        render(vicinity, player, player_id, inability_message(reason))
         ap
     end
   end
@@ -240,6 +216,8 @@ defmodule UndercityCli.GameLoop do
       nil -> :ok
     end
   end
+
+  defp inability_message(reason), do: Map.fetch!(@inability_messages, reason)
 
   defp render(vicinity, player, _player_id, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
