@@ -23,6 +23,7 @@ defmodule UndercityCli.MixProject do
 
   defp deps do
     [
+      {:owl, "~> 0.13.0"},
       {:undercity_server, in_umbrella: true}
     ]
   end

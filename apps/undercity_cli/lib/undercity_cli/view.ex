@@ -18,10 +18,14 @@ defmodule UndercityCli.View do
     inn: "Low beams sag overhead in a room thick with the smell of damp wood and old smoke."
   }
 
-  @dim "\e[38;5;235m"
-  @grid_color "\e[38;5;245m"
-  @highlight "\e[38;5;103m"
-  @bg_fill "\e[48;5;236m"
+  @dim IO.ANSI.color(235)
+  @grid_color IO.ANSI.color(245)
+  @highlight IO.ANSI.color(103)
+  @bg_fill IO.ANSI.color_background(236)
+
+  @success_color IO.ANSI.color(108)
+  @info_color IO.ANSI.color(67)
+  @warning_color IO.ANSI.color(131)
 
   def describe_block(%Vicinity{} = vicinity, current_player) do
     description = Map.fetch!(@descriptions, description_key(vicinity))
@@ -42,16 +46,10 @@ defmodule UndercityCli.View do
     sections =
       sections ++
         [
-          [
-            "\e[38;5;245m",
-            "You are #{prefix} ",
-            "\e[38;5;103m",
-            name,
-            "\e[38;5;245m",
-            ". ",
-            description,
-            IO.ANSI.reset()
-          ]
+          Owl.Data.tag(
+            ["You are #{prefix} ", Owl.Data.tag(name, @highlight), ". ", description],
+            @grid_color
+          )
         ]
 
     sections =
@@ -64,18 +62,16 @@ defmodule UndercityCli.View do
             surface = scribble_surface(vicinity)
 
             [
-              [
-                "\e[38;5;245mSomeone has scribbled \e[3m",
-                text,
-                "\e[23m #{surface}.",
-                IO.ANSI.reset()
-              ]
+              Owl.Data.tag(
+                ["Someone has scribbled ", Owl.Data.tag(text, :italic), " #{surface}."],
+                @grid_color
+              )
             ]
         end
 
     sections = sections ++ ["", describe_people(vicinity.people, current_player)]
 
-    Enum.map_join(sections, "\n", &IO.iodata_to_binary/1)
+    Enum.map_join(sections, "\n", &to_owl_string/1)
   end
 
   defp description_key(%Vicinity{type: :space, building_type: bt}) when bt != nil, do: :"space_#{bt}"
@@ -220,9 +216,15 @@ defmodule UndercityCli.View do
   end
 
   def format_message(message, category \\ :info)
-  def format_message(message, :success), do: "\e[38;5;108m▸ #{message}#{IO.ANSI.reset()}"
-  def format_message(message, :info), do: "\e[38;5;67m▸ #{message}#{IO.ANSI.reset()}"
-  def format_message(message, :warning), do: "\e[38;5;131m▸ #{message}#{IO.ANSI.reset()}"
+
+  def format_message(message, category) do
+    color = message_color(category)
+    ["▸ ", message] |> Owl.Data.tag(color) |> to_owl_string()
+  end
+
+  defp message_color(:success), do: @success_color
+  defp message_color(:info), do: @info_color
+  defp message_color(:warning), do: @warning_color
 
   @doc """
   Returns the awareness tier for a given AP value.
@@ -287,4 +289,6 @@ defmodule UndercityCli.View do
   defp health_tier_message(:battered), do: {"You are severely wounded.", :warning}
   defp health_tier_message(:critical), do: {"You have many wounds and are close to passing out.", :warning}
   defp health_tier_message(:collapsed), do: {"Your body has given out.", :warning}
+
+  defp to_owl_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
 end
