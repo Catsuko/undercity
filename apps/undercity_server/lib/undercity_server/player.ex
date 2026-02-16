@@ -35,16 +35,20 @@ defmodule UndercityServer.Player do
   end
 
   @spec drop_item(String.t(), non_neg_integer()) ::
-          {:ok, String.t(), non_neg_integer()} | {:error, :invalid_index} | {:error, :exhausted}
+          {:ok, String.t(), non_neg_integer()}
+          | {:error, :invalid_index}
+          | {:error, :exhausted}
+          | {:error, :collapsed}
   def drop_item(player_id, index) do
     GenServer.call(via(player_id), {:drop_item, index})
   end
 
   @spec eat_item(String.t(), non_neg_integer()) ::
-          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer()}
+          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer(), non_neg_integer()}
           | {:error, :invalid_index}
           | {:error, :not_edible, String.t()}
           | {:error, :exhausted}
+          | {:error, :collapsed}
   def eat_item(player_id, index) do
     GenServer.call(via(player_id), {:eat_item, index})
   end
@@ -65,16 +69,17 @@ defmodule UndercityServer.Player do
   end
 
   @spec use_item(String.t(), String.t(), pos_integer()) ::
-          {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :item_missing}
+          {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed} | {:error, :item_missing}
   def use_item(player_id, item_name, cost) do
     GenServer.call(via(player_id), {:use_item, item_name, cost})
   end
 
-  @spec perform(String.t(), pos_integer(), (-> any())) :: {:ok, any(), non_neg_integer()} | {:error, :exhausted}
+  @spec perform(String.t(), pos_integer(), (-> any())) ::
+          {:ok, any(), non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed}
   def perform(player_id, cost \\ 1, action_fn) do
     case GenServer.call(via(player_id), {:spend_ap, cost}) do
       {:ok, ap} -> {:ok, action_fn.(), ap}
-      {:error, :exhausted} -> {:error, :exhausted}
+      {:error, _} = error -> error
     end
   end
 
@@ -123,20 +128,17 @@ defmodule UndercityServer.Player do
 
   @impl true
   def handle_call({:drop_item, index}, _from, state) do
-    action_points = ActionPoints.regenerate(state.action_points)
-
     items = Inventory.list_items(state.inventory)
 
-    with {:ok, action_points} <- ActionPoints.spend(action_points, 1),
-         true <- index >= 0 and index < length(items) do
+    with {:index, true} <- {:index, index >= 0 and index < length(items)},
+         {:ok, state} <- exert(state, 1) do
       item_name = Enum.at(items, index).name
-      new_inventory = Inventory.remove_at(state.inventory, index)
-      state = %{state | inventory: new_inventory, action_points: action_points}
+      state = %{state | inventory: Inventory.remove_at(state.inventory, index)}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, item_name, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, item_name, ActionPoints.current(state.action_points)}, state}
     else
-      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
-      false -> {:reply, {:error, :invalid_index}, state}
+      {:index, false} -> {:reply, {:error, :invalid_index}, state}
+      {:error, _} = error -> {:reply, error, state}
     end
   end
 
@@ -147,17 +149,16 @@ defmodule UndercityServer.Player do
     with {:index, true} <- {:index, index >= 0 and index < length(items)},
          item = Enum.at(items, index),
          {:edible, effect} when effect != :not_edible <- {:edible, Food.effect(item.name)},
-         action_points = ActionPoints.regenerate(state.action_points),
-         {:ok, action_points} <- ActionPoints.spend(action_points, 1) do
+         {:ok, state} <- exert(state, 1) do
       health = Health.apply_effect(state.health, effect)
       inventory = Inventory.remove_at(state.inventory, index)
-      state = %{state | inventory: inventory, action_points: action_points, health: health}
+      state = %{state | inventory: inventory, health: health}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, item, effect, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, item, effect, ActionPoints.current(state.action_points), Health.current(health)}, state}
     else
       {:index, false} -> {:reply, {:error, :invalid_index}, state}
       {:edible, :not_edible} -> {:reply, {:error, :not_edible, Enum.at(items, index).name}, state}
-      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
+      {:error, _} = error -> {:reply, error, state}
     end
   end
 
@@ -186,31 +187,26 @@ defmodule UndercityServer.Player do
 
   @impl true
   def handle_call({:use_item, item_name, cost}, _from, state) do
-    action_points = ActionPoints.regenerate(state.action_points)
-
-    with {:ok, action_points} <- ActionPoints.spend(action_points, cost),
-         {:ok, inventory} <- consume_item(state.inventory, item_name) do
-      state = %{state | action_points: action_points, inventory: inventory}
+    with {:ok, inventory} <- consume_item(state.inventory, item_name),
+         {:ok, state} <- exert(state, cost) do
+      state = %{state | inventory: inventory}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
     else
-      {:error, :exhausted} -> {:reply, {:error, :exhausted}, state}
       {:error, :item_missing} -> {:reply, {:error, :item_missing}, state}
+      {:error, _} = error -> {:reply, error, state}
     end
   end
 
   @impl true
   def handle_call({:spend_ap, cost}, _from, state) do
-    action_points = ActionPoints.regenerate(state.action_points)
-
-    case ActionPoints.spend(action_points, cost) do
-      {:ok, action_points} ->
-        state = %{state | action_points: action_points}
+    case exert(state, cost) do
+      {:ok, state} ->
         PlayerStore.save(state.id, state)
-        {:reply, {:ok, ActionPoints.current(action_points)}, state}
+        {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
 
-      {:error, :exhausted} ->
-        {:reply, {:error, :exhausted}, state}
+      {:error, _} = error ->
+        {:reply, error, state}
     end
   end
 
@@ -219,6 +215,22 @@ defmodule UndercityServer.Player do
     action_points = ActionPoints.regenerate(state.action_points)
     state = %{state | action_points: action_points}
     {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(state.health)}, state}
+  end
+
+  defp exert(state, cost) do
+    if Health.current(state.health) == 0 do
+      {:error, :collapsed}
+    else
+      action_points = ActionPoints.regenerate(state.action_points)
+
+      case ActionPoints.spend(action_points, cost) do
+        {:ok, action_points} ->
+          {:ok, %{state | action_points: action_points}}
+
+        {:error, :exhausted} ->
+          {:error, :exhausted}
+      end
+    end
   end
 
   defp consume_item(inventory, item_name) do

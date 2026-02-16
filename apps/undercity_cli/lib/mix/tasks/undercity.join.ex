@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Undercity.Join do
       {:ok, {player_id, vicinity, constitution}} ->
         Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
-        GameLoop.run(player, player_id, vicinity, constitution.ap)
+        GameLoop.run(player, player_id, vicinity, constitution.ap, constitution.hp)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")

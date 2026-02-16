@@ -1,6 +1,7 @@
 defmodule UndercityServer.PlayerTest do
   use ExUnit.Case, async: true
 
+  alias UndercityCore.Health
   alias UndercityCore.Item
   alias UndercityServer.Player
 
@@ -16,6 +17,12 @@ defmodule UndercityServer.PlayerTest do
     end)
 
     %{id: id}
+  end
+
+  defp collapse(id) do
+    :sys.replace_state(:"player_#{id}", fn state ->
+      %{state | health: %Health{hp: 0}}
+    end)
   end
 
   describe "use_item/2" do
@@ -123,7 +130,7 @@ defmodule UndercityServer.PlayerTest do
     test "consumes edible item and returns effect", %{id: id} do
       Player.add_item(id, Item.new("Mushroom"))
 
-      assert {:ok, %Item{name: "Mushroom"}, effect, 49} = Player.eat_item(id, 0)
+      assert {:ok, %Item{name: "Mushroom"}, effect, 49, _hp} = Player.eat_item(id, 0)
       assert match?({:heal, 5}, effect) or match?({:damage, 5}, effect)
 
       assert [] = Player.check_inventory(id)
@@ -140,7 +147,7 @@ defmodule UndercityServer.PlayerTest do
           id = "player_eat_#{:rand.uniform(100_000)}"
           start_supervised!({Player, id: id, name: "test_#{id}"}, id: id)
           Player.add_item(id, Item.new("Mushroom"))
-          {:ok, _item, effect, _ap} = Player.eat_item(id, 0)
+          {:ok, _item, effect, _ap, _hp} = Player.eat_item(id, 0)
           {id, effect}
         end
 
@@ -203,6 +210,49 @@ defmodule UndercityServer.PlayerTest do
 
     test "new player starts with 50 HP", %{id: id} do
       assert 50 = Player.constitution(id).hp
+    end
+  end
+
+  describe "collapsed (0 HP) blocks actions" do
+    test "perform returns :collapsed", %{id: id} do
+      collapse(id)
+      assert {:error, :collapsed} = Player.perform(id, fn -> :should_not_run end)
+    end
+
+    test "drop_item returns :collapsed", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.drop_item(id, 0)
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+    end
+
+    test "eat_item returns :collapsed", %{id: id} do
+      Player.add_item(id, Item.new("Mushroom"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.eat_item(id, 0)
+      assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+    end
+
+    test "use_item/3 returns :collapsed", %{id: id} do
+      Player.add_item(id, Item.new("Chalk", 3))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.use_item(id, "Chalk", 1)
+      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+    end
+
+    test "action fn is not called when collapsed", %{id: id} do
+      collapse(id)
+      test_pid = self()
+
+      assert {:error, :collapsed} =
+               Player.perform(id, fn ->
+                 send(test_pid, :action_ran)
+               end)
+
+      refute_received :action_ran
     end
   end
 

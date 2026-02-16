@@ -253,4 +253,38 @@ defmodule UndercityCli.View do
   defp tier_message(:weary), do: {"You feel weary.", :warning}
   defp tier_message(:exhausted), do: {"You can barely keep your eyes open.", :warning}
   defp tier_message(:spent), do: {"You are completely exhausted.", :warning}
+
+  @doc """
+  Returns the health tier for a given HP value.
+  """
+  def health_tier(0), do: :collapsed
+  def health_tier(hp) when hp >= 45, do: :healthy
+  def health_tier(hp) when hp >= 35, do: :sore
+  def health_tier(hp) when hp >= 15, do: :wounded
+  def health_tier(hp) when hp >= 5, do: :battered
+  def health_tier(_hp), do: :critical
+
+  @doc """
+  Returns a status message for the current health tier.
+  """
+  def health_status_message(hp), do: health_tier_message(health_tier(hp))
+
+  @doc """
+  Returns a threshold crossing message if HP moved into a new tier, or nil.
+  """
+  def health_threshold_message(old_hp, new_hp) do
+    old_tier = health_tier(old_hp)
+    new_tier = health_tier(new_hp)
+
+    if old_tier != new_tier do
+      health_tier_message(new_tier)
+    end
+  end
+
+  defp health_tier_message(:healthy), do: {"You feel healthy.", :success}
+  defp health_tier_message(:sore), do: {"You feel some aches and pains.", :warning}
+  defp health_tier_message(:wounded), do: {"You are wounded.", :warning}
+  defp health_tier_message(:battered), do: {"You are severely wounded.", :warning}
+  defp health_tier_message(:critical), do: {"You have many wounds and are close to passing out.", :warning}
+  defp health_tier_message(:collapsed), do: {"Your body has given out.", :warning}
 end
