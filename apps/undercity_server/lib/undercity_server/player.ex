@@ -41,7 +41,7 @@ defmodule UndercityServer.Player do
   end
 
   @spec eat_item(String.t(), non_neg_integer()) ::
-          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer()}
+          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer(), non_neg_integer()}
           | {:error, :invalid_index}
           | {:error, :not_edible, String.t()}
           | {:error, :exhausted}
@@ -153,7 +153,7 @@ defmodule UndercityServer.Player do
       inventory = Inventory.remove_at(state.inventory, index)
       state = %{state | inventory: inventory, action_points: action_points, health: health}
       PlayerStore.save(state.id, state)
-      {:reply, {:ok, item, effect, ActionPoints.current(action_points)}, state}
+      {:reply, {:ok, item, effect, ActionPoints.current(action_points), Health.current(health)}, state}
     else
       {:index, false} -> {:reply, {:error, :invalid_index}, state}
       {:edible, :not_edible} -> {:reply, {:error, :not_edible, Enum.at(items, index).name}, state}

@@ -9,6 +9,7 @@ defmodule UndercityServer.Session do
   """
 
   alias UndercityCore.ActionPoints
+  alias UndercityCore.Health
   alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.Player
@@ -73,7 +74,7 @@ defmodule UndercityServer.Session do
 
         spawn_block = WorldMap.spawn_block()
         Block.join(spawn_block, player_id)
-        {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max()}}
+        {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max(), hp: Health.max()}}
     end
   end
 

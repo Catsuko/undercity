@@ -403,4 +403,84 @@ defmodule UndercityCli.ViewTest do
       assert nil == View.threshold_message(30, 20)
     end
   end
+
+  describe "health_tier/1" do
+    test "45+ is healthy" do
+      assert :healthy = View.health_tier(50)
+      assert :healthy = View.health_tier(45)
+    end
+
+    test "35-44 is sore" do
+      assert :sore = View.health_tier(44)
+      assert :sore = View.health_tier(35)
+    end
+
+    test "15-34 is wounded" do
+      assert :wounded = View.health_tier(34)
+      assert :wounded = View.health_tier(15)
+    end
+
+    test "5-14 is battered" do
+      assert :battered = View.health_tier(14)
+      assert :battered = View.health_tier(5)
+    end
+
+    test "1-4 is critical" do
+      assert :critical = View.health_tier(4)
+      assert :critical = View.health_tier(1)
+    end
+
+    test "0 is collapsed" do
+      assert :collapsed = View.health_tier(0)
+    end
+  end
+
+  describe "health_status_message/1" do
+    test "healthy is a success message" do
+      assert {"You feel healthy.", :success} = View.health_status_message(50)
+    end
+
+    test "sore is a warning message" do
+      assert {"You feel some aches and pains.", :warning} = View.health_status_message(40)
+    end
+
+    test "wounded is a warning message" do
+      assert {"You are wounded.", :warning} = View.health_status_message(20)
+    end
+
+    test "battered is a warning message" do
+      assert {"You are severely wounded.", :warning} = View.health_status_message(10)
+    end
+
+    test "critical is a warning message" do
+      assert {"You have many wounds and are close to passing out.", :warning} = View.health_status_message(2)
+    end
+
+    test "collapsed is a warning message" do
+      assert {"Your body has given out.", :warning} = View.health_status_message(0)
+    end
+  end
+
+  describe "health_threshold_message/2" do
+    test "returns message when crossing into sore" do
+      assert {"You feel some aches and pains.", :warning} = View.health_threshold_message(45, 44)
+    end
+
+    test "returns message when crossing into battered" do
+      assert {"You are severely wounded.", :warning} = View.health_threshold_message(15, 14)
+    end
+
+    test "returns message when crossing into collapsed" do
+      assert {"Your body has given out.", :warning} = View.health_threshold_message(1, 0)
+    end
+
+    test "returns message when recovering to healthy" do
+      assert {"You feel healthy.", :success} = View.health_threshold_message(44, 45)
+    end
+
+    test "returns nil when staying in same tier" do
+      assert nil == View.health_threshold_message(50, 49)
+      assert nil == View.health_threshold_message(20, 16)
+    end
+  end
 end

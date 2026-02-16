@@ -123,7 +123,7 @@ defmodule UndercityServer.PlayerTest do
     test "consumes edible item and returns effect", %{id: id} do
       Player.add_item(id, Item.new("Mushroom"))
 
-      assert {:ok, %Item{name: "Mushroom"}, effect, 49} = Player.eat_item(id, 0)
+      assert {:ok, %Item{name: "Mushroom"}, effect, 49, _hp} = Player.eat_item(id, 0)
       assert match?({:heal, 5}, effect) or match?({:damage, 5}, effect)
 
       assert [] = Player.check_inventory(id)
@@ -140,7 +140,7 @@ defmodule UndercityServer.PlayerTest do
           id = "player_eat_#{:rand.uniform(100_000)}"
           start_supervised!({Player, id: id, name: "test_#{id}"}, id: id)
           Player.add_item(id, Item.new("Mushroom"))
-          {:ok, _item, effect, _ap} = Player.eat_item(id, 0)
+          {:ok, _item, effect, _ap, _hp} = Player.eat_item(id, 0)
           {id, effect}
         end
 

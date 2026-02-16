@@ -20,55 +20,83 @@ defmodule UndercityCli.GameLoop do
   }
 
   @exhausted_message {"You are too exhausted to act.", :warning}
+  @collapsed_message {"Your body has given out.", :warning}
 
-  def run(player, player_id, vicinity, ap) do
+  def run(player, player_id, vicinity, ap, hp) do
     render(vicinity, player, player_id)
-    show_status(ap)
-    loop(player, player_id, vicinity, ap)
+    show_status(ap, hp)
+    loop(player, player_id, vicinity, ap, hp)
   end
 
-  defp loop(player, player_id, vicinity, ap) do
+  defp loop(player, player_id, vicinity, ap, hp) do
     input = "> " |> IO.gets() |> String.trim() |> String.downcase()
 
-    case dispatch(parse(input), player, player_id, vicinity, ap) do
+    case dispatch(parse(input), player, player_id, vicinity, ap, hp) do
       :quit -> :ok
-      {vicinity, ap} -> loop(player, player_id, vicinity, ap)
+      {vicinity, ap, hp} -> loop(player, player_id, vicinity, ap, hp)
     end
   end
 
-  defp dispatch(:look, player, player_id, vicinity, ap) do
+  defp dispatch(:look, player, player_id, vicinity, ap, hp) do
     render(vicinity, player, player_id)
-    {vicinity, ap}
+    {vicinity, ap, hp}
   end
 
-  defp dispatch({:move, direction}, player, player_id, vicinity, ap) do
-    handle_move(player, player_id, vicinity, ap, direction)
+  defp dispatch({:move, _direction}, player, player_id, vicinity, ap, 0) do
+    render(vicinity, player, player_id, @collapsed_message)
+    {vicinity, ap, 0}
   end
 
-  defp dispatch(:search, player, player_id, vicinity, ap) do
-    {vicinity, handle_search(player, player_id, vicinity, ap)}
+  defp dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
+    handle_move(player, player_id, vicinity, ap, hp, direction)
   end
 
-  defp dispatch(:inventory, player, player_id, vicinity, ap) do
+  defp dispatch(:search, player, player_id, vicinity, ap, 0) do
+    render(vicinity, player, player_id, @collapsed_message)
+    {vicinity, ap, 0}
+  end
+
+  defp dispatch(:search, player, player_id, vicinity, ap, hp) do
+    {vicinity, new_ap} = {vicinity, handle_search(player, player_id, vicinity, ap)}
+    {vicinity, new_ap, hp}
+  end
+
+  defp dispatch(:inventory, player, player_id, vicinity, ap, hp) do
     handle_inventory(player, player_id, vicinity)
-    {vicinity, ap}
+    {vicinity, ap, hp}
   end
 
-  defp dispatch({:drop, index}, player, player_id, vicinity, ap) do
-    {vicinity, handle_drop(player, player_id, vicinity, ap, index)}
+  defp dispatch({:drop, _index}, player, player_id, vicinity, ap, 0) do
+    render(vicinity, player, player_id, @collapsed_message)
+    {vicinity, ap, 0}
   end
 
-  defp dispatch({:eat, index}, player, player_id, vicinity, ap) do
-    {vicinity, handle_eat(player, player_id, vicinity, ap, index)}
+  defp dispatch({:drop, index}, player, player_id, vicinity, ap, hp) do
+    {vicinity, handle_drop(player, player_id, vicinity, ap, index), hp}
   end
 
-  defp dispatch({:scribble, text}, player, player_id, vicinity, ap) do
-    {vicinity, handle_scribble(player, player_id, vicinity, ap, text)}
+  defp dispatch({:eat, _index}, player, player_id, vicinity, ap, 0) do
+    render(vicinity, player, player_id, @collapsed_message)
+    {vicinity, ap, 0}
   end
 
-  defp dispatch(:quit, _player, _player_id, _vicinity, _ap), do: :quit
+  defp dispatch({:eat, index}, player, player_id, vicinity, ap, hp) do
+    {new_ap, new_hp} = handle_eat(player, player_id, vicinity, ap, hp, index)
+    {vicinity, new_ap, new_hp}
+  end
 
-  defp dispatch(:unknown, player, player_id, vicinity, ap) do
+  defp dispatch({:scribble, _text}, player, player_id, vicinity, ap, 0) do
+    render(vicinity, player, player_id, @collapsed_message)
+    {vicinity, ap, 0}
+  end
+
+  defp dispatch({:scribble, text}, player, player_id, vicinity, ap, hp) do
+    {vicinity, handle_scribble(player, player_id, vicinity, ap, text), hp}
+  end
+
+  defp dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
+
+  defp dispatch(:unknown, player, player_id, vicinity, ap, hp) do
     render(
       vicinity,
       player,
@@ -77,23 +105,23 @@ defmodule UndercityCli.GameLoop do
        :warning}
     )
 
-    {vicinity, ap}
+    {vicinity, ap, hp}
   end
 
-  defp handle_move(player, player_id, vicinity, ap, direction) do
+  defp handle_move(player, player_id, vicinity, ap, hp, direction) do
     case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
         render(new_vicinity, player, player_id, View.threshold_message(ap, new_ap))
-        {new_vicinity, new_ap}
+        {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
         render(vicinity, player, player_id, {"You can't go that way.", :warning})
         show_threshold(ap, new_ap)
-        {vicinity, new_ap}
+        {vicinity, new_ap, hp}
 
       {:error, :exhausted} ->
         render(vicinity, player, player_id, @exhausted_message)
-        {vicinity, ap}
+        {vicinity, ap, hp}
     end
   end
 
@@ -137,24 +165,25 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp handle_eat(player, player_id, vicinity, ap, index) do
+  defp handle_eat(player, player_id, vicinity, ap, hp, index) do
     case Gateway.perform(player_id, vicinity.id, :eat, index) do
-      {:ok, item, _effect, new_ap} ->
+      {:ok, item, _effect, new_ap, new_hp} ->
         render(vicinity, player, player_id, {"Ate a #{item.name}.", :success})
         show_threshold(ap, new_ap)
-        new_ap
+        show_health_threshold(hp, new_hp)
+        {new_ap, new_hp}
 
       {:error, :not_edible, item_name} ->
         render(vicinity, player, player_id, {"You can't eat #{item_name}.", :warning})
-        ap
+        {ap, hp}
 
       {:error, :invalid_index} ->
         render(vicinity, player, player_id, {"Invalid item selection.", :warning})
-        ap
+        {ap, hp}
 
       {:error, :exhausted} ->
         render(vicinity, player, player_id, @exhausted_message)
-        ap
+        {ap, hp}
     end
   end
 
@@ -191,13 +220,22 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp show_status(ap) do
-    {text, category} = View.status_message(ap)
-    IO.puts("\n" <> View.format_message(text, category))
+  defp show_status(ap, hp) do
+    {ap_text, ap_category} = View.status_message(ap)
+    {hp_text, hp_category} = View.health_status_message(hp)
+    IO.puts("\n" <> View.format_message(ap_text, ap_category))
+    IO.puts(View.format_message(hp_text, hp_category))
   end
 
   defp show_threshold(old_ap, new_ap) do
     case View.threshold_message(old_ap, new_ap) do
+      {text, category} -> IO.puts(View.format_message(text, category))
+      nil -> :ok
+    end
+  end
+
+  defp show_health_threshold(old_hp, new_hp) do
+    case View.health_threshold_message(old_hp, new_hp) do
       {text, category} -> IO.puts(View.format_message(text, category))
       nil -> :ok
     end
