@@ -50,7 +50,7 @@ defmodule UndercityCli.View.BlockDescription do
 
     sections = sections ++ ["", describe_people(vicinity.people, current_player), ""]
 
-    Enum.map_join(sections, "\n", &to_owl_string/1)
+    sections |> Enum.map_join("\n", &to_owl_string/1) |> IO.puts()
   end
 
   def describe_people(people, current_player) do

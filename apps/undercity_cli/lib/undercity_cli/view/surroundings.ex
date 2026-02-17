@@ -13,11 +13,11 @@ defmodule UndercityCli.View.Surroundings do
   @highlight IO.ANSI.color(103)
   @bg_fill IO.ANSI.color_background(236)
 
-  def render(%Vicinity{neighbourhood: nil}), do: ""
+  def render(%Vicinity{neighbourhood: nil}), do: :ok
 
   def render(%Vicinity{} = vicinity) do
     inside = if Vicinity.inside?(vicinity), do: centre_id(vicinity.neighbourhood)
-    render_grid(vicinity.neighbourhood, inside)
+    IO.puts(render_grid(vicinity.neighbourhood, inside) <> "\n")
   end
 
   defp render_grid(neighbourhood, inside) do
