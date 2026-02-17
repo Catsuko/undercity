@@ -11,14 +11,28 @@ defmodule UndercityCli.View.Constitution do
   """
   def render(_ap, 0) do
     {text, category} = health_status_message(0)
-    Status.format_message(text, category)
+    Status.render_message(text, category)
   end
 
   def render(ap, hp) do
     {ap_text, ap_cat} = status_message(ap)
     {hp_text, hp_cat} = health_status_message(hp)
+    Status.render_message(ap_text, ap_cat)
+    Status.render_message(hp_text, hp_cat)
+  end
 
-    Enum.join([Status.format_message(ap_text, ap_cat), Status.format_message(hp_text, hp_cat)], "\n")
+  @doc """
+  Renders threshold crossing messages when AP or HP change tiers.
+  Only prints if a threshold was crossed. Unchanged values default to current.
+  """
+  def render(ap, hp, old_ap, old_hp \\ nil)
+
+  def render(ap, hp, old_ap, nil), do: render(ap, hp, old_ap, hp)
+
+  def render(ap, hp, old_ap, old_hp) do
+    [threshold_message(old_ap, ap), health_threshold_message(old_hp, hp)]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.each(fn {text, cat} -> Status.render_message(text, cat) end)
   end
 
   @doc """

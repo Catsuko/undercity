@@ -1,21 +1,50 @@
 defmodule UndercityCli.View.ConstitutionTest do
   use ExUnit.Case, async: true
 
+  import ExUnit.CaptureIO
+
   alias UndercityCli.View.Constitution
 
   describe "render/2" do
     test "shows both AP and HP status" do
-      result = Constitution.render(50, 50)
+      output = capture_io(fn -> Constitution.render(50, 50) end)
 
-      assert result =~ "You feel rested."
-      assert result =~ "You feel healthy."
+      assert output =~ "You feel rested."
+      assert output =~ "You feel healthy."
     end
 
     test "only shows HP status when collapsed" do
-      result = Constitution.render(30, 0)
+      output = capture_io(fn -> Constitution.render(30, 0) end)
 
-      assert result =~ "Your body has given out."
-      refute result =~ "weary"
+      assert output =~ "Your body has given out."
+      refute output =~ "weary"
+    end
+  end
+
+  describe "render/4" do
+    test "shows AP threshold message when AP tier changes" do
+      output = capture_io(fn -> Constitution.render(39, 50, 40, 50) end)
+
+      assert output =~ "You feel weary."
+    end
+
+    test "shows HP threshold message when HP tier changes" do
+      output = capture_io(fn -> Constitution.render(50, 44, 50, 45) end)
+
+      assert output =~ "You feel some aches and pains."
+    end
+
+    test "shows both threshold messages when both tiers change" do
+      output = capture_io(fn -> Constitution.render(39, 44, 40, 45) end)
+
+      assert output =~ "You feel weary."
+      assert output =~ "You feel some aches and pains."
+    end
+
+    test "prints nothing when no thresholds are crossed" do
+      output = capture_io(fn -> Constitution.render(49, 49, 50, 50) end)
+
+      assert output == ""
     end
   end
 

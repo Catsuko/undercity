@@ -4,7 +4,6 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.View
-  alias UndercityCli.View.Constitution
   alias UndercityServer.Gateway
 
   @directions %{
@@ -27,7 +26,7 @@ defmodule UndercityCli.GameLoop do
 
   def run(player, player_id, vicinity, ap, hp) do
     render(vicinity, player, player_id)
-    show_status(ap, hp)
+    View.render_constitution(ap, hp)
     loop(player, player_id, vicinity, ap, hp)
   end
 
@@ -50,7 +49,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp dispatch(:search, player, player_id, vicinity, ap, hp) do
-    {vicinity, handle_search(player, player_id, vicinity, ap), hp}
+    {vicinity, handle_search(player, player_id, vicinity, ap, hp), hp}
   end
 
   defp dispatch(:inventory, player, player_id, vicinity, ap, hp) do
@@ -59,7 +58,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp dispatch({:drop, index}, player, player_id, vicinity, ap, hp) do
-    {vicinity, handle_drop(player, player_id, vicinity, ap, index), hp}
+    {vicinity, handle_drop(player, player_id, vicinity, ap, hp, index), hp}
   end
 
   defp dispatch({:eat, index}, player, player_id, vicinity, ap, hp) do
@@ -68,7 +67,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp dispatch({:scribble, text}, player, player_id, vicinity, ap, hp) do
-    {vicinity, handle_scribble(player, player_id, vicinity, ap, text), hp}
+    {vicinity, handle_scribble(player, player_id, vicinity, ap, hp, text), hp}
   end
 
   defp dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
@@ -88,12 +87,13 @@ defmodule UndercityCli.GameLoop do
   defp handle_move(player, player_id, vicinity, ap, hp, direction) do
     case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
-        render(new_vicinity, player, player_id, Constitution.threshold_message(ap, new_ap))
+        render(new_vicinity, player, player_id)
+        View.render_constitution(new_ap, hp, ap)
         {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
         render(vicinity, player, player_id, {"You can't go that way.", :warning})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         {vicinity, new_ap, hp}
 
       {:error, reason} ->
@@ -102,21 +102,21 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp handle_search(player, player_id, vicinity, ap) do
+  defp handle_search(player, player_id, vicinity, ap, hp) do
     case Gateway.perform(player_id, vicinity.id, :search, nil) do
       {:ok, {:found, item}, new_ap} ->
         render(vicinity, player, player_id, {"You found #{item.name}!", :success})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         new_ap
 
       {:ok, {:found_but_full, item}, new_ap} ->
         render(vicinity, player, player_id, {"You found #{item.name}, but your inventory is full.", :warning})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         new_ap
 
       {:ok, :nothing, new_ap} ->
         render(vicinity, player, player_id, {"You find nothing.", :warning})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         new_ap
 
       {:error, reason} ->
@@ -125,11 +125,11 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp handle_drop(player, player_id, vicinity, ap, index) do
+  defp handle_drop(player, player_id, vicinity, ap, hp, index) do
     case Gateway.drop_item(player_id, index) do
       {:ok, item_name, new_ap} ->
         render(vicinity, player, player_id, {"You dropped #{item_name}.", :info})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         new_ap
 
       {:error, :invalid_index} ->
@@ -146,8 +146,7 @@ defmodule UndercityCli.GameLoop do
     case Gateway.perform(player_id, vicinity.id, :eat, index) do
       {:ok, item, _effect, new_ap, new_hp} ->
         render(vicinity, player, player_id, {"Ate a #{item.name}.", :success})
-        show_threshold(ap, new_ap)
-        show_health_threshold(hp, new_hp)
+        View.render_constitution(new_ap, new_hp, ap, hp)
         {new_ap, new_hp}
 
       {:error, :not_edible, item_name} ->
@@ -176,11 +175,11 @@ defmodule UndercityCli.GameLoop do
     render(vicinity, player, player_id, message)
   end
 
-  defp handle_scribble(player, player_id, vicinity, ap, text) do
+  defp handle_scribble(player, player_id, vicinity, ap, hp, text) do
     case Gateway.perform(player_id, vicinity.id, :scribble, text) do
       {:ok, new_ap} ->
         render(vicinity, player, player_id, {"You scribble #{View.scribble_surface(vicinity)}.", :success})
-        show_threshold(ap, new_ap)
+        View.render_constitution(new_ap, hp, ap)
         new_ap
 
       {:error, :empty_message} ->
@@ -197,24 +196,6 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp show_status(ap, hp) do
-    IO.puts("\n" <> View.render_constitution(ap, hp))
-  end
-
-  defp show_threshold(old_ap, new_ap) do
-    case Constitution.threshold_message(old_ap, new_ap) do
-      {text, category} -> IO.puts(View.format_message(text, category))
-      nil -> :ok
-    end
-  end
-
-  defp show_health_threshold(old_hp, new_hp) do
-    case Constitution.health_threshold_message(old_hp, new_hp) do
-      {text, category} -> IO.puts(View.format_message(text, category))
-      nil -> :ok
-    end
-  end
-
   defp inability_message(reason), do: Map.fetch!(@inability_messages, reason)
 
   defp render(vicinity, player, _player_id, message \\ nil) do
@@ -226,7 +207,7 @@ defmodule UndercityCli.GameLoop do
     IO.puts(View.render_current_block(vicinity, player))
 
     case message do
-      {text, category} -> IO.puts("\n" <> View.format_message(text, category))
+      {text, category} -> IO.puts(View.format_message(text, category))
       nil -> :ok
     end
   end
