@@ -1,12 +1,10 @@
 defmodule UndercityCli.View.BlockDescriptionTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureIO
-
   alias UndercityCli.View.BlockDescription
   alias UndercityServer.Vicinity
 
-  describe "render/2" do
+  describe "render_to_string/2" do
     test "includes name, type-driven description, and people" do
       vicinity = %Vicinity{
         id: "plaza",
@@ -20,7 +18,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "You are at"
       assert output =~ "The Plaza"
@@ -42,7 +40,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       refute output =~ "┌"
       refute output =~ "┘"
@@ -61,7 +59,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "You are at"
       assert output =~ "Ashwell"
@@ -82,7 +80,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: :inn
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "You are outside"
       assert output =~ "The Lame Horse"
@@ -102,7 +100,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "A patch of open ground"
     end
@@ -121,7 +119,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "beware the dark"
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "Someone has scribbled"
       assert output =~ "beware the dark"
@@ -144,7 +142,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       refute output =~ "scribbled"
     end
@@ -159,7 +157,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "rest in peace"
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "rest in peace"
       assert output =~ "on a tombstone."
@@ -179,7 +177,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "free ale"
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "free ale"
       assert output =~ "on the wall."
@@ -199,7 +197,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "enter here"
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "enter here"
       assert output =~ "on the wall."
@@ -218,7 +216,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> BlockDescription.render(vicinity, "Grimshaw") end)
+      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
 
       assert output =~ "You are inside"
       assert output =~ "The Lame Horse Inn"

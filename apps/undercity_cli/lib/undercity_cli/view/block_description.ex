@@ -19,7 +19,7 @@ defmodule UndercityCli.View.BlockDescription do
   @grid_color IO.ANSI.color(245)
   @highlight IO.ANSI.color(103)
 
-  def render(%Vicinity{} = vicinity, current_player) do
+  def render_to_string(%Vicinity{} = vicinity, current_player) do
     description = Map.fetch!(@descriptions, description_key(vicinity))
     prefix = block_prefix(vicinity.type)
     name = Vicinity.name(vicinity)
@@ -50,7 +50,7 @@ defmodule UndercityCli.View.BlockDescription do
 
     sections = sections ++ ["", describe_people(vicinity.people, current_player), ""]
 
-    sections |> Enum.map_join("\n", &to_owl_string/1) |> IO.puts()
+    Enum.map_join(sections, "\n", &to_owl_string/1)
   end
 
   def describe_people(people, current_player) do

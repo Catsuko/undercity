@@ -1,8 +1,6 @@
 defmodule UndercityCli.View.StatusTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureIO
-
   alias UndercityCli.View.Status
 
   describe "format_message/2" do
@@ -25,20 +23,6 @@ defmodule UndercityCli.View.StatusTest do
 
       assert result =~ "▸ You can't go that way."
       assert result =~ "\e[38;5;131m"
-    end
-  end
-
-  describe "render_message/1" do
-    test "prints formatted message for tuple" do
-      output = capture_io(fn -> Status.render_message({"hello", :info}) end)
-
-      assert output =~ "▸ hello"
-    end
-
-    test "does nothing for nil" do
-      output = capture_io(fn -> Status.render_message(nil) end)
-
-      assert output == ""
     end
   end
 end

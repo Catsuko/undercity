@@ -3,36 +3,24 @@ defmodule UndercityCli.View.Constitution do
   AP and HP tier logic with status and threshold messages.
   """
 
-  alias UndercityCli.View.Status
+  @doc """
+  Returns status messages for current AP and HP as a list of {text, category} tuples.
+  """
+  def status_messages(_ap, 0), do: [health_status_message(0)]
+  def status_messages(ap, hp), do: [status_message(ap), health_status_message(hp)]
 
   @doc """
-  Renders the current AP/HP status as formatted message lines.
-  When collapsed (hp=0), only shows health status.
+  Returns threshold crossing messages as a list of {text, category} tuples.
+  Only includes messages where a tier boundary was crossed.
   """
-  def render(_ap, 0) do
-    {text, category} = health_status_message(0)
-    Status.render_message(text, category)
+  def threshold_messages(old_ap, new_ap, old_hp \\ nil, new_hp \\ nil)
+
+  def threshold_messages(old_ap, new_ap, nil, nil) do
+    Enum.reject([threshold_message(old_ap, new_ap)], &is_nil/1)
   end
 
-  def render(ap, hp) do
-    {ap_text, ap_cat} = status_message(ap)
-    {hp_text, hp_cat} = health_status_message(hp)
-    Status.render_message(ap_text, ap_cat)
-    Status.render_message(hp_text, hp_cat)
-  end
-
-  @doc """
-  Renders threshold crossing messages when AP or HP change tiers.
-  Only prints if a threshold was crossed. Unchanged values default to current.
-  """
-  def render(ap, hp, old_ap, old_hp \\ nil)
-
-  def render(ap, hp, old_ap, nil), do: render(ap, hp, old_ap, hp)
-
-  def render(ap, hp, old_ap, old_hp) do
-    [threshold_message(old_ap, ap), health_threshold_message(old_hp, hp)]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.each(fn {text, cat} -> Status.render_message(text, cat) end)
+  def threshold_messages(old_ap, new_ap, old_hp, new_hp) do
+    Enum.reject([threshold_message(old_ap, new_ap), health_threshold_message(old_hp, new_hp)], &is_nil/1)
   end
 
   @doc """

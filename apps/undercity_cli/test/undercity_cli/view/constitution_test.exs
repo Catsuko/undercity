@@ -1,52 +1,7 @@
 defmodule UndercityCli.View.ConstitutionTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureIO
-
   alias UndercityCli.View.Constitution
-
-  describe "render/2" do
-    test "shows both AP and HP status" do
-      output = capture_io(fn -> Constitution.render(50, 50) end)
-
-      assert output =~ "You feel rested."
-      assert output =~ "You feel healthy."
-    end
-
-    test "only shows HP status when collapsed" do
-      output = capture_io(fn -> Constitution.render(30, 0) end)
-
-      assert output =~ "Your body has given out."
-      refute output =~ "weary"
-    end
-  end
-
-  describe "render/4" do
-    test "shows AP threshold message when AP tier changes" do
-      output = capture_io(fn -> Constitution.render(39, 50, 40, 50) end)
-
-      assert output =~ "You feel weary."
-    end
-
-    test "shows HP threshold message when HP tier changes" do
-      output = capture_io(fn -> Constitution.render(50, 44, 50, 45) end)
-
-      assert output =~ "You feel some aches and pains."
-    end
-
-    test "shows both threshold messages when both tiers change" do
-      output = capture_io(fn -> Constitution.render(39, 44, 40, 45) end)
-
-      assert output =~ "You feel weary."
-      assert output =~ "You feel some aches and pains."
-    end
-
-    test "prints nothing when no thresholds are crossed" do
-      output = capture_io(fn -> Constitution.render(49, 49, 50, 50) end)
-
-      assert output == ""
-    end
-  end
 
   describe "awareness_tier/1" do
     test "40+ is rested" do
@@ -187,6 +142,37 @@ defmodule UndercityCli.View.ConstitutionTest do
     test "returns nil when staying in same tier" do
       assert nil == Constitution.health_threshold_message(50, 49)
       assert nil == Constitution.health_threshold_message(20, 16)
+    end
+  end
+
+  describe "status_messages/2" do
+    test "returns AP and HP messages when alive" do
+      messages = Constitution.status_messages(50, 50)
+      assert [{"You feel rested.", :success}, {"You feel healthy.", :success}] = messages
+    end
+
+    test "returns only HP message when collapsed" do
+      messages = Constitution.status_messages(10, 0)
+      assert [{"Your body has given out.", :warning}] = messages
+    end
+  end
+
+  describe "threshold_messages/4" do
+    test "returns AP threshold when crossing tier" do
+      assert [{"You feel weary.", :warning}] = Constitution.threshold_messages(40, 39)
+    end
+
+    test "returns empty list when no threshold crossed" do
+      assert [] = Constitution.threshold_messages(50, 49)
+    end
+
+    test "returns both AP and HP thresholds" do
+      assert [{"You feel weary.", :warning}, {"You feel some aches and pains.", :warning}] =
+               Constitution.threshold_messages(40, 39, 45, 44)
+    end
+
+    test "defaults old_hp/new_hp to nil" do
+      assert [{"You feel weary.", :warning}] = Constitution.threshold_messages(40, 39)
     end
   end
 end

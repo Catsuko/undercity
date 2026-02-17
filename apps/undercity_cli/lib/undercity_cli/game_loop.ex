@@ -4,6 +4,7 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.View
+  alias UndercityCli.View.Constitution
   alias UndercityServer.Gateway
 
   @directions %{
@@ -20,17 +21,21 @@ defmodule UndercityCli.GameLoop do
   }
 
   def run(player, player_id, vicinity, ap, hp) do
-    View.render(vicinity, player)
-    View.render_constitution(ap, hp)
+    View.init()
+    View.render(vicinity, player, Constitution.status_messages(ap, hp))
     loop(player, player_id, vicinity, ap, hp)
   end
 
   defp loop(player, player_id, vicinity, ap, hp) do
-    input = "> " |> IO.gets() |> String.trim() |> String.downcase()
+    input = View.read_input() |> String.trim() |> String.downcase()
 
     case dispatch(parse(input), player, player_id, vicinity, ap, hp) do
-      :quit -> :ok
-      {vicinity, ap, hp} -> loop(player, player_id, vicinity, ap, hp)
+      :quit ->
+        View.teardown()
+        :ok
+
+      {vicinity, ap, hp} ->
+        loop(player, player_id, vicinity, ap, hp)
     end
   end
 

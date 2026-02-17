@@ -11,105 +11,63 @@ defmodule UndercityCli.View.Surroundings do
   @dim IO.ANSI.color(235)
   @grid_color IO.ANSI.color(245)
   @highlight IO.ANSI.color(103)
-  @bg_fill IO.ANSI.color_background(236)
 
-  def render(%Vicinity{neighbourhood: nil}), do: :ok
+  def render_to_string(%Vicinity{neighbourhood: nil}), do: ""
 
-  def render(%Vicinity{} = vicinity) do
+  def render_to_string(%Vicinity{} = vicinity) do
     inside = if Vicinity.inside?(vicinity), do: centre_id(vicinity.neighbourhood)
-    IO.puts(render_grid(vicinity.neighbourhood, inside) <> "\n")
+    render_table(vicinity.neighbourhood, inside)
   end
 
-  defp render_grid(neighbourhood, inside) do
-    line_color = if inside, do: @dim, else: @grid_color
-    bar = String.duplicate("─", @cell_width)
-    top = "#{line_color}┌#{bar}┬#{bar}┬#{bar}┐#{IO.ANSI.reset()}"
-    mid = "#{line_color}├#{bar}┼#{bar}┼#{bar}┤#{IO.ANSI.reset()}"
-    bot = "#{line_color}└#{bar}┴#{bar}┴#{bar}┘#{IO.ANSI.reset()}"
+  defp render_table(neighbourhood, inside) do
+    [header_row | body_rows] = neighbourhood
+
+    header_cells =
+      header_row
+      |> Enum.with_index()
+      |> Map.new(fn {block_id, c} -> {c, format_cell(block_id, 0, c, inside)} end)
 
     rows =
-      neighbourhood
-      |> Enum.with_index()
+      body_rows
+      |> Enum.with_index(1)
       |> Enum.map(fn {row, r} ->
-        render_row(row, r, inside, line_color)
+        row
+        |> Enum.with_index()
+        |> Map.new(fn {block_id, c} -> {c, format_cell(block_id, r, c, inside)} end)
       end)
 
-    [
-      top,
-      Enum.at(rows, 0),
-      mid,
-      Enum.at(rows, 1),
-      mid,
-      Enum.at(rows, 2),
-      bot
-    ]
-    |> List.flatten()
-    |> Enum.join("\n")
+    rows
+    |> Owl.Table.new(
+      render_cell: [
+        header: &Map.fetch!(header_cells, &1),
+        body: & &1
+      ],
+      border_style: :solid,
+      divide_body_rows: true
+    )
+    |> to_owl_string()
   end
 
-  defp render_row(row, r, inside, line_color) do
-    cells =
-      row
-      |> Enum.with_index()
-      |> Enum.map(fn {block_id, c} ->
-        name = if block_id, do: Vicinity.name_for(block_id)
-        is_building = block_id != nil and Vicinity.building?(block_id)
-        is_current = r == 1 and c == 1
-        is_inside = inside != nil and block_id == inside
-        render_cell_lines(name, is_building, is_current, is_inside, inside != nil)
-      end)
+  defp format_cell(nil, _r, _c, _inside) do
+    blank = String.duplicate(" ", @cell_width)
+    Enum.join([blank, blank, blank], "\n")
+  end
 
-    pipe = "#{line_color}│#{IO.ANSI.reset()}"
+  defp format_cell(block_id, r, c, inside) do
+    name = Vicinity.name_for(block_id)
+    is_building = Vicinity.building?(block_id)
+    is_current = r == 1 and c == 1
+    is_inside_this = inside != nil and block_id == inside
+    dimmed = inside != nil
 
-    for line <- 0..2 do
-      cell_line =
-        Enum.map_join(cells, pipe, fn lines -> Enum.at(lines, line) end)
-
-      "#{pipe}#{cell_line}#{pipe}"
+    cond do
+      is_building and is_inside_this -> format_building_inside(name)
+      is_building -> format_building(name, is_current, dimmed)
+      true -> format_plain(name, is_current, dimmed)
     end
   end
 
-  defp render_cell_lines(nil, _building, _current, _inside_this, dimmed) do
-    color = if dimmed, do: @dim, else: @grid_color
-    blank = "#{color}#{String.duplicate(" ", @cell_width)}#{IO.ANSI.reset()}"
-    [blank, blank, blank]
-  end
-
-  defp render_cell_lines(name, true, _is_current, true, _dimmed) do
-    inner_width = @box_width - 2
-    text = pad_center(name, inner_width)
-    pad = div(@cell_width - @box_width, 2)
-    side_pad = String.duplicate(" ", pad)
-
-    top_line =
-      "#{@dim}#{side_pad}#{@highlight}╔#{String.duplicate("═", inner_width)}╗#{@dim}#{side_pad}#{IO.ANSI.reset()}"
-
-    mid_line =
-      "#{@dim}#{side_pad}#{@highlight}║#{@bg_fill}#{text}#{IO.ANSI.reset()}#{@highlight}║#{@dim}#{side_pad}#{IO.ANSI.reset()}"
-
-    bot_line =
-      "#{@dim}#{side_pad}#{@highlight}╚#{String.duplicate("═", inner_width)}╝#{@dim}#{side_pad}#{IO.ANSI.reset()}"
-
-    [top_line, mid_line, bot_line]
-  end
-
-  defp render_cell_lines(name, true, is_current, false, dimmed) do
-    inner_width = @box_width - 2
-    text = pad_center(name, inner_width)
-    pad = div(@cell_width - @box_width, 2)
-    side_pad = String.duplicate(" ", pad)
-
-    box_color = if dimmed, do: @dim, else: @grid_color
-    text_color = if dimmed, do: @dim, else: if(is_current, do: @highlight, else: @grid_color)
-
-    top_line = "#{box_color}#{side_pad}╔#{String.duplicate("═", inner_width)}╗#{side_pad}#{IO.ANSI.reset()}"
-    mid_line = "#{box_color}#{side_pad}║#{text_color}#{text}#{box_color}║#{side_pad}#{IO.ANSI.reset()}"
-    bot_line = "#{box_color}#{side_pad}╚#{String.duplicate("═", inner_width)}╝#{side_pad}#{IO.ANSI.reset()}"
-
-    [top_line, mid_line, bot_line]
-  end
-
-  defp render_cell_lines(name, false, is_current, _inside_this, dimmed) do
+  defp format_plain(name, is_current, dimmed) do
     text = pad_center(name, @cell_width)
     blank = String.duplicate(" ", @cell_width)
 
@@ -120,7 +78,64 @@ defmodule UndercityCli.View.Surroundings do
         true -> @grid_color
       end
 
-    [blank, "#{color}#{text}#{IO.ANSI.reset()}", blank]
+    [blank, "\n", Owl.Data.tag(text, color), "\n", blank]
+  end
+
+  defp format_building_inside(name) do
+    inner_width = @box_width - 2
+    text = pad_center(name, inner_width)
+    pad = div(@cell_width - @box_width, 2)
+    side_pad = String.duplicate(" ", pad)
+
+    top = [
+      Owl.Data.tag(side_pad, @dim),
+      Owl.Data.tag("╔#{String.duplicate("═", inner_width)}╗", @highlight),
+      Owl.Data.tag(side_pad, @dim)
+    ]
+
+    mid = [
+      Owl.Data.tag(side_pad, @dim),
+      Owl.Data.tag("║#{text}║", @highlight),
+      Owl.Data.tag(side_pad, @dim)
+    ]
+
+    bot = [
+      Owl.Data.tag(side_pad, @dim),
+      Owl.Data.tag("╚#{String.duplicate("═", inner_width)}╝", @highlight),
+      Owl.Data.tag(side_pad, @dim)
+    ]
+
+    [top, "\n", mid, "\n", bot]
+  end
+
+  defp format_building(name, is_current, dimmed) do
+    inner_width = @box_width - 2
+    text = pad_center(name, inner_width)
+    pad = div(@cell_width - @box_width, 2)
+    side_pad = String.duplicate(" ", pad)
+
+    box_color = if dimmed, do: @dim, else: @grid_color
+    text_color = if dimmed, do: @dim, else: if(is_current, do: @highlight, else: @grid_color)
+
+    top =
+      Owl.Data.tag(
+        "#{side_pad}╔#{String.duplicate("═", inner_width)}╗#{side_pad}",
+        box_color
+      )
+
+    mid = [
+      Owl.Data.tag("#{side_pad}║", box_color),
+      Owl.Data.tag(text, text_color),
+      Owl.Data.tag("║#{side_pad}", box_color)
+    ]
+
+    bot =
+      Owl.Data.tag(
+        "#{side_pad}╚#{String.duplicate("═", inner_width)}╝#{side_pad}",
+        box_color
+      )
+
+    [top, "\n", mid, "\n", bot]
   end
 
   defp pad_center(text, width) do
@@ -135,4 +150,6 @@ defmodule UndercityCli.View.Surroundings do
   defp centre_id(neighbourhood) do
     neighbourhood |> Enum.at(1) |> Enum.at(1)
   end
+
+  defp to_owl_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
 end

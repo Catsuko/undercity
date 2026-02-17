@@ -1,12 +1,10 @@
 defmodule UndercityCli.View.SurroundingsTest do
   use ExUnit.Case, async: true
 
-  import ExUnit.CaptureIO
-
   alias UndercityCli.View.Surroundings
   alias UndercityServer.Vicinity
 
-  describe "render/1" do
+  describe "render_to_string/1" do
     test "renders center block with all neighbours" do
       vicinity = %Vicinity{
         id: "plaza",
@@ -20,7 +18,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
+      output = Surroundings.render_to_string(vicinity)
 
       assert output =~ "The Plaza"
       assert output =~ "Ashwell"
@@ -44,7 +42,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
+      output = Surroundings.render_to_string(vicinity)
 
       assert output =~ "Ashwell"
       assert output =~ "North Alley"
@@ -65,7 +63,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
+      output = Surroundings.render_to_string(vicinity)
 
       assert output =~ "╔"
       assert output =~ "║"
@@ -86,14 +84,14 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
+      output = Surroundings.render_to_string(vicinity)
 
       refute output =~ "╔"
       refute output =~ "║"
       refute output =~ "╚"
     end
 
-    test "dims grid and fills building box when inside" do
+    test "dims grid and highlights building box when inside" do
       vicinity = %Vicinity{
         id: "lame_horse_interior",
         type: :inn,
@@ -106,18 +104,18 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
+      output = Surroundings.render_to_string(vicinity)
 
-      # Dim colour used for grid lines
+      # Dim colour used for non-building cells
       assert output =~ "\e[38;5;235m"
-      # Background fill inside the building box
-      assert output =~ "\e[48;5;236m"
+      # Highlight colour used for building box
+      assert output =~ "\e[38;5;103m"
       # Building box characters still present
       assert output =~ "╔"
       assert output =~ "║"
     end
 
-    test "does nothing when no neighbourhood" do
+    test "returns empty string when no neighbourhood" do
       vicinity = %Vicinity{
         id: "plaza",
         type: :square,
@@ -126,9 +124,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = capture_io(fn -> Surroundings.render(vicinity) end)
-
-      assert output == ""
+      assert Surroundings.render_to_string(vicinity) == ""
     end
   end
 end

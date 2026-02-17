@@ -14,13 +14,6 @@ defmodule UndercityCli.View.Status do
     ["▸ ", message] |> Owl.Data.tag(color) |> to_owl_string()
   end
 
-  def render_message(nil), do: :ok
-  def render_message({message, category}), do: render_message(message, category)
-
-  def render_message(message, category) do
-    IO.puts(format_message(message, category))
-  end
-
   defp message_color(:success), do: @success_color
   defp message_color(:info), do: @info_color
   defp message_color(:warning), do: @warning_color
