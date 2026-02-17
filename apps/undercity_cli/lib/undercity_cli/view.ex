@@ -10,9 +10,14 @@ defmodule UndercityCli.View do
   """
 
   alias UndercityCli.View.Screen
+  alias UndercityCli.View.Constitution
 
-  defdelegate init(), to: Screen
   defdelegate read_input(), to: Screen
+
+  def init(vicinity, player, ap, hp) do
+    Screen.init()
+    render(vicinity, player, Constitution.status_messages(ap, hp))
+  end
 
   def render(vicinity, player, messages \\ []) do
     Screen.update(vicinity, player, messages)

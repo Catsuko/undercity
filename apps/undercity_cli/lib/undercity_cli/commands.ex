@@ -16,10 +16,6 @@ defmodule UndercityCli.Commands do
     collapsed: {"Your body has given out.", :warning}
   }
 
-  def dispatch(:look, player, _player_id, vicinity, ap, hp) do
-    look(player, vicinity, ap, hp)
-  end
-
   def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
     move(player, player_id, vicinity, ap, hp, direction)
   end
@@ -48,11 +44,6 @@ defmodule UndercityCli.Commands do
 
   def dispatch(:unknown, player, _player_id, vicinity, ap, hp) do
     unknown(player, vicinity, ap, hp)
-  end
-
-  def look(player, vicinity, ap, hp) do
-    View.render(vicinity, player, Constitution.status_messages(ap, hp))
-    {vicinity, ap, hp}
   end
 
   def move(player, player_id, vicinity, ap, hp, direction) do
@@ -180,7 +171,7 @@ defmodule UndercityCli.Commands do
 
   def unknown(player, vicinity, ap, hp) do
     View.render(vicinity, player, [
-      {"Unknown command. Try: look, search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
+      {"Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
        :warning}
     ])
 

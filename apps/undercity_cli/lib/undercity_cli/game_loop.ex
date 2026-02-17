@@ -20,8 +20,7 @@ defmodule UndercityCli.GameLoop do
   }
 
   def run(player, player_id, vicinity, ap, hp) do
-    View.init()
-    Commands.look(player, vicinity, ap, hp)
+    View.init(vicinity, player, ap, hp)
     loop(player, player_id, vicinity, ap, hp)
   end
 
@@ -37,8 +36,6 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  def parse("look"), do: :look
-  def parse("l"), do: :look
   def parse("search"), do: :search
   def parse("inventory"), do: :inventory
   def parse("i"), do: :inventory
