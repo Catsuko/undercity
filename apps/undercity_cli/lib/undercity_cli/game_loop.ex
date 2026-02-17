@@ -4,6 +4,7 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.View
+  alias UndercityCli.View.Constitution
   alias UndercityServer.Gateway
 
   @directions %{
@@ -87,7 +88,7 @@ defmodule UndercityCli.GameLoop do
   defp handle_move(player, player_id, vicinity, ap, hp, direction) do
     case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
-        render(new_vicinity, player, player_id, View.threshold_message(ap, new_ap))
+        render(new_vicinity, player, player_id, Constitution.threshold_message(ap, new_ap))
         {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
@@ -196,27 +197,19 @@ defmodule UndercityCli.GameLoop do
     end
   end
 
-  defp show_status(_ap, 0) do
-    {hp_text, hp_category} = View.health_status_message(0)
-    IO.puts("\n" <> View.format_message(hp_text, hp_category))
-  end
-
   defp show_status(ap, hp) do
-    {ap_text, ap_category} = View.status_message(ap)
-    {hp_text, hp_category} = View.health_status_message(hp)
-    IO.puts("\n" <> View.format_message(ap_text, ap_category))
-    IO.puts(View.format_message(hp_text, hp_category))
+    IO.puts("\n" <> View.render_constitution(ap, hp))
   end
 
   defp show_threshold(old_ap, new_ap) do
-    case View.threshold_message(old_ap, new_ap) do
+    case Constitution.threshold_message(old_ap, new_ap) do
       {text, category} -> IO.puts(View.format_message(text, category))
       nil -> :ok
     end
   end
 
   defp show_health_threshold(old_hp, new_hp) do
-    case View.health_threshold_message(old_hp, new_hp) do
+    case Constitution.health_threshold_message(old_hp, new_hp) do
       {text, category} -> IO.puts(View.format_message(text, category))
       nil -> :ok
     end
@@ -226,7 +219,11 @@ defmodule UndercityCli.GameLoop do
 
   defp render(vicinity, player, _player_id, message \\ nil) do
     IO.write([IO.ANSI.clear(), IO.ANSI.home()])
-    IO.puts(View.describe_block(vicinity, player))
+
+    surroundings = View.render_surroundings(vicinity)
+    if surroundings != "", do: IO.puts(surroundings <> "\n")
+
+    IO.puts(View.render_current_block(vicinity, player))
 
     case message do
       {text, category} -> IO.puts("\n" <> View.format_message(text, category))
