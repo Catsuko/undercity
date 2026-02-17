@@ -30,7 +30,6 @@ defmodule UndercityCli.GameLoop do
 
     case Commands.dispatch(parse(input), player, player_id, vicinity, ap, hp) do
       :quit ->
-        View.teardown()
         :ok
 
       {vicinity, ap, hp} ->

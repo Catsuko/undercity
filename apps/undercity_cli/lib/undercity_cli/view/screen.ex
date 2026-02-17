@@ -60,8 +60,4 @@ defmodule UndercityCli.View.Screen do
       {:input, input} -> input
     end
   end
-
-  def teardown do
-    :ok
-  end
 end

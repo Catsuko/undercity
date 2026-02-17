@@ -13,7 +13,6 @@ defmodule UndercityCli.View do
 
   defdelegate init(), to: Screen
   defdelegate read_input(), to: Screen
-  defdelegate teardown(), to: Screen
 
   def render(vicinity, player, messages \\ []) do
     Screen.update(vicinity, player, messages)
