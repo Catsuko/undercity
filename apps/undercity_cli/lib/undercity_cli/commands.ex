@@ -5,12 +5,12 @@ defmodule UndercityCli.Commands do
   Each function calls the server via Gateway, pushes messages to the
   MessageBuffer, and returns the updated `{vicinity, ap, hp}` game state.
   Messages are rendered by the game loop after each dispatch.
+  Threshold messages (AP/HP tier crossings) are handled by the game loop.
   """
 
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View
   alias UndercityCli.View.BlockDescription
-  alias UndercityCli.View.Constitution
   alias UndercityServer.Gateway
 
   def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
@@ -20,11 +20,10 @@ defmodule UndercityCli.Commands do
       {:ok, {:ok, new_vicinity}, new_ap} ->
         View.render_surroundings(new_vicinity)
         View.render_description(new_vicinity, player)
-        MessageBuffer.push(Constitution.threshold_messages(ap, new_ap, hp, hp))
         {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
-        MessageBuffer.push([{"You can't go that way.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)])
+        MessageBuffer.push("You can't go that way.", :warning)
         {vicinity, new_ap, hp}
     end)
   end
@@ -34,19 +33,15 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :search, nil)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, {:found, item}, new_ap} ->
-        MessageBuffer.push([{"You found #{item.name}!", :success} | Constitution.threshold_messages(ap, new_ap, hp, hp)])
+        MessageBuffer.push("You found #{item.name}!", :success)
         {vicinity, new_ap, hp}
 
       {:ok, {:found_but_full, item}, new_ap} ->
-        MessageBuffer.push([
-          {"You found #{item.name}, but your inventory is full.", :warning}
-          | Constitution.threshold_messages(ap, new_ap, hp, hp)
-        ])
-
+        MessageBuffer.push("You found #{item.name}, but your inventory is full.", :warning)
         {vicinity, new_ap, hp}
 
       {:ok, :nothing, new_ap} ->
-        MessageBuffer.push([{"You find nothing.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)])
+        MessageBuffer.push("You find nothing.", :warning)
         {vicinity, new_ap, hp}
     end)
   end
@@ -69,7 +64,7 @@ defmodule UndercityCli.Commands do
     |> Gateway.drop_item(index)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, item_name, new_ap} ->
-        MessageBuffer.push([{"You dropped #{item_name}.", :info} | Constitution.threshold_messages(ap, new_ap, hp, hp)])
+        MessageBuffer.push("You dropped #{item_name}.", :info)
         {vicinity, new_ap, hp}
 
       {:error, :invalid_index} ->
@@ -83,7 +78,7 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :eat, index)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, item, _effect, new_ap, new_hp} ->
-        MessageBuffer.push([{"Ate a #{item.name}.", :success} | Constitution.threshold_messages(ap, new_ap, hp, new_hp)])
+        MessageBuffer.push("Ate a #{item.name}.", :success)
         {vicinity, new_ap, new_hp}
 
       {:error, :not_edible, item_name} ->
@@ -101,11 +96,7 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :scribble, text)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, new_ap} ->
-        MessageBuffer.push([
-          {"You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success}
-          | Constitution.threshold_messages(ap, new_ap, hp, hp)
-        ])
-
+        MessageBuffer.push("You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success)
         {vicinity, new_ap, hp}
 
       {:error, :empty_message} ->
