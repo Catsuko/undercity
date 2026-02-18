@@ -23,7 +23,7 @@ defmodule UndercityCli.Commands do
         {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
-        MessageBuffer.push("You can't go that way.", :warning)
+        MessageBuffer.warn("You can't go that way.")
         {vicinity, new_ap, hp}
     end)
   end
@@ -33,15 +33,15 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :search, nil)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, {:found, item}, new_ap} ->
-        MessageBuffer.push("You found #{item.name}!", :success)
+        MessageBuffer.success("You found #{item.name}!")
         {vicinity, new_ap, hp}
 
       {:ok, {:found_but_full, item}, new_ap} ->
-        MessageBuffer.push("You found #{item.name}, but your inventory is full.", :warning)
+        MessageBuffer.warn("You found #{item.name}, but your inventory is full.")
         {vicinity, new_ap, hp}
 
       {:ok, :nothing, new_ap} ->
-        MessageBuffer.push("You find nothing.", :warning)
+        MessageBuffer.warn("You find nothing.")
         {vicinity, new_ap, hp}
     end)
   end
@@ -49,13 +49,11 @@ defmodule UndercityCli.Commands do
   def dispatch(:inventory, _player, player_id, vicinity, ap, hp) do
     items = Gateway.check_inventory(player_id)
 
-    message =
-      case items do
-        [] -> {"Your inventory is empty.", :info}
-        items -> {"Inventory: #{Enum.map_join(items, ", ", & &1.name)}", :info}
-      end
+    case items do
+      [] -> MessageBuffer.info("Your inventory is empty.")
+      items -> MessageBuffer.info("Inventory: #{Enum.map_join(items, ", ", & &1.name)}")
+    end
 
-    MessageBuffer.push([message])
     {vicinity, ap, hp}
   end
 
@@ -64,11 +62,11 @@ defmodule UndercityCli.Commands do
     |> Gateway.drop_item(index)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, item_name, new_ap} ->
-        MessageBuffer.push("You dropped #{item_name}.", :info)
+        MessageBuffer.info("You dropped #{item_name}.")
         {vicinity, new_ap, hp}
 
       {:error, :invalid_index} ->
-        MessageBuffer.push("Invalid item selection.", :warning)
+        MessageBuffer.warn("Invalid item selection.")
         {vicinity, ap, hp}
     end)
   end
@@ -78,15 +76,15 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :eat, index)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, item, _effect, new_ap, new_hp} ->
-        MessageBuffer.push("Ate a #{item.name}.", :success)
+        MessageBuffer.success("Ate a #{item.name}.")
         {vicinity, new_ap, new_hp}
 
       {:error, :not_edible, item_name} ->
-        MessageBuffer.push("You can't eat #{item_name}.", :warning)
+        MessageBuffer.warn("You can't eat #{item_name}.")
         {vicinity, ap, hp}
 
       {:error, :invalid_index} ->
-        MessageBuffer.push("Invalid item selection.", :warning)
+        MessageBuffer.warn("Invalid item selection.")
         {vicinity, ap, hp}
     end)
   end
@@ -96,15 +94,15 @@ defmodule UndercityCli.Commands do
     |> Gateway.perform(vicinity.id, :scribble, text)
     |> handle_action(vicinity, ap, hp, fn
       {:ok, new_ap} ->
-        MessageBuffer.push("You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success)
+        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
         {vicinity, new_ap, hp}
 
       {:error, :empty_message} ->
-        MessageBuffer.push("You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success)
+        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
         {vicinity, ap, hp}
 
       {:error, :item_missing} ->
-        MessageBuffer.push("You have no chalk.", :warning)
+        MessageBuffer.warn("You have no chalk.")
         {vicinity, ap, hp}
     end)
   end
@@ -112,21 +110,20 @@ defmodule UndercityCli.Commands do
   def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
 
   def dispatch(:unknown, _player, _player_id, vicinity, ap, hp) do
-    MessageBuffer.push(
-      "Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
-      :warning
+    MessageBuffer.warn(
+      "Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
     )
 
     {vicinity, ap, hp}
   end
 
   defp handle_action({:error, :exhausted}, vicinity, ap, hp, _callback) do
-    MessageBuffer.push("You are too exhausted to act.", :warning)
+    MessageBuffer.warn("You are too exhausted to act.")
     {vicinity, ap, hp}
   end
 
   defp handle_action({:error, :collapsed}, vicinity, ap, hp, _callback) do
-    MessageBuffer.push("Your body has given out.", :warning)
+    MessageBuffer.warn("Your body has given out.")
     {vicinity, ap, hp}
   end
 

@@ -46,6 +46,27 @@ defmodule UndercityCli.MessageBufferTest do
     end
   end
 
+  describe "info/1" do
+    test "pushes an info message" do
+      MessageBuffer.info("Hello")
+      assert MessageBuffer.flush() == [{"Hello", :info}]
+    end
+  end
+
+  describe "success/1" do
+    test "pushes a success message" do
+      MessageBuffer.success("Well done")
+      assert MessageBuffer.flush() == [{"Well done", :success}]
+    end
+  end
+
+  describe "warn/1" do
+    test "pushes a warning message" do
+      MessageBuffer.warn("Watch out")
+      assert MessageBuffer.flush() == [{"Watch out", :warning}]
+    end
+  end
+
   describe "flush/0" do
     test "returns empty list when buffer is empty" do
       assert MessageBuffer.flush() == []

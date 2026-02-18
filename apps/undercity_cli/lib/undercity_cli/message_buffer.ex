@@ -31,6 +31,15 @@ defmodule UndercityCli.MessageBuffer do
     Agent.update(@name, &(&1 ++ messages))
   end
 
+  @doc "Pushes an info message onto the buffer."
+  def info(text), do: push(text, :info)
+
+  @doc "Pushes a success message onto the buffer."
+  def success(text), do: push(text, :success)
+
+  @doc "Pushes a warning message onto the buffer."
+  def warn(text), do: push(text, :warning)
+
   @doc """
   Returns all accumulated messages and clears the buffer.
   """
