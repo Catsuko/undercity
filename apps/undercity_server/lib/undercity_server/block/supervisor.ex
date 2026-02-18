@@ -17,7 +17,12 @@ defmodule UndercityServer.Block.Supervisor do
   def init(block) do
     children = [
       {UndercityServer.Block.Store, block.id},
-      {UndercityServer.Block, id: block.id, name: block.name, type: block.type, exits: block.exits}
+      {UndercityServer.Block,
+       id: block.id,
+       name: block.name,
+       type: block.type,
+       exits: block.exits,
+       random: Map.get(block, :random, &:rand.uniform/0)}
     ]
 
     Supervisor.init(children, strategy: :rest_for_one)

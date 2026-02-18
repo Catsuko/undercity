@@ -11,7 +11,6 @@ defmodule UndercityServer.Block do
   use GenServer
 
   alias UndercityCore.Block, as: CoreBlock
-  alias UndercityCore.LootTable
   alias UndercityCore.Search
   alias UndercityServer.Block.Store
 
@@ -22,8 +21,9 @@ defmodule UndercityServer.Block do
     name = Keyword.fetch!(opts, :name)
     type = Keyword.fetch!(opts, :type)
     exits = Keyword.get(opts, :exits, %{})
+    random = Keyword.get(opts, :random, &:rand.uniform/0)
 
-    GenServer.start_link(__MODULE__, {id, name, type, exits}, name: process_name(id))
+    GenServer.start_link(__MODULE__, {id, name, type, exits, random}, name: process_name(id))
   end
 
   def join(block_id, player_id) when is_binary(player_id) do
@@ -61,56 +61,55 @@ defmodule UndercityServer.Block do
   # Server callbacks
 
   @impl true
-  def init({id, name, type, exits}) do
+  def init({id, name, type, exits, random}) do
     block =
       case Store.load_block(id) do
         {:ok, persisted} -> persisted
         :error -> CoreBlock.new(id, name, type, exits)
       end
 
-    {:ok, block}
+    {:ok, {block, random}}
   end
 
   @impl true
-  def handle_call({:join, player_id}, _from, block) do
+  def handle_call({:join, player_id}, _from, {block, random}) do
     block = CoreBlock.add_person(block, player_id)
     Store.save_block(block.id, block)
-    {:reply, block_info(block), block}
+    {:reply, block_info(block), {block, random}}
   end
 
   @impl true
-  def handle_call({:leave, player_id}, _from, block) do
+  def handle_call({:leave, player_id}, _from, {block, random}) do
     block = CoreBlock.remove_person(block, player_id)
     Store.save_block(block.id, block)
-    {:reply, :ok, block}
+    {:reply, :ok, {block, random}}
   end
 
   @impl true
-  def handle_call({:has_person, player_id}, _from, block) do
-    {:reply, CoreBlock.has_person?(block, player_id), block}
+  def handle_call({:has_person, player_id}, _from, {block, random}) do
+    {:reply, CoreBlock.has_person?(block, player_id), {block, random}}
   end
 
   @impl true
-  def handle_call(:info, _from, block) do
-    {:reply, block_info(block), block}
+  def handle_call(:info, _from, {block, random}) do
+    {:reply, block_info(block), {block, random}}
   end
 
   @impl true
-  def handle_call(:search, _from, block) do
-    loot_table = LootTable.for_block_type(block.type)
-    {:reply, Search.search(loot_table), block}
+  def handle_call(:search, _from, {block, random}) do
+    {:reply, Search.search(block.type, random.()), {block, random}}
   end
 
   @impl true
-  def handle_call({:scribble, text}, _from, block) do
+  def handle_call({:scribble, text}, _from, {block, random}) do
     block = CoreBlock.scribble(block, text)
     Store.save_block(block.id, block)
-    {:reply, :ok, block}
+    {:reply, :ok, {block, random}}
   end
 
   @impl true
-  def handle_call(:get_scribble, _from, block) do
-    {:reply, block.scribble, block}
+  def handle_call(:get_scribble, _from, {block, random}) do
+    {:reply, block.scribble, {block, random}}
   end
 
   defp block_info(block), do: {block.id, CoreBlock.list_people(block)}
