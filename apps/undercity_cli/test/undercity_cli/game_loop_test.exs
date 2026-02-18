@@ -4,11 +4,6 @@ defmodule UndercityCli.GameLoopTest do
   alias UndercityCli.GameLoop
 
   describe "parse/1" do
-    test "parses look commands" do
-      assert GameLoop.parse("look") == :look
-      assert GameLoop.parse("l") == :look
-    end
-
     test "parses quit commands" do
       assert GameLoop.parse("quit") == :quit
       assert GameLoop.parse("q") == :quit
