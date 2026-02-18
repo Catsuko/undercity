@@ -4,6 +4,7 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.MessageBuffer
   alias UndercityCli.View
 
   @directions %{
@@ -25,6 +26,7 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp loop(player, player_id, vicinity, ap, hp) do
+    View.render_messages(MessageBuffer.flush())
     input = View.read_input() |> String.trim() |> String.downcase()
 
     case Commands.dispatch(parse(input), player, player_id, vicinity, ap, hp) do
