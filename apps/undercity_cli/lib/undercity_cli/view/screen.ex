@@ -20,7 +20,7 @@ defmodule UndercityCli.View.Screen do
       state: nil,
       render: fn
         nil -> ""
-        vicinity -> Surroundings.render_to_string(vicinity)
+        vicinity -> Surroundings.render(vicinity)
       end
     )
 
@@ -28,7 +28,7 @@ defmodule UndercityCli.View.Screen do
       state: nil,
       render: fn
         nil -> ""
-        {vicinity, player} -> BlockDescription.render_to_string(vicinity, player)
+        {vicinity, player} -> BlockDescription.render(vicinity, player)
       end
     )
 
@@ -36,7 +36,7 @@ defmodule UndercityCli.View.Screen do
       state: [],
       render: fn
         [] -> ""
-        messages -> Enum.map_join(messages, "\n", fn {text, cat} -> Status.format_message(text, cat) end)
+        messages -> Enum.intersperse(Enum.map(messages, fn {text, cat} -> Status.format_message(text, cat) end), "\n")
       end
     )
   end

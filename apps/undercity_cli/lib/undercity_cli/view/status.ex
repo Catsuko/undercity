@@ -11,12 +11,10 @@ defmodule UndercityCli.View.Status do
 
   def format_message(message, category) do
     color = message_color(category)
-    ["▸ ", message] |> Owl.Data.tag(color) |> to_owl_string()
+    Owl.Data.tag(["▸ ", message], color)
   end
 
   defp message_color(:success), do: @success_color
   defp message_color(:info), do: @info_color
   defp message_color(:warning), do: @warning_color
-
-  defp to_owl_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
 end

@@ -12,9 +12,9 @@ defmodule UndercityCli.View.Surroundings do
   @grid_color IO.ANSI.color(245)
   @highlight IO.ANSI.color(103)
 
-  def render_to_string(%Vicinity{neighbourhood: nil}), do: ""
+  def render(%Vicinity{neighbourhood: nil}), do: ""
 
-  def render_to_string(%Vicinity{} = vicinity) do
+  def render(%Vicinity{} = vicinity) do
     inside = if Vicinity.inside?(vicinity), do: centre_id(vicinity.neighbourhood)
     render_table(vicinity.neighbourhood, inside)
   end
@@ -36,16 +36,11 @@ defmodule UndercityCli.View.Surroundings do
         |> Map.new(fn {block_id, c} -> {c, format_cell(block_id, r, c, inside)} end)
       end)
 
-    rows
-    |> Owl.Table.new(
-      render_cell: [
-        header: &Map.fetch!(header_cells, &1),
-        body: & &1
-      ],
+    Owl.Table.new(rows,
+      render_cell: [header: &Map.fetch!(header_cells, &1), body: & &1],
       border_style: :solid,
       divide_body_rows: true
     )
-    |> to_owl_string()
   end
 
   defp format_cell(nil, _r, _c, _inside) do
@@ -150,6 +145,4 @@ defmodule UndercityCli.View.Surroundings do
   defp centre_id(neighbourhood) do
     neighbourhood |> Enum.at(1) |> Enum.at(1)
   end
-
-  defp to_owl_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
 end

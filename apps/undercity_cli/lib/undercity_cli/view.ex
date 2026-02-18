@@ -9,8 +9,8 @@ defmodule UndercityCli.View do
   - `View.Status` — generic message formatting
   """
 
-  alias UndercityCli.View.Screen
   alias UndercityCli.View.Constitution
+  alias UndercityCli.View.Screen
 
   defdelegate read_input(), to: Screen
 

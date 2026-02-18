@@ -4,7 +4,9 @@ defmodule UndercityCli.View.SurroundingsTest do
   alias UndercityCli.View.Surroundings
   alias UndercityServer.Vicinity
 
-  describe "render_to_string/1" do
+  defp render_to_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
+
+  describe "render/1" do
     test "renders center block with all neighbours" do
       vicinity = %Vicinity{
         id: "plaza",
@@ -18,7 +20,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = Surroundings.render_to_string(vicinity)
+      output = vicinity |> Surroundings.render() |> render_to_string()
 
       assert output =~ "The Plaza"
       assert output =~ "Ashwell"
@@ -42,7 +44,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = Surroundings.render_to_string(vicinity)
+      output = vicinity |> Surroundings.render() |> render_to_string()
 
       assert output =~ "Ashwell"
       assert output =~ "North Alley"
@@ -63,7 +65,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = Surroundings.render_to_string(vicinity)
+      output = vicinity |> Surroundings.render() |> render_to_string()
 
       assert output =~ "╔"
       assert output =~ "║"
@@ -84,7 +86,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = Surroundings.render_to_string(vicinity)
+      output = vicinity |> Surroundings.render() |> render_to_string()
 
       refute output =~ "╔"
       refute output =~ "║"
@@ -104,7 +106,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      output = Surroundings.render_to_string(vicinity)
+      output = vicinity |> Surroundings.render() |> render_to_string()
 
       # Dim colour used for non-building cells
       assert output =~ "\e[38;5;235m"
@@ -124,7 +126,7 @@ defmodule UndercityCli.View.SurroundingsTest do
         building_type: nil
       }
 
-      assert Surroundings.render_to_string(vicinity) == ""
+      assert Surroundings.render(vicinity) == ""
     end
   end
 end

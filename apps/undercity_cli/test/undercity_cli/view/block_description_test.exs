@@ -4,7 +4,9 @@ defmodule UndercityCli.View.BlockDescriptionTest do
   alias UndercityCli.View.BlockDescription
   alias UndercityServer.Vicinity
 
-  describe "render_to_string/2" do
+  defp render_to_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
+
+  describe "render/2" do
     test "includes name, type-driven description, and people" do
       vicinity = %Vicinity{
         id: "plaza",
@@ -18,7 +20,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "You are at"
       assert output =~ "The Plaza"
@@ -40,7 +42,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       refute output =~ "┌"
       refute output =~ "┘"
@@ -59,7 +61,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "You are at"
       assert output =~ "Ashwell"
@@ -80,7 +82,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: :inn
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "You are outside"
       assert output =~ "The Lame Horse"
@@ -100,7 +102,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "A patch of open ground"
     end
@@ -119,7 +121,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "beware the dark"
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "Someone has scribbled"
       assert output =~ "beware the dark"
@@ -142,7 +144,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       refute output =~ "scribbled"
     end
@@ -157,7 +159,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "rest in peace"
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "rest in peace"
       assert output =~ "on a tombstone."
@@ -177,7 +179,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "free ale"
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "free ale"
       assert output =~ "on the wall."
@@ -197,7 +199,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "enter here"
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "enter here"
       assert output =~ "on the wall."
@@ -216,7 +218,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = BlockDescription.render_to_string(vicinity, "Grimshaw")
+      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
 
       assert output =~ "You are inside"
       assert output =~ "The Lame Horse Inn"
