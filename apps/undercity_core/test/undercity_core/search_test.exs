@@ -5,30 +5,16 @@ defmodule UndercityCore.SearchTest do
   alias UndercityCore.Search
 
   describe "search/2" do
-    test "returns {:found, item} when roll is below threshold" do
-      loot_table = [{0.10, "Junk"}]
-
-      assert {:found, %Item{name: "Junk"}} = Search.search(loot_table, 0.05)
+    test "returns {:found, item} when roll hits the block's loot table" do
+      assert {:found, %Item{name: "Mushroom"}} = Search.search(:graveyard, 0.05)
     end
 
-    test "returns :nothing when roll is above threshold" do
-      loot_table = [{0.10, "Junk"}]
-
-      assert :nothing = Search.search(loot_table, 0.5)
+    test "returns :nothing when roll misses" do
+      assert :nothing = Search.search(:graveyard, 0.5)
     end
 
-    test "returns :nothing when roll is exactly at threshold" do
-      loot_table = [{0.10, "Junk"}]
-
-      assert :nothing = Search.search(loot_table, 0.1)
-    end
-
-    test "selects the correct item from a multi-entry table" do
-      loot_table = [{0.20, "Chalk"}, {0.05, "Junk"}]
-
-      assert {:found, %Item{name: "Chalk"}} = Search.search(loot_table, 0.10)
-      assert {:found, %Item{name: "Junk"}} = Search.search(loot_table, 0.22)
-      assert :nothing = Search.search(loot_table, 0.30)
+    test "uses default loot table for unknown block types" do
+      assert :nothing = Search.search(:street, 0.5)
     end
   end
 end

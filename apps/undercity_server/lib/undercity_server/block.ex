@@ -11,7 +11,6 @@ defmodule UndercityServer.Block do
   use GenServer
 
   alias UndercityCore.Block, as: CoreBlock
-  alias UndercityCore.LootTable
   alias UndercityCore.Search
   alias UndercityServer.Block.Store
 
@@ -97,8 +96,7 @@ defmodule UndercityServer.Block do
 
   @impl true
   def handle_call(:search, _from, block) do
-    loot_table = LootTable.for_block_type(block.type)
-    {:reply, Search.search(loot_table), block}
+    {:reply, Search.search(block.type), block}
   end
 
   @impl true
