@@ -9,16 +9,18 @@ defmodule UndercityCli.View do
   - `View.Status` — generic message formatting
   """
 
+  alias UndercityCli.MessageBuffer
   alias UndercityCli.View.Constitution
   alias UndercityCli.View.Screen
 
   defdelegate read_input(), to: Screen
 
   def init(vicinity, player, ap, hp) do
+    MessageBuffer.start_link()
     Screen.init()
     render_surroundings(vicinity)
     render_description(vicinity, player)
-    render_messages(Constitution.status_messages(ap, hp))
+    MessageBuffer.push(Constitution.status_messages(ap, hp))
   end
 
   def render_surroundings(vicinity) do

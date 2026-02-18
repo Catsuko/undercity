@@ -4,7 +4,9 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.MessageBuffer
   alias UndercityCli.View
+  alias UndercityCli.View.Constitution
 
   @directions %{
     "north" => :north,
@@ -25,14 +27,16 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp loop(player, player_id, vicinity, ap, hp) do
+    View.render_messages(MessageBuffer.flush())
     input = View.read_input() |> String.trim() |> String.downcase()
 
     case Commands.dispatch(parse(input), player, player_id, vicinity, ap, hp) do
       :quit ->
         :ok
 
-      {vicinity, ap, hp} ->
-        loop(player, player_id, vicinity, ap, hp)
+      {new_vicinity, new_ap, new_hp} ->
+        MessageBuffer.push(Constitution.threshold_messages(ap, new_ap, hp, new_hp))
+        loop(player, player_id, new_vicinity, new_ap, new_hp)
     end
   end
 
