@@ -17,36 +17,6 @@ defmodule UndercityCli.Commands do
   }
 
   def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
-    move(player, player_id, vicinity, ap, hp, direction)
-  end
-
-  def dispatch(:search, player, player_id, vicinity, ap, hp) do
-    search(player, player_id, vicinity, ap, hp)
-  end
-
-  def dispatch(:inventory, player, player_id, vicinity, ap, hp) do
-    inventory(player, player_id, vicinity, ap, hp)
-  end
-
-  def dispatch({:drop, index}, player, player_id, vicinity, ap, hp) do
-    drop(player, player_id, vicinity, ap, hp, index)
-  end
-
-  def dispatch({:eat, index}, player, player_id, vicinity, ap, hp) do
-    eat(player, player_id, vicinity, ap, hp, index)
-  end
-
-  def dispatch({:scribble, text}, player, player_id, vicinity, ap, hp) do
-    scribble(player, player_id, vicinity, ap, hp, text)
-  end
-
-  def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
-
-  def dispatch(:unknown, player, player_id, vicinity, ap, hp) do
-    unknown(player, player_id, vicinity, ap, hp)
-  end
-
-  def move(player, player_id, vicinity, ap, hp, direction) do
     case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
         View.render_surroundings(new_vicinity)
@@ -65,7 +35,7 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def search(_player, player_id, vicinity, ap, hp) do
+  def dispatch(:search, _player, player_id, vicinity, ap, hp) do
     case Gateway.perform(player_id, vicinity.id, :search, nil) do
       {:ok, {:found, item}, new_ap} ->
         messages = [{"You found #{item.name}!", :success} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
@@ -92,7 +62,7 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def inventory(_player, player_id, vicinity, ap, hp) do
+  def dispatch(:inventory, _player, player_id, vicinity, ap, hp) do
     items = Gateway.check_inventory(player_id)
 
     message =
@@ -105,7 +75,7 @@ defmodule UndercityCli.Commands do
     {vicinity, ap, hp}
   end
 
-  def drop(_player, player_id, vicinity, ap, hp, index) do
+  def dispatch({:drop, index}, _player, player_id, vicinity, ap, hp) do
     case Gateway.drop_item(player_id, index) do
       {:ok, item_name, new_ap} ->
         messages = [{"You dropped #{item_name}.", :info} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
@@ -122,7 +92,7 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def eat(_player, player_id, vicinity, ap, hp, index) do
+  def dispatch({:eat, index}, _player, player_id, vicinity, ap, hp) do
     case Gateway.perform(player_id, vicinity.id, :eat, index) do
       {:ok, item, _effect, new_ap, new_hp} ->
         messages = [{"Ate a #{item.name}.", :success} | Constitution.threshold_messages(ap, new_ap, hp, new_hp)]
@@ -143,7 +113,7 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def scribble(_player, player_id, vicinity, ap, hp, text) do
+  def dispatch({:scribble, text}, _player, player_id, vicinity, ap, hp) do
     case Gateway.perform(player_id, vicinity.id, :scribble, text) do
       {:ok, new_ap} ->
         messages = [
@@ -171,7 +141,9 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def unknown(_player, _player_id, vicinity, ap, hp) do
+  def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
+
+  def dispatch(:unknown, _player, _player_id, vicinity, ap, hp) do
     View.render_messages([
       {"Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
        :warning}
