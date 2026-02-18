@@ -16,10 +16,20 @@ defmodule UndercityCli.View do
 
   def init(vicinity, player, ap, hp) do
     Screen.init()
-    render(vicinity, player, Constitution.status_messages(ap, hp))
+    render_surroundings(vicinity)
+    render_description(vicinity, player)
+    render_messages(Constitution.status_messages(ap, hp))
   end
 
-  def render(vicinity, player, messages \\ []) do
-    Screen.update(vicinity, player, messages)
+  def render_surroundings(vicinity) do
+    Screen.update_surroundings(vicinity)
+  end
+
+  def render_description(vicinity, player) do
+    Screen.update_description(vicinity, player)
+  end
+
+  def render_messages(messages) do
+    Screen.update_messages(messages)
   end
 end

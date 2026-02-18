@@ -41,9 +41,15 @@ defmodule UndercityCli.View.Screen do
     )
   end
 
-  def update(vicinity, player, messages \\ []) do
+  def update_surroundings(vicinity) do
     Owl.LiveScreen.update(:surroundings, vicinity)
+  end
+
+  def update_description(vicinity, player) do
     Owl.LiveScreen.update(:description, {vicinity, player})
+  end
+
+  def update_messages(messages) do
     Owl.LiveScreen.update(:messages, messages)
   end
 

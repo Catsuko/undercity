@@ -42,32 +42,34 @@ defmodule UndercityCli.Commands do
 
   def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
 
-  def dispatch(:unknown, player, _player_id, vicinity, ap, hp) do
-    unknown(player, vicinity, ap, hp)
+  def dispatch(:unknown, player, player_id, vicinity, ap, hp) do
+    unknown(player, player_id, vicinity, ap, hp)
   end
 
   def move(player, player_id, vicinity, ap, hp, direction) do
     case Gateway.perform(player_id, vicinity.id, :move, direction) do
       {:ok, {:ok, new_vicinity}, new_ap} ->
-        View.render(new_vicinity, player, Constitution.threshold_messages(ap, new_ap, hp, hp))
+        View.render_surroundings(new_vicinity)
+        View.render_description(new_vicinity, player)
+        View.render_messages(Constitution.threshold_messages(ap, new_ap, hp, hp))
         {new_vicinity, new_ap, hp}
 
       {:ok, {:error, :no_exit}, new_ap} ->
         messages = [{"You can't go that way.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:error, reason} ->
-        View.render(vicinity, player, [inability_message(reason)])
+        View.render_messages([inability_message(reason)])
         {vicinity, ap, hp}
     end
   end
 
-  def search(player, player_id, vicinity, ap, hp) do
+  def search(_player, player_id, vicinity, ap, hp) do
     case Gateway.perform(player_id, vicinity.id, :search, nil) do
       {:ok, {:found, item}, new_ap} ->
         messages = [{"You found #{item.name}!", :success} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:ok, {:found_but_full, item}, new_ap} ->
@@ -76,21 +78,21 @@ defmodule UndercityCli.Commands do
           | Constitution.threshold_messages(ap, new_ap, hp, hp)
         ]
 
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:ok, :nothing, new_ap} ->
         messages = [{"You find nothing.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:error, reason} ->
-        View.render(vicinity, player, [inability_message(reason)])
+        View.render_messages([inability_message(reason)])
         {vicinity, ap, hp}
     end
   end
 
-  def inventory(player, player_id, vicinity, ap, hp) do
+  def inventory(_player, player_id, vicinity, ap, hp) do
     items = Gateway.check_inventory(player_id)
 
     message =
@@ -99,49 +101,49 @@ defmodule UndercityCli.Commands do
         items -> {"Inventory: #{Enum.map_join(items, ", ", & &1.name)}", :info}
       end
 
-    View.render(vicinity, player, [message])
+    View.render_messages([message])
     {vicinity, ap, hp}
   end
 
-  def drop(player, player_id, vicinity, ap, hp, index) do
+  def drop(_player, player_id, vicinity, ap, hp, index) do
     case Gateway.drop_item(player_id, index) do
       {:ok, item_name, new_ap} ->
         messages = [{"You dropped #{item_name}.", :info} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:error, :invalid_index} ->
-        View.render(vicinity, player, [{"Invalid item selection.", :warning}])
+        View.render_messages([{"Invalid item selection.", :warning}])
         {vicinity, ap, hp}
 
       {:error, reason} ->
-        View.render(vicinity, player, [inability_message(reason)])
+        View.render_messages([inability_message(reason)])
         {vicinity, ap, hp}
     end
   end
 
-  def eat(player, player_id, vicinity, ap, hp, index) do
+  def eat(_player, player_id, vicinity, ap, hp, index) do
     case Gateway.perform(player_id, vicinity.id, :eat, index) do
       {:ok, item, _effect, new_ap, new_hp} ->
         messages = [{"Ate a #{item.name}.", :success} | Constitution.threshold_messages(ap, new_ap, hp, new_hp)]
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, new_hp}
 
       {:error, :not_edible, item_name} ->
-        View.render(vicinity, player, [{"You can't eat #{item_name}.", :warning}])
+        View.render_messages([{"You can't eat #{item_name}.", :warning}])
         {vicinity, ap, hp}
 
       {:error, :invalid_index} ->
-        View.render(vicinity, player, [{"Invalid item selection.", :warning}])
+        View.render_messages([{"Invalid item selection.", :warning}])
         {vicinity, ap, hp}
 
       {:error, reason} ->
-        View.render(vicinity, player, [inability_message(reason)])
+        View.render_messages([inability_message(reason)])
         {vicinity, ap, hp}
     end
   end
 
-  def scribble(player, player_id, vicinity, ap, hp, text) do
+  def scribble(_player, player_id, vicinity, ap, hp, text) do
     case Gateway.perform(player_id, vicinity.id, :scribble, text) do
       {:ok, new_ap} ->
         messages = [
@@ -149,28 +151,28 @@ defmodule UndercityCli.Commands do
           | Constitution.threshold_messages(ap, new_ap, hp, hp)
         ]
 
-        View.render(vicinity, player, messages)
+        View.render_messages(messages)
         {vicinity, new_ap, hp}
 
       {:error, :empty_message} ->
-        View.render(vicinity, player, [
+        View.render_messages([
           {"You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success}
         ])
 
         {vicinity, ap, hp}
 
       {:error, :item_missing} ->
-        View.render(vicinity, player, [{"You have no chalk.", :warning}])
+        View.render_messages([{"You have no chalk.", :warning}])
         {vicinity, ap, hp}
 
       {:error, reason} ->
-        View.render(vicinity, player, [inability_message(reason)])
+        View.render_messages([inability_message(reason)])
         {vicinity, ap, hp}
     end
   end
 
-  def unknown(player, vicinity, ap, hp) do
-    View.render(vicinity, player, [
+  def unknown(_player, _player_id, vicinity, ap, hp) do
+    View.render_messages([
       {"Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit",
        :warning}
     ])

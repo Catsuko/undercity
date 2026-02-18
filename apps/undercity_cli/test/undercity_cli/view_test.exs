@@ -14,13 +14,25 @@ defmodule UndercityCli.ViewTest do
 
   @player "Grimshaw"
 
-  describe "render/3" do
-    test "updates LiveScreen blocks without crashing" do
-      View.render(@vicinity, @player)
+  describe "render_surroundings/1" do
+    test "updates surroundings block without crashing" do
+      View.render_surroundings(@vicinity)
+    end
+  end
+
+  describe "render_description/2" do
+    test "updates description block without crashing" do
+      View.render_description(@vicinity, @player)
+    end
+  end
+
+  describe "render_messages/1" do
+    test "updates messages block without crashing" do
+      View.render_messages([{"Hello", :info}])
     end
 
-    test "accepts messages" do
-      View.render(@vicinity, @player, [{"Hello", :info}])
+    test "accepts empty messages" do
+      View.render_messages([])
     end
   end
 end

@@ -18,15 +18,29 @@ defmodule UndercityCli.View.ScreenTest do
     end
   end
 
-  describe "update/3" do
-    test "updates all blocks" do
+  describe "update_surroundings/1" do
+    test "updates surroundings block" do
       Screen.init()
-      Screen.update(@vicinity, "Grimshaw", [{"Hello", :info}])
+      Screen.update_surroundings(@vicinity)
+    end
+  end
+
+  describe "update_description/2" do
+    test "updates description block" do
+      Screen.init()
+      Screen.update_description(@vicinity, "Grimshaw")
+    end
+  end
+
+  describe "update_messages/1" do
+    test "updates messages block" do
+      Screen.init()
+      Screen.update_messages([{"Hello", :info}])
     end
 
-    test "defaults to empty messages" do
+    test "accepts empty messages" do
       Screen.init()
-      Screen.update(@vicinity, "Grimshaw")
+      Screen.update_messages([])
     end
   end
 end
