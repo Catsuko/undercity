@@ -11,13 +11,10 @@ defmodule UndercityCli.Commands do
   alias UndercityCli.View.Constitution
   alias UndercityServer.Gateway
 
-  @inability_messages %{
-    exhausted: {"You are too exhausted to act.", :warning},
-    collapsed: {"Your body has given out.", :warning}
-  }
-
   def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
-    case Gateway.perform(player_id, vicinity.id, :move, direction) do
+    player_id
+    |> Gateway.perform(vicinity.id, :move, direction)
+    |> handle_action(vicinity, ap, hp, fn
       {:ok, {:ok, new_vicinity}, new_ap} ->
         View.render_surroundings(new_vicinity)
         View.render_description(new_vicinity, player)
@@ -28,15 +25,13 @@ defmodule UndercityCli.Commands do
         messages = [{"You can't go that way.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
         View.render_messages(messages)
         {vicinity, new_ap, hp}
-
-      {:error, reason} ->
-        View.render_messages([inability_message(reason)])
-        {vicinity, ap, hp}
-    end
+    end)
   end
 
   def dispatch(:search, _player, player_id, vicinity, ap, hp) do
-    case Gateway.perform(player_id, vicinity.id, :search, nil) do
+    player_id
+    |> Gateway.perform(vicinity.id, :search, nil)
+    |> handle_action(vicinity, ap, hp, fn
       {:ok, {:found, item}, new_ap} ->
         messages = [{"You found #{item.name}!", :success} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
         View.render_messages(messages)
@@ -55,11 +50,7 @@ defmodule UndercityCli.Commands do
         messages = [{"You find nothing.", :warning} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
         View.render_messages(messages)
         {vicinity, new_ap, hp}
-
-      {:error, reason} ->
-        View.render_messages([inability_message(reason)])
-        {vicinity, ap, hp}
-    end
+    end)
   end
 
   def dispatch(:inventory, _player, player_id, vicinity, ap, hp) do
@@ -76,7 +67,9 @@ defmodule UndercityCli.Commands do
   end
 
   def dispatch({:drop, index}, _player, player_id, vicinity, ap, hp) do
-    case Gateway.drop_item(player_id, index) do
+    player_id
+    |> Gateway.drop_item(index)
+    |> handle_action(vicinity, ap, hp, fn
       {:ok, item_name, new_ap} ->
         messages = [{"You dropped #{item_name}.", :info} | Constitution.threshold_messages(ap, new_ap, hp, hp)]
         View.render_messages(messages)
@@ -85,15 +78,13 @@ defmodule UndercityCli.Commands do
       {:error, :invalid_index} ->
         View.render_messages([{"Invalid item selection.", :warning}])
         {vicinity, ap, hp}
-
-      {:error, reason} ->
-        View.render_messages([inability_message(reason)])
-        {vicinity, ap, hp}
-    end
+    end)
   end
 
   def dispatch({:eat, index}, _player, player_id, vicinity, ap, hp) do
-    case Gateway.perform(player_id, vicinity.id, :eat, index) do
+    player_id
+    |> Gateway.perform(vicinity.id, :eat, index)
+    |> handle_action(vicinity, ap, hp, fn
       {:ok, item, _effect, new_ap, new_hp} ->
         messages = [{"Ate a #{item.name}.", :success} | Constitution.threshold_messages(ap, new_ap, hp, new_hp)]
         View.render_messages(messages)
@@ -106,15 +97,13 @@ defmodule UndercityCli.Commands do
       {:error, :invalid_index} ->
         View.render_messages([{"Invalid item selection.", :warning}])
         {vicinity, ap, hp}
-
-      {:error, reason} ->
-        View.render_messages([inability_message(reason)])
-        {vicinity, ap, hp}
-    end
+    end)
   end
 
   def dispatch({:scribble, text}, _player, player_id, vicinity, ap, hp) do
-    case Gateway.perform(player_id, vicinity.id, :scribble, text) do
+    player_id
+    |> Gateway.perform(vicinity.id, :scribble, text)
+    |> handle_action(vicinity, ap, hp, fn
       {:ok, new_ap} ->
         messages = [
           {"You scribble #{BlockDescription.scribble_surface(vicinity)}.", :success}
@@ -134,11 +123,7 @@ defmodule UndercityCli.Commands do
       {:error, :item_missing} ->
         View.render_messages([{"You have no chalk.", :warning}])
         {vicinity, ap, hp}
-
-      {:error, reason} ->
-        View.render_messages([inability_message(reason)])
-        {vicinity, ap, hp}
-    end
+    end)
   end
 
   def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
@@ -152,5 +137,15 @@ defmodule UndercityCli.Commands do
     {vicinity, ap, hp}
   end
 
-  defp inability_message(reason), do: Map.fetch!(@inability_messages, reason)
+  defp handle_action({:error, :exhausted}, vicinity, ap, hp, _callback) do
+    View.render_messages([{"You are too exhausted to act.", :warning}])
+    {vicinity, ap, hp}
+  end
+
+  defp handle_action({:error, :collapsed}, vicinity, ap, hp, _callback) do
+    View.render_messages([{"Your body has given out.", :warning}])
+    {vicinity, ap, hp}
+  end
+
+  defp handle_action(result, _vicinity, _ap, _hp, callback), do: callback.(result)
 end
