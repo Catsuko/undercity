@@ -1,152 +1,72 @@
 defmodule UndercityCli.Commands do
   @moduledoc """
-  Command handlers for the CLI game.
+  Routes parsed input to the appropriate command module.
 
-  Each function calls the server via Gateway, pushes messages to the
-  MessageBuffer, and returns the updated `{vicinity, ap, hp}` game state.
-  Messages are rendered by the game loop after each dispatch.
-  Threshold messages (AP/HP tier crossings) are handled by the game loop.
+  Splits raw input into a verb (and optional rest), looks up the verb in the
+  routing table, and delegates to the matching command module. Each command
+  module implements `dispatch/4` and returns `{:moved, state}` or
+  `{:continue, state}`. The game loop uses the tag to decide what to re-render.
+
+  `gateway` and `message_buffer` are passed explicitly so command modules can
+  be tested in isolation without live server processes or terminal I/O.
+
+  Also exposes `handle_action/4`, a shared helper used by command modules to
+  normalise Gateway results — catching exhaustion/collapse before delegating
+  to the command-specific callback.
   """
 
-  alias UndercityCli.MessageBuffer
-  alias UndercityCli.View
-  alias UndercityCli.View.BlockDescription
-  alias UndercityCli.View.InventorySelector
-  alias UndercityServer.Gateway
+  alias UndercityCli.GameState
 
-  def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :move, direction)
-    |> handle_action(vicinity, ap, hp, fn
-      {:ok, {:ok, new_vicinity}, new_ap} ->
-        View.render_surroundings(new_vicinity)
-        View.render_description(new_vicinity, player)
-        {new_vicinity, new_ap, hp}
+  @command_routes [
+    {UndercityCli.Commands.Move, ["north", "south", "east", "west", "n", "s", "e", "w", "enter", "exit"]},
+    {UndercityCli.Commands.Search, ["search"]},
+    {UndercityCli.Commands.Inventory, ["inventory", "i"]},
+    {UndercityCli.Commands.Drop, ["drop"]},
+    {UndercityCli.Commands.Eat, ["eat"]},
+    {UndercityCli.Commands.Scribble, ["scribble"]}
+  ]
 
-      {:ok, {:error, :no_exit}, new_ap} ->
-        MessageBuffer.warn("You can't go that way.")
-        {vicinity, new_ap, hp}
-    end)
-  end
+  @commands Map.new(
+              Enum.flat_map(@command_routes, fn {mod, verbs} ->
+                Enum.map(verbs, &{&1, mod})
+              end)
+            )
 
-  def dispatch(:search, _player, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :search, nil)
-    |> handle_action(vicinity, ap, hp, fn
-      {:ok, {:found, item}, new_ap} ->
-        MessageBuffer.success("You found #{item.name}!")
-        {vicinity, new_ap, hp}
+  def dispatch(input, state, gateway, message_buffer) do
+    parsed = split(input)
 
-      {:ok, {:found_but_full, item}, new_ap} ->
-        MessageBuffer.warn("You found #{item.name}, but your inventory is full.")
-        {vicinity, new_ap, hp}
+    case Map.get(@commands, verb(parsed)) do
+      nil ->
+        message_buffer.warn(
+          "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
+        )
 
-      {:ok, :nothing, new_ap} ->
-        MessageBuffer.warn("You find nothing.")
-        {vicinity, new_ap, hp}
-    end)
-  end
+        GameState.continue(state)
 
-  def dispatch(:inventory, _player, player_id, vicinity, ap, hp) do
-    items = Gateway.check_inventory(player_id)
-
-    case items do
-      [] -> MessageBuffer.info("Your inventory is empty.")
-      items -> MessageBuffer.info("Inventory: #{Enum.map_join(items, ", ", & &1.name)}")
-    end
-
-    {vicinity, ap, hp}
-  end
-
-  def dispatch(:drop, player, player_id, vicinity, ap, hp) do
-    case select_from_inventory(player_id, "Drop which item?") do
-      :cancel -> {vicinity, ap, hp}
-      {:ok, index} -> dispatch({:drop, index}, player, player_id, vicinity, ap, hp)
+      module ->
+        module.dispatch(parsed, state, gateway, message_buffer)
     end
   end
 
-  def dispatch({:drop, index}, _player, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.drop_item(index)
-    |> handle_action(vicinity, ap, hp, fn
-      {:ok, item_name, new_ap} ->
-        MessageBuffer.info("You dropped #{item_name}.")
-        {vicinity, new_ap, hp}
-
-      {:error, :invalid_index} ->
-        MessageBuffer.warn("Invalid item selection.")
-        {vicinity, ap, hp}
-    end)
+  def handle_action({:error, :exhausted}, state, message_buffer, _callback) do
+    message_buffer.warn("You are too exhausted to act.")
+    GameState.continue(state)
   end
 
-  def dispatch(:eat, player, player_id, vicinity, ap, hp) do
-    case select_from_inventory(player_id, "Eat which item?") do
-      :cancel -> {vicinity, ap, hp}
-      {:ok, index} -> dispatch({:eat, index}, player, player_id, vicinity, ap, hp)
+  def handle_action({:error, :collapsed}, state, message_buffer, _callback) do
+    message_buffer.warn("Your body has given out.")
+    GameState.continue(state)
+  end
+
+  def handle_action(result, _state, _message_buffer, callback), do: callback.(result)
+
+  defp split(input) do
+    case String.split(input, " ", parts: 2) do
+      [verb] -> verb
+      [verb, rest] -> {verb, rest}
     end
   end
 
-  def dispatch({:eat, index}, _player, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :eat, index)
-    |> handle_action(vicinity, ap, hp, fn
-      {:ok, item, _effect, new_ap, new_hp} ->
-        MessageBuffer.success("Ate a #{item.name}.")
-        {vicinity, new_ap, new_hp}
-
-      {:error, :not_edible, item_name} ->
-        MessageBuffer.warn("You can't eat #{item_name}.")
-        {vicinity, ap, hp}
-
-      {:error, :invalid_index} ->
-        MessageBuffer.warn("Invalid item selection.")
-        {vicinity, ap, hp}
-    end)
-  end
-
-  def dispatch({:scribble, text}, _player, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :scribble, text)
-    |> handle_action(vicinity, ap, hp, fn
-      {:ok, new_ap} ->
-        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
-        {vicinity, new_ap, hp}
-
-      {:error, :empty_message} ->
-        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
-        {vicinity, ap, hp}
-
-      {:error, :item_missing} ->
-        MessageBuffer.warn("You have no chalk.")
-        {vicinity, ap, hp}
-    end)
-  end
-
-  def dispatch(:quit, _player, _player_id, _vicinity, _ap, _hp), do: :quit
-
-  def dispatch(:unknown, _player, _player_id, vicinity, ap, hp) do
-    MessageBuffer.warn(
-      "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
-    )
-
-    {vicinity, ap, hp}
-  end
-
-  defp select_from_inventory(player_id, label) do
-    player_id
-    |> Gateway.check_inventory()
-    |> InventorySelector.select(label)
-  end
-
-  defp handle_action({:error, :exhausted}, vicinity, ap, hp, _callback) do
-    MessageBuffer.warn("You are too exhausted to act.")
-    {vicinity, ap, hp}
-  end
-
-  defp handle_action({:error, :collapsed}, vicinity, ap, hp, _callback) do
-    MessageBuffer.warn("Your body has given out.")
-    {vicinity, ap, hp}
-  end
-
-  defp handle_action(result, _vicinity, _ap, _hp, callback), do: callback.(result)
+  defp verb({verb, _rest}), do: verb
+  defp verb(verb), do: verb
 end

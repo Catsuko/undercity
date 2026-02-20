@@ -4,72 +4,37 @@ defmodule UndercityCli.GameLoop do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View
   alias UndercityCli.View.Constitution
+  alias UndercityServer.Gateway
 
-  @directions %{
-    "north" => :north,
-    "south" => :south,
-    "east" => :east,
-    "west" => :west,
-    "n" => :north,
-    "s" => :south,
-    "e" => :east,
-    "w" => :west,
-    "enter" => :enter,
-    "exit" => :exit
-  }
-
-  def run(player, player_id, vicinity, ap, hp) do
-    View.init(vicinity, player, ap, hp)
-    loop(player, player_id, vicinity, ap, hp)
+  def run(player, %GameState{} = state) do
+    View.init(state.vicinity, player, state.ap, state.hp)
+    loop(player, state)
   end
 
-  defp loop(player, player_id, vicinity, ap, hp) do
+  defp loop(player, state) do
     View.render_messages(MessageBuffer.flush())
     input = View.read_input() |> String.trim() |> String.downcase()
 
-    case Commands.dispatch(parse(input), player, player_id, vicinity, ap, hp) do
-      :quit ->
+    case input do
+      x when x in ["quit", "q"] ->
         :ok
 
-      {new_vicinity, new_ap, new_hp} ->
-        MessageBuffer.push(Constitution.threshold_messages(ap, new_ap, hp, new_hp))
-        loop(player, player_id, new_vicinity, new_ap, new_hp)
-    end
-  end
+      _ ->
+        case Commands.dispatch(input, state, Gateway, MessageBuffer) do
+          {:moved, new_state} ->
+            View.render_surroundings(new_state.vicinity)
+            View.render_description(new_state.vicinity, player)
+            MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
+            loop(player, new_state)
 
-  def parse("search"), do: :search
-  def parse("inventory"), do: :inventory
-  def parse("i"), do: :inventory
-  def parse("quit"), do: :quit
-  def parse("q"), do: :quit
-
-  def parse("drop"), do: :drop
-
-  def parse("drop " <> index_str) do
-    case Integer.parse(index_str) do
-      {n, ""} when n >= 1 -> {:drop, n - 1}
-      _ -> :unknown
-    end
-  end
-
-  def parse("eat"), do: :eat
-
-  def parse("eat " <> index_str) do
-    case Integer.parse(index_str) do
-      {n, ""} when n >= 1 -> {:eat, n - 1}
-      _ -> :unknown
-    end
-  end
-
-  def parse("scribble " <> text), do: {:scribble, text}
-
-  def parse(input) do
-    case Map.fetch(@directions, input) do
-      {:ok, direction} -> {:move, direction}
-      :error -> :unknown
+          {:continue, new_state} ->
+            MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
+            loop(player, new_state)
+        end
     end
   end
 end
