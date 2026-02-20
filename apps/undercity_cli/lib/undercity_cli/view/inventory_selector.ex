@@ -43,19 +43,16 @@ defmodule UndercityCli.View.InventorySelector do
   defp render_option({item, _index}), do: item.name
 
   defp render_list(options, label) do
-    n = length(options)
-
-    list =
+    items =
       options
       |> Enum.with_index(1)
-      |> Enum.map_intersperse("\n", fn {option, i} -> [number_tag(i, n), render_option(option)] end)
+      |> Enum.map_intersperse("  ", fn {option, i} -> [number_tag(i), render_option(option)] end)
 
-    ["\n" | list] ++ ["\n\n", Owl.Data.tag(label, @highlight)]
+    [Owl.Data.tag(label, @highlight), "\n" | items]
   end
 
-  defp number_tag(i, n) do
-    width = n |> to_string() |> String.length()
-    Owl.Data.tag(String.pad_leading("#{i}", width) <> ". ", @highlight)
+  defp number_tag(i) do
+    Owl.Data.tag("#{i}. ", @highlight)
   end
 
   defp read_loop(options) do
