@@ -4,24 +4,25 @@ defmodule UndercityCli.Commands.Search do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
   alias UndercityServer.Gateway
 
-  def dispatch(_verb, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :search, nil)
-    |> Commands.handle_action(ap, hp, fn
+  def dispatch(_verb, state) do
+    state.player_id
+    |> Gateway.perform(state.vicinity.id, :search, nil)
+    |> Commands.handle_action(state, fn
       {:ok, {:found, item}, new_ap} ->
         MessageBuffer.success("You found #{item.name}!")
-        {:acted, new_ap, hp}
+        GameState.continue(state, new_ap, state.hp)
 
       {:ok, {:found_but_full, item}, new_ap} ->
         MessageBuffer.warn("You found #{item.name}, but your inventory is full.")
-        {:acted, new_ap, hp}
+        GameState.continue(state, new_ap, state.hp)
 
       {:ok, :nothing, new_ap} ->
         MessageBuffer.warn("You find nothing.")
-        {:acted, new_ap, hp}
+        GameState.continue(state, new_ap, state.hp)
     end)
   end
 end

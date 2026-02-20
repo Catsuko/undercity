@@ -4,30 +4,31 @@ defmodule UndercityCli.Commands.Scribble do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View.BlockDescription
   alias UndercityServer.Gateway
 
-  def dispatch("scribble", _player_id, _vicinity, ap, hp) do
+  def dispatch("scribble", state) do
     MessageBuffer.warn("Usage: scribble <text>")
-    {:acted, ap, hp}
+    GameState.continue(state)
   end
 
-  def dispatch({"scribble", text}, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :scribble, text)
-    |> Commands.handle_action(ap, hp, fn
+  def dispatch({"scribble", text}, state) do
+    state.player_id
+    |> Gateway.perform(state.vicinity.id, :scribble, text)
+    |> Commands.handle_action(state, fn
       {:ok, new_ap} ->
-        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
-        {:acted, new_ap, hp}
+        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(state.vicinity)}.")
+        GameState.continue(state, new_ap, state.hp)
 
       {:error, :empty_message} ->
-        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(vicinity)}.")
-        {:acted, ap, hp}
+        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(state.vicinity)}.")
+        GameState.continue(state)
 
       {:error, :item_missing} ->
         MessageBuffer.warn("You have no chalk.")
-        {:acted, ap, hp}
+        GameState.continue(state)
     end)
   end
 end

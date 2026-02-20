@@ -4,48 +4,49 @@ defmodule UndercityCli.Commands.Eat do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View.InventorySelector
   alias UndercityServer.Gateway
 
-  def dispatch("eat", player_id, vicinity, ap, hp) do
-    case select_from_inventory(player_id, "Eat which item?") do
-      :cancel -> {:acted, ap, hp}
-      {:ok, index} -> eat(index, player_id, vicinity, ap, hp)
+  def dispatch("eat", state) do
+    case select_from_inventory(state, "Eat which item?") do
+      :cancel -> GameState.continue(state)
+      {:ok, index} -> eat(index, state)
     end
   end
 
-  def dispatch({"eat", index_str}, player_id, vicinity, ap, hp) do
+  def dispatch({"eat", index_str}, state) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
-        eat(n - 1, player_id, vicinity, ap, hp)
+        eat(n - 1, state)
 
       _ ->
         MessageBuffer.warn("Invalid item selection.")
-        {:acted, ap, hp}
+        GameState.continue(state)
     end
   end
 
-  defp eat(index, player_id, vicinity, ap, hp) do
-    player_id
-    |> Gateway.perform(vicinity.id, :eat, index)
-    |> Commands.handle_action(ap, hp, fn
+  defp eat(index, state) do
+    state.player_id
+    |> Gateway.perform(state.vicinity.id, :eat, index)
+    |> Commands.handle_action(state, fn
       {:ok, item, _effect, new_ap, new_hp} ->
         MessageBuffer.success("Ate a #{item.name}.")
-        {:acted, new_ap, new_hp}
+        GameState.continue(state, new_ap, new_hp)
 
       {:error, :not_edible, item_name} ->
         MessageBuffer.warn("You can't eat #{item_name}.")
-        {:acted, ap, hp}
+        GameState.continue(state)
 
       {:error, :invalid_index} ->
         MessageBuffer.warn("Invalid item selection.")
-        {:acted, ap, hp}
+        GameState.continue(state)
     end)
   end
 
-  defp select_from_inventory(player_id, label) do
-    player_id
+  defp select_from_inventory(state, label) do
+    state.player_id
     |> Gateway.check_inventory()
     |> InventorySelector.select(label)
   end

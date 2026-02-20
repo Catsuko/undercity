@@ -4,44 +4,45 @@ defmodule UndercityCli.Commands.Drop do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View.InventorySelector
   alias UndercityServer.Gateway
 
-  def dispatch("drop", player_id, _vicinity, ap, hp) do
-    case select_from_inventory(player_id, "Drop which item?") do
-      :cancel -> {:acted, ap, hp}
-      {:ok, index} -> drop(index, player_id, ap, hp)
+  def dispatch("drop", state) do
+    case select_from_inventory(state, "Drop which item?") do
+      :cancel -> GameState.continue(state)
+      {:ok, index} -> drop(index, state)
     end
   end
 
-  def dispatch({"drop", index_str}, player_id, _vicinity, ap, hp) do
+  def dispatch({"drop", index_str}, state) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
-        drop(n - 1, player_id, ap, hp)
+        drop(n - 1, state)
 
       _ ->
         MessageBuffer.warn("Invalid item selection.")
-        {:acted, ap, hp}
+        GameState.continue(state)
     end
   end
 
-  defp drop(index, player_id, ap, hp) do
-    player_id
+  defp drop(index, state) do
+    state.player_id
     |> Gateway.drop_item(index)
-    |> Commands.handle_action(ap, hp, fn
+    |> Commands.handle_action(state, fn
       {:ok, item_name, new_ap} ->
         MessageBuffer.info("You dropped #{item_name}.")
-        {:acted, new_ap, hp}
+        GameState.continue(state, new_ap, state.hp)
 
       {:error, :invalid_index} ->
         MessageBuffer.warn("Invalid item selection.")
-        {:acted, ap, hp}
+        GameState.continue(state)
     end)
   end
 
-  defp select_from_inventory(player_id, label) do
-    player_id
+  defp select_from_inventory(state, label) do
+    state.player_id
     |> Gateway.check_inventory()
     |> InventorySelector.select(label)
   end

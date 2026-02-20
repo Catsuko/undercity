@@ -23,15 +23,15 @@ defmodule UndercityCli.GameLoop do
 
       _ ->
         case Commands.dispatch(input, player_id, vicinity, ap, hp) do
-          {:moved, new_vicinity, new_ap, new_hp} ->
-            View.render_surroundings(new_vicinity)
-            View.render_description(new_vicinity, player)
-            MessageBuffer.push(Constitution.threshold_messages(ap, new_ap, hp, new_hp))
-            loop(player, player_id, new_vicinity, new_ap, new_hp)
+          {:moved, new_state} ->
+            View.render_surroundings(new_state.vicinity)
+            View.render_description(new_state.vicinity, player)
+            MessageBuffer.push(Constitution.threshold_messages(ap, new_state.ap, hp, new_state.hp))
+            loop(player, player_id, new_state.vicinity, new_state.ap, new_state.hp)
 
-          {:acted, new_ap, new_hp} ->
-            MessageBuffer.push(Constitution.threshold_messages(ap, new_ap, hp, new_hp))
-            loop(player, player_id, vicinity, new_ap, new_hp)
+          {:continue, new_state} ->
+            MessageBuffer.push(Constitution.threshold_messages(ap, new_state.ap, hp, new_state.hp))
+            loop(player, player_id, new_state.vicinity, new_state.ap, new_state.hp)
         end
     end
   end

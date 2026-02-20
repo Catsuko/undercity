@@ -4,14 +4,15 @@ defmodule UndercityCli.Commands do
 
   Splits raw input into a verb (and optional rest), looks up the verb in the
   routing table, and delegates to the matching command module. Each command
-  module implements `dispatch/5` and returns `{:moved, vicinity, ap, hp}` or
-  `{:acted, ap, hp}`. The game loop uses the tag to decide what to re-render.
+  module implements `dispatch/2` and returns `{:moved, state}` or
+  `{:continue, state}`. The game loop uses the tag to decide what to re-render.
 
-  Also exposes `handle_action/4`, a shared helper used by command modules to
+  Also exposes `handle_action/3`, a shared helper used by command modules to
   normalise Gateway results — catching exhaustion/collapse before delegating
   to the command-specific callback.
   """
 
+  alias UndercityCli.GameState
   alias UndercityCli.MessageBuffer
 
   @command_routes [
@@ -30,6 +31,7 @@ defmodule UndercityCli.Commands do
             )
 
   def dispatch(input, player_id, vicinity, ap, hp) do
+    state = %GameState{player_id: player_id, vicinity: vicinity, ap: ap, hp: hp}
     parsed = split(input)
 
     case Map.get(@commands, verb(parsed)) do
@@ -38,24 +40,24 @@ defmodule UndercityCli.Commands do
           "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
         )
 
-        {:acted, ap, hp}
+        GameState.continue(state)
 
       module ->
-        module.dispatch(parsed, player_id, vicinity, ap, hp)
+        module.dispatch(parsed, state)
     end
   end
 
-  def handle_action({:error, :exhausted}, ap, hp, _callback) do
+  def handle_action({:error, :exhausted}, state, _callback) do
     MessageBuffer.warn("You are too exhausted to act.")
-    {:acted, ap, hp}
+    GameState.continue(state)
   end
 
-  def handle_action({:error, :collapsed}, ap, hp, _callback) do
+  def handle_action({:error, :collapsed}, state, _callback) do
     MessageBuffer.warn("Your body has given out.")
-    {:acted, ap, hp}
+    GameState.continue(state)
   end
 
-  def handle_action(result, _ap, _hp, callback), do: callback.(result)
+  def handle_action(result, _state, callback), do: callback.(result)
 
   defp split(input) do
     case String.split(input, " ", parts: 2) do
