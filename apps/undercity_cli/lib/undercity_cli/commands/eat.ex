@@ -5,49 +5,47 @@ defmodule UndercityCli.Commands.Eat do
 
   alias UndercityCli.Commands
   alias UndercityCli.GameState
-  alias UndercityCli.MessageBuffer
   alias UndercityCli.View.InventorySelector
-  alias UndercityServer.Gateway
 
-  def dispatch("eat", state) do
-    case select_from_inventory(state, "Eat which item?") do
+  def dispatch("eat", state, gateway, message_buffer) do
+    case select_from_inventory(state, gateway, "Eat which item?") do
       :cancel -> GameState.continue(state)
-      {:ok, index} -> eat(index, state)
+      {:ok, index} -> eat(index, state, gateway, message_buffer)
     end
   end
 
-  def dispatch({"eat", index_str}, state) do
+  def dispatch({"eat", index_str}, state, gateway, message_buffer) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
-        eat(n - 1, state)
+        eat(n - 1, state, gateway, message_buffer)
 
       _ ->
-        MessageBuffer.warn("Invalid item selection.")
+        message_buffer.warn("Invalid item selection.")
         GameState.continue(state)
     end
   end
 
-  defp eat(index, state) do
+  defp eat(index, state, gateway, message_buffer) do
     state.player_id
-    |> Gateway.perform(state.vicinity.id, :eat, index)
-    |> Commands.handle_action(state, fn
+    |> gateway.perform(state.vicinity.id, :eat, index)
+    |> Commands.handle_action(state, message_buffer, fn
       {:ok, item, _effect, new_ap, new_hp} ->
-        MessageBuffer.success("Ate a #{item.name}.")
+        message_buffer.success("Ate a #{item.name}.")
         GameState.continue(state, new_ap, new_hp)
 
       {:error, :not_edible, item_name} ->
-        MessageBuffer.warn("You can't eat #{item_name}.")
+        message_buffer.warn("You can't eat #{item_name}.")
         GameState.continue(state)
 
       {:error, :invalid_index} ->
-        MessageBuffer.warn("Invalid item selection.")
+        message_buffer.warn("Invalid item selection.")
         GameState.continue(state)
     end)
   end
 
-  defp select_from_inventory(state, label) do
+  defp select_from_inventory(state, gateway, label) do
     state.player_id
-    |> Gateway.check_inventory()
+    |> gateway.check_inventory()
     |> InventorySelector.select(label)
   end
 end

@@ -5,8 +5,6 @@ defmodule UndercityCli.Commands.Move do
 
   alias UndercityCli.Commands
   alias UndercityCli.GameState
-  alias UndercityCli.MessageBuffer
-  alias UndercityServer.Gateway
 
   @directions %{
     "north" => :north,
@@ -21,17 +19,17 @@ defmodule UndercityCli.Commands.Move do
     "exit" => :exit
   }
 
-  def dispatch(verb, state) do
+  def dispatch(verb, state, gateway, message_buffer) do
     direction = Map.fetch!(@directions, verb)
 
     state.player_id
-    |> Gateway.perform(state.vicinity.id, :move, direction)
-    |> Commands.handle_action(state, fn
+    |> gateway.perform(state.vicinity.id, :move, direction)
+    |> Commands.handle_action(state, message_buffer, fn
       {:ok, {:ok, new_vicinity}, new_ap} ->
         GameState.moved(state, new_vicinity, new_ap, state.hp)
 
       {:ok, {:error, :no_exit}, new_ap} ->
-        MessageBuffer.warn("You can't go that way.")
+        message_buffer.warn("You can't go that way.")
         GameState.continue(state, new_ap, state.hp)
     end)
   end

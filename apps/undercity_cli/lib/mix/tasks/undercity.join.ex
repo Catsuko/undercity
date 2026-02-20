@@ -5,6 +5,7 @@ defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
   alias UndercityCli.GameLoop
+  alias UndercityCli.GameState
   alias UndercityCli.Spinner
   alias UndercityServer.Vicinity
 
@@ -18,7 +19,8 @@ defmodule Mix.Tasks.Undercity.Join do
       {:ok, {player_id, vicinity, constitution}} ->
         Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
-        GameLoop.run(player, player_id, vicinity, constitution.ap, constitution.hp)
+        state = %GameState{player_id: player_id, vicinity: vicinity, ap: constitution.ap, hp: constitution.hp}
+        GameLoop.run(player, state)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")

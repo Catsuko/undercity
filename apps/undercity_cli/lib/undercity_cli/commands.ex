@@ -4,16 +4,18 @@ defmodule UndercityCli.Commands do
 
   Splits raw input into a verb (and optional rest), looks up the verb in the
   routing table, and delegates to the matching command module. Each command
-  module implements `dispatch/2` and returns `{:moved, state}` or
+  module implements `dispatch/4` and returns `{:moved, state}` or
   `{:continue, state}`. The game loop uses the tag to decide what to re-render.
 
-  Also exposes `handle_action/3`, a shared helper used by command modules to
+  `gateway` and `message_buffer` are passed explicitly so command modules can
+  be tested in isolation without live server processes or terminal I/O.
+
+  Also exposes `handle_action/4`, a shared helper used by command modules to
   normalise Gateway results — catching exhaustion/collapse before delegating
   to the command-specific callback.
   """
 
   alias UndercityCli.GameState
-  alias UndercityCli.MessageBuffer
 
   @command_routes [
     {UndercityCli.Commands.Move, ["north", "south", "east", "west", "n", "s", "e", "w", "enter", "exit"]},
@@ -30,34 +32,33 @@ defmodule UndercityCli.Commands do
               end)
             )
 
-  def dispatch(input, player_id, vicinity, ap, hp) do
-    state = %GameState{player_id: player_id, vicinity: vicinity, ap: ap, hp: hp}
+  def dispatch(input, state, gateway, message_buffer) do
     parsed = split(input)
 
     case Map.get(@commands, verb(parsed)) do
       nil ->
-        MessageBuffer.warn(
+        message_buffer.warn(
           "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
         )
 
         GameState.continue(state)
 
       module ->
-        module.dispatch(parsed, state)
+        module.dispatch(parsed, state, gateway, message_buffer)
     end
   end
 
-  def handle_action({:error, :exhausted}, state, _callback) do
-    MessageBuffer.warn("You are too exhausted to act.")
+  def handle_action({:error, :exhausted}, state, message_buffer, _callback) do
+    message_buffer.warn("You are too exhausted to act.")
     GameState.continue(state)
   end
 
-  def handle_action({:error, :collapsed}, state, _callback) do
-    MessageBuffer.warn("Your body has given out.")
+  def handle_action({:error, :collapsed}, state, message_buffer, _callback) do
+    message_buffer.warn("Your body has given out.")
     GameState.continue(state)
   end
 
-  def handle_action(result, _state, callback), do: callback.(result)
+  def handle_action(result, _state, _message_buffer, callback), do: callback.(result)
 
   defp split(input) do
     case String.split(input, " ", parts: 2) do
