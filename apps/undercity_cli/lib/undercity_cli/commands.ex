@@ -11,6 +11,7 @@ defmodule UndercityCli.Commands do
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View
   alias UndercityCli.View.BlockDescription
+  alias UndercityCli.View.InventorySelector
   alias UndercityServer.Gateway
 
   def dispatch({:move, direction}, player, player_id, vicinity, ap, hp) do
@@ -57,6 +58,13 @@ defmodule UndercityCli.Commands do
     {vicinity, ap, hp}
   end
 
+  def dispatch(:drop, player, player_id, vicinity, ap, hp) do
+    case select_from_inventory(player_id, "Drop which item?") do
+      :cancel -> {vicinity, ap, hp}
+      {:ok, index} -> dispatch({:drop, index}, player, player_id, vicinity, ap, hp)
+    end
+  end
+
   def dispatch({:drop, index}, _player, player_id, vicinity, ap, hp) do
     player_id
     |> Gateway.drop_item(index)
@@ -69,6 +77,13 @@ defmodule UndercityCli.Commands do
         MessageBuffer.warn("Invalid item selection.")
         {vicinity, ap, hp}
     end)
+  end
+
+  def dispatch(:eat, player, player_id, vicinity, ap, hp) do
+    case select_from_inventory(player_id, "Eat which item?") do
+      :cancel -> {vicinity, ap, hp}
+      {:ok, index} -> dispatch({:eat, index}, player, player_id, vicinity, ap, hp)
+    end
   end
 
   def dispatch({:eat, index}, _player, player_id, vicinity, ap, hp) do
@@ -111,10 +126,16 @@ defmodule UndercityCli.Commands do
 
   def dispatch(:unknown, _player, _player_id, vicinity, ap, hp) do
     MessageBuffer.warn(
-      "Unknown command. Try: search, inventory, drop <n>, eat <n>, scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
+      "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
     )
 
     {vicinity, ap, hp}
+  end
+
+  defp select_from_inventory(player_id, label) do
+    player_id
+    |> Gateway.check_inventory()
+    |> InventorySelector.select(label)
   end
 
   defp handle_action({:error, :exhausted}, vicinity, ap, hp, _callback) do

@@ -39,6 +39,14 @@ defmodule UndercityCli.View.Screen do
         messages -> Enum.intersperse(Enum.map(messages, fn {text, cat} -> Status.format_message(text, cat) end), "\n")
       end
     )
+
+    Owl.LiveScreen.add_block(:selector,
+      state: nil,
+      render: fn
+        nil -> ""
+        data -> data
+      end
+    )
   end
 
   def update_surroundings(vicinity) do
@@ -51,6 +59,10 @@ defmodule UndercityCli.View.Screen do
 
   def update_messages(messages) do
     Owl.LiveScreen.update(:messages, messages)
+  end
+
+  def update_selector(data) do
+    Owl.LiveScreen.update(:selector, data)
   end
 
   def read_input do

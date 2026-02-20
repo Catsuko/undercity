@@ -46,12 +46,16 @@ defmodule UndercityCli.GameLoop do
   def parse("quit"), do: :quit
   def parse("q"), do: :quit
 
+  def parse("drop"), do: :drop
+
   def parse("drop " <> index_str) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 -> {:drop, n - 1}
       _ -> :unknown
     end
   end
+
+  def parse("eat"), do: :eat
 
   def parse("eat " <> index_str) do
     case Integer.parse(index_str) do
