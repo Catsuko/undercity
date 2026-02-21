@@ -3,38 +3,19 @@ defmodule UndercityServer.Actions.SearchTest do
 
   alias UndercityCore.Item
   alias UndercityServer.Actions.Search
-  alias UndercityServer.Block.Supervisor, as: BlockSupervisor
   alias UndercityServer.Player
+  alias UndercityServer.Test.Helpers
 
   # :graveyard has [{0.20, "Mushroom"}] — roll < 0.20 finds, roll >= 0.20 misses
   defp always_finds, do: fn -> 0.05 end
   defp always_misses, do: fn -> 0.99 end
 
-  defp unique_id, do: "test_#{:erlang.unique_integer([:positive])}"
-
   defp start_block(random_fn) do
-    block_id = unique_id()
-
-    start_supervised!(
-      {BlockSupervisor, %{id: block_id, name: "Test Block", type: :graveyard, exits: %{}, random: random_fn}},
-      id: block_id
-    )
-
-    on_exit(fn ->
-      File.rm(Path.join([File.cwd!(), "data", "blocks", "#{block_id}.dets"]))
-    end)
-
-    block_id
+    Helpers.start_block!(type: :graveyard, random: random_fn)
   end
 
   setup do
-    player_id = unique_id()
-    start_supervised!({Player, id: player_id, name: "test_#{player_id}"}, id: player_id)
-
-    on_exit(fn ->
-      File.rm(Path.join([File.cwd!(), "data", "players", "players.dets"]))
-    end)
-
+    player_id = Helpers.start_player!()
     %{player_id: player_id}
   end
 

@@ -2,21 +2,10 @@ defmodule UndercityServer.BlockTest do
   use ExUnit.Case, async: true
 
   alias UndercityServer.Block
-  alias UndercityServer.Block.Supervisor, as: BlockSupervisor
+  alias UndercityServer.Test.Helpers
 
   setup do
-    id = "block_#{:erlang.unique_integer([:positive])}"
-
-    start_supervised!(
-      {BlockSupervisor, %{id: id, name: "Test Block", type: :street, exits: %{}}},
-      id: id
-    )
-
-    on_exit(fn ->
-      path = Path.join([File.cwd!(), "data", "blocks", "#{id}.dets"])
-      File.rm(path)
-    end)
-
+    id = Helpers.start_block!()
     %{id: id}
   end
 
