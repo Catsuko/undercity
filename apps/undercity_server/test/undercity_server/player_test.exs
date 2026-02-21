@@ -6,7 +6,7 @@ defmodule UndercityServer.PlayerTest do
   alias UndercityServer.Player
 
   setup do
-    id = "player_#{:rand.uniform(100_000)}"
+    id = "player_#{:erlang.unique_integer([:positive])}"
     name = "test_#{id}"
 
     start_supervised!({Player, id: id, name: name}, id: id)
@@ -144,7 +144,7 @@ defmodule UndercityServer.PlayerTest do
       # Keep eating until we get a damage then a heal
       results =
         for _ <- 1..100 do
-          id = "player_eat_#{:rand.uniform(100_000)}"
+          id = "player_eat_#{:erlang.unique_integer([:positive])}"
           start_supervised!({Player, id: id, name: "test_#{id}"}, id: id)
           Player.add_item(id, Item.new("Mushroom"))
           {:ok, _item, effect, _ap, _hp} = Player.eat_item(id, 0)

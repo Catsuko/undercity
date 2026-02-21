@@ -5,7 +5,7 @@ defmodule UndercityServer.BlockTest do
   alias UndercityServer.Block.Supervisor, as: BlockSupervisor
 
   setup do
-    id = "block_#{:rand.uniform(100_000)}"
+    id = "block_#{:erlang.unique_integer([:positive])}"
 
     start_supervised!(
       {BlockSupervisor, %{id: id, name: "Test Block", type: :street, exits: %{}}},
