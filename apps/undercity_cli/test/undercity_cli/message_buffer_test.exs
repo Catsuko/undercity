@@ -4,7 +4,7 @@ defmodule UndercityCli.MessageBufferTest do
   alias UndercityCli.MessageBuffer
 
   setup do
-    MessageBuffer.start_link()
+    start_supervised!(MessageBuffer)
     :ok
   end
 

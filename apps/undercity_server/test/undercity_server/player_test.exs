@@ -9,11 +9,11 @@ defmodule UndercityServer.PlayerTest do
     id = "player_#{:erlang.unique_integer([:positive])}"
     name = "test_#{id}"
 
+    :dets.delete(:player_store, id)
     start_supervised!({Player, id: id, name: name}, id: id)
 
     on_exit(fn ->
-      path = Path.join([File.cwd!(), "data", "players", "players.dets"])
-      File.rm(path)
+      :dets.delete(:player_store, id)
     end)
 
     %{id: id}
@@ -145,7 +145,9 @@ defmodule UndercityServer.PlayerTest do
       results =
         for _ <- 1..100 do
           id = "player_eat_#{:erlang.unique_integer([:positive])}"
+          :dets.delete(:player_store, id)
           start_supervised!({Player, id: id, name: "test_#{id}"}, id: id)
+          on_exit(id, fn -> :dets.delete(:player_store, id) end)
           Player.add_item(id, Item.new("Mushroom"))
           {:ok, _item, effect, _ap, _hp} = Player.eat_item(id, 0)
           {id, effect}

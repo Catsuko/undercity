@@ -16,7 +16,11 @@ defmodule UndercityCli.View do
   defdelegate read_input(), to: Screen
 
   def init(vicinity, player, ap, hp) do
-    MessageBuffer.start_link()
+    case MessageBuffer.start_link() do
+      {:ok, _} -> :ok
+      {:error, {:already_started, _}} -> :ok
+    end
+
     Screen.init()
     render_surroundings(vicinity)
     render_description(vicinity, player)
