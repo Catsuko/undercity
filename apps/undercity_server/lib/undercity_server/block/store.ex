@@ -59,6 +59,6 @@ defmodule UndercityServer.Block.Store do
   end
 
   defp data_path(block_id) do
-    Path.join([File.cwd!(), "data", "blocks", "#{block_id}.dets"])
+    Path.join([File.cwd!(), UndercityServer.data_dir(), "blocks", "#{block_id}.dets"])
   end
 end

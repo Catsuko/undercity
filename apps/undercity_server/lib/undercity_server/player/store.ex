@@ -98,6 +98,6 @@ defmodule UndercityServer.Player.Store do
   end
 
   defp data_path do
-    Path.join([File.cwd!(), "data", "players", "players.dets"])
+    Path.join([File.cwd!(), UndercityServer.data_dir(), "players", "players.dets"])
   end
 end
