@@ -118,7 +118,7 @@ defmodule UndercityServer.Player do
     case Inventory.add_item(state.inventory, item) do
       {:ok, new_inventory} ->
         state = %{state | inventory: new_inventory}
-        PlayerStore.save(state.id, state)
+        save!(state)
         {:reply, :ok, state}
 
       {:error, :full} ->
@@ -134,7 +134,7 @@ defmodule UndercityServer.Player do
          {:ok, state} <- exert(state, 1) do
       item_name = Enum.at(items, index).name
       state = %{state | inventory: Inventory.remove_at(state.inventory, index)}
-      PlayerStore.save(state.id, state)
+      save!(state)
       {:reply, {:ok, item_name, ActionPoints.current(state.action_points)}, state}
     else
       {:index, false} -> {:reply, {:error, :invalid_index}, state}
@@ -153,7 +153,7 @@ defmodule UndercityServer.Player do
       health = Health.apply_effect(state.health, effect)
       inventory = Inventory.remove_at(state.inventory, index)
       state = %{state | inventory: inventory, health: health}
-      PlayerStore.save(state.id, state)
+      save!(state)
       {:reply, {:ok, item, effect, ActionPoints.current(state.action_points), Health.current(health)}, state}
     else
       {:index, false} -> {:reply, {:error, :invalid_index}, state}
@@ -177,7 +177,7 @@ defmodule UndercityServer.Player do
     case consume_item(state.inventory, item_name) do
       {:ok, inventory} ->
         state = %{state | inventory: inventory}
-        PlayerStore.save(state.id, state)
+        save!(state)
         {:reply, :ok, state}
 
       {:error, :item_missing} ->
@@ -190,7 +190,7 @@ defmodule UndercityServer.Player do
     with {:ok, inventory} <- consume_item(state.inventory, item_name),
          {:ok, state} <- exert(state, cost) do
       state = %{state | inventory: inventory}
-      PlayerStore.save(state.id, state)
+      save!(state)
       {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
     else
       {:error, :item_missing} -> {:reply, {:error, :item_missing}, state}
@@ -202,7 +202,7 @@ defmodule UndercityServer.Player do
   def handle_call({:spend_ap, cost}, _from, state) do
     case exert(state, cost) do
       {:ok, state} ->
-        PlayerStore.save(state.id, state)
+        save!(state)
         {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
 
       {:error, _} = error ->
@@ -215,6 +215,10 @@ defmodule UndercityServer.Player do
     action_points = ActionPoints.regenerate(state.action_points)
     state = %{state | action_points: action_points}
     {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(state.health)}, state}
+  end
+
+  defp save!(state) do
+    :ok = PlayerStore.save(state.id, state)
   end
 
   defp exert(state, cost) do
