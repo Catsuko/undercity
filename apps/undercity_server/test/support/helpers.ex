@@ -5,6 +5,7 @@ defmodule UndercityServer.Test.Helpers do
   """
 
   alias UndercityServer.Block.Supervisor, as: BlockSupervisor
+  alias UndercityServer.Player
 
   @doc """
   Starts a Block under test supervision and registers cleanup of its DETS file
@@ -33,6 +34,24 @@ defmodule UndercityServer.Test.Helpers do
     path = Path.join([File.cwd!(), UndercityServer.data_dir(), "blocks", "#{id}.dets"])
     ExUnit.Callbacks.on_exit(fn -> File.rm(path) end)
     ExUnit.Callbacks.start_supervised!({BlockSupervisor, block_opts}, id: id)
+
+    id
+  end
+
+  @doc """
+  Starts a Player under test supervision and registers cleanup of its DETS
+  entry on exit. Returns the player id.
+
+  Options:
+  - `:name` - player name (default: `"Test Player"`)
+  """
+  def start_player!(opts \\ []) do
+    id = "player_#{:erlang.unique_integer([:positive])}"
+    name = Keyword.get(opts, :name, "Test Player")
+
+    :dets.delete(:player_store, id)
+    ExUnit.Callbacks.on_exit(fn -> :dets.delete(:player_store, id) end)
+    ExUnit.Callbacks.start_supervised!({Player, id: id, name: name}, id: id)
 
     id
   end

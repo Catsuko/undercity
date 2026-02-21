@@ -10,20 +10,12 @@ defmodule UndercityServer.Actions.SearchTest do
   defp always_finds, do: fn -> 0.05 end
   defp always_misses, do: fn -> 0.99 end
 
-  defp unique_id, do: "test_#{:erlang.unique_integer([:positive])}"
-
   defp start_block(random_fn) do
     Helpers.start_block!(type: :graveyard, random: random_fn)
   end
 
   setup do
-    player_id = unique_id()
-    start_supervised!({Player, id: player_id, name: "test_#{player_id}"}, id: player_id)
-
-    on_exit(fn ->
-      File.rm(Path.join([File.cwd!(), "data", "players", "players.dets"]))
-    end)
-
+    player_id = Helpers.start_player!()
     %{player_id: player_id}
   end
 
