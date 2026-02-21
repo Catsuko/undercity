@@ -7,8 +7,8 @@ defmodule UndercityCore.ActionPoints do
   regeneration rate, and the spend/regen computations.
   """
 
-  @max 50
-  @regen_interval 1800
+  @max Application.compile_env(:undercity_core, :action_points_max, 50)
+  @regen_interval Application.compile_env(:undercity_core, :action_points_regen_interval, 1800)
 
   defstruct [:ap, :updated_at]
 
@@ -21,23 +21,24 @@ defmodule UndercityCore.ActionPoints do
   Returns a fresh action points struct at maximum AP.
   """
   @spec new(integer()) :: t()
-  def new(now \\ System.os_time(:second)), do: %__MODULE__{ap: @max, updated_at: now}
+  def new(now \\ System.os_time(:second)), do: %__MODULE__{ap: max(), updated_at: now}
 
   @doc """
   Returns the maximum action points a player can have.
+  Configured via `:action_points_max` (default: 50).
   """
   @spec max() :: non_neg_integer()
   def max, do: @max
 
   @doc """
   Applies lazy regeneration and returns the updated struct.
-  Regenerates 1 AP per #{@regen_interval}-second interval elapsed, capped at #{@max}.
+  Regenerates 1 AP per `:action_points_regen_interval` seconds elapsed, capped at `max/0`.
   """
   @spec regenerate(t(), integer()) :: t()
   def regenerate(%__MODULE__{ap: ap, updated_at: updated_at} = action_points, now \\ System.os_time(:second)) do
     elapsed = now - updated_at
-    gained = div(elapsed, @regen_interval)
-    %{action_points | ap: min(ap + gained, @max)}
+    gained = div(elapsed, regen_interval())
+    %{action_points | ap: min(ap + gained, max())}
   end
 
   @doc """
@@ -57,4 +58,6 @@ defmodule UndercityCore.ActionPoints do
   end
 
   def spend(%__MODULE__{}, _cost, _now), do: {:error, :exhausted}
+
+  defp regen_interval, do: @regen_interval
 end
