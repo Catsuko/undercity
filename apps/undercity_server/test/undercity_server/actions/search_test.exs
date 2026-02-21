@@ -10,7 +10,7 @@ defmodule UndercityServer.Actions.SearchTest do
   defp always_finds, do: fn -> 0.05 end
   defp always_misses, do: fn -> 0.99 end
 
-  defp unique_id, do: "test_#{:rand.uniform(100_000_000)}"
+  defp unique_id, do: "test_#{:erlang.unique_integer([:positive])}"
 
   defp start_block(random_fn) do
     block_id = unique_id()
