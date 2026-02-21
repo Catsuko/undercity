@@ -10,11 +10,19 @@ defmodule UndercityCli.MessageBuffer do
   @name __MODULE__
 
   @doc """
-  Starts the MessageBuffer Agent, replacing any existing instance.
+  Starts the MessageBuffer Agent under a supervisor.
   """
-  def start_link do
-    if pid = Process.whereis(@name), do: Agent.stop(pid)
+  def start_link(_opts \\ []) do
     Agent.start_link(fn -> [] end, name: @name)
+  end
+
+  def child_spec(opts) do
+    %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, [opts]},
+      type: :worker,
+      restart: :permanent
+    }
   end
 
   @doc """
