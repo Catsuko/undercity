@@ -7,14 +7,16 @@ defmodule UndercityCli.Commands.Eat do
   alias UndercityCli.GameState
   alias UndercityCli.View.InventorySelector
 
-  def dispatch("eat", state, gateway, message_buffer) do
-    case select_from_inventory(state, gateway, "Eat which item?") do
+  def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
+
+  def dispatch("eat", state, gateway, message_buffer, selector) do
+    case select_from_inventory(state, gateway, selector, "Eat which item?") do
       :cancel -> GameState.continue(state)
       {:ok, index} -> eat(index, state, gateway, message_buffer)
     end
   end
 
-  def dispatch({"eat", index_str}, state, gateway, message_buffer) do
+  def dispatch({"eat", index_str}, state, gateway, message_buffer, _selector) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
         eat(n - 1, state, gateway, message_buffer)
@@ -43,9 +45,9 @@ defmodule UndercityCli.Commands.Eat do
     end)
   end
 
-  defp select_from_inventory(state, gateway, label) do
+  defp select_from_inventory(state, gateway, selector, label) do
     state.player_id
     |> gateway.check_inventory()
-    |> InventorySelector.select(label)
+    |> selector.select(label)
   end
 end

@@ -7,14 +7,16 @@ defmodule UndercityCli.Commands.Drop do
   alias UndercityCli.GameState
   alias UndercityCli.View.InventorySelector
 
-  def dispatch("drop", state, gateway, message_buffer) do
-    case select_from_inventory(state, gateway, "Drop which item?") do
+  def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
+
+  def dispatch("drop", state, gateway, message_buffer, selector) do
+    case select_from_inventory(state, gateway, selector, "Drop which item?") do
       :cancel -> GameState.continue(state)
       {:ok, index} -> drop(index, state, gateway, message_buffer)
     end
   end
 
-  def dispatch({"drop", index_str}, state, gateway, message_buffer) do
+  def dispatch({"drop", index_str}, state, gateway, message_buffer, _selector) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
         drop(n - 1, state, gateway, message_buffer)
@@ -39,9 +41,9 @@ defmodule UndercityCli.Commands.Drop do
     end)
   end
 
-  defp select_from_inventory(state, gateway, label) do
+  defp select_from_inventory(state, gateway, selector, label) do
     state.player_id
     |> gateway.check_inventory()
-    |> InventorySelector.select(label)
+    |> selector.select(label)
   end
 end

@@ -1,5 +1,6 @@
 defmodule EatSuccessGateway do
   @moduledoc false
+  def check_inventory(_player_id), do: []
   def perform(_player_id, _block_id, :eat, _index), do: {:ok, %{name: "Bread"}, :restore, 9, 11}
 end
 
@@ -16,8 +17,17 @@ defmodule UndercityCli.Commands.EatTest do
 
   @state %GameState{player_id: "player1", vicinity: %{id: "block1"}, ap: 10, hp: 10}
 
-  # Bare eat (no index) is deferred to undercity-1ll — it requires interactive
-  # InventorySelector which reads from IO and cannot be unit tested in isolation.
+  test "bare eat cancelled returns continue with unchanged state" do
+    assert {:continue, new_state} = Eat.dispatch("eat", @state, EatSuccessGateway, FakeMessageBuffer, CancelSelector)
+    assert new_state == @state
+  end
+
+  test "bare eat with selection succeeds and returns continue with success message and updated ap and hp" do
+    assert {:continue, new_state} = Eat.dispatch("eat", @state, EatSuccessGateway, FakeMessageBuffer, SelectFirstSelector)
+    assert new_state.ap == 9
+    assert new_state.hp == 11
+    assert_received {:success, "Ate a Bread."}
+  end
 
   test "successful eat returns continue with success message and updated ap and hp" do
     assert {:continue, new_state} = Eat.dispatch({"eat", "1"}, @state, EatSuccessGateway, FakeMessageBuffer)

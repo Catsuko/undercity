@@ -11,8 +11,16 @@ defmodule UndercityCli.Commands.DropTest do
 
   @state %GameState{player_id: "player1", vicinity: %{id: "block1"}, ap: 10, hp: 10}
 
-  # Bare drop (no index) is deferred to undercity-1ll — it requires interactive
-  # InventorySelector which reads from IO and cannot be unit tested in isolation.
+  test "bare drop cancelled returns continue with unchanged state" do
+    assert {:continue, new_state} = Drop.dispatch("drop", @state, FakeGateway, FakeMessageBuffer, CancelSelector)
+    assert new_state == @state
+  end
+
+  test "bare drop with selection succeeds and returns continue with info and updated ap" do
+    assert {:continue, new_state} = Drop.dispatch("drop", @state, FakeGateway, FakeMessageBuffer, SelectFirstSelector)
+    assert new_state.ap == 9
+    assert_received {:info, "You dropped Sword."}
+  end
 
   test "indexed drop succeeds and returns continue with info and updated ap" do
     assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, FakeGateway, FakeMessageBuffer)
