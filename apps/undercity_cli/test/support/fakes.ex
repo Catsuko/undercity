@@ -20,6 +20,16 @@ defmodule CollapsedGateway do
   def drop_item(_player_id, _index), do: {:error, :collapsed}
 end
 
+defmodule SelectFirstSelector do
+  @moduledoc false
+  def select(_items, _label), do: {:ok, 0}
+end
+
+defmodule CancelSelector do
+  @moduledoc false
+  def select(_items, _label), do: :cancel
+end
+
 defmodule FakeMessageBuffer do
   @moduledoc false
   def warn(msg), do: send(self(), {:warn, msg})
