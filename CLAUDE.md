@@ -28,6 +28,6 @@ Use 'bd' for task tracking.
 
 ## Workflow
 
-- When starting a bead, work through design questions and concerns one by one with the user before moving to implementation.
-- When exploring or investigating, start with `docs/architecture.md` for a system overview, then check other files in `docs/` for topic-specific detail (actions, persistence, testing, domain). Per-app conventions and process structure are documented in the `@moduledoc` of each top-level module (`UndercityCore`, `UndercityServer`, `UndercityCli`).
+- When starting a bead, create a branch first, then work through design questions and discussion with the user before moving to implementation.
+- When exploring or investigating, start with `docs/architecture.md` for a system overview, then check other files in `docs/` for topic-specific detail (actions, persistence, testing). Per-app conventions and process structure are documented in the `@moduledoc` of each top-level module (`UndercityCore`, `UndercityServer`, `UndercityCli`).
 - Always ask for review before closing/completing tasks or committing to git, unless explicitly told otherwise.
