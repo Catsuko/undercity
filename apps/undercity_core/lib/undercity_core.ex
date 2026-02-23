@@ -1,32 +1,20 @@
 defmodule UndercityCore do
   @moduledoc """
-  Domain logic for the undercity.
+  Pure domain logic for the Undercity — no OTP, no processes, no side effects.
 
-  The undercity is a persistent world that players inhabit. Players exist in the
-  world even when they are not connected — there is no logout or disconnect concept.
-  Connecting simply means waking up where you already are.
+  All runtime state lives in `UndercityServer`. This app defines the structs and
+  functions that both the server and its tests build on.
 
-  This module contains pure domain structs and functions with no OTP dependencies.
+  ## Domain
 
-  ## Models
-
-  ### Block
-
-  A block is a location in the undercity where people can gather. Each block has an id,
-  a name, a type, and a set of player IDs currently present.
-
-  See `UndercityCore.Block`.
-
-  ### Inventory
-
-  A bounded collection of items a player can carry.
-
-  See `UndercityCore.Inventory`.
-
-  ### Item
-
-  An item that can be found and carried.
-
-  See `UndercityCore.Item`.
+  - The world is made up of **blocks** — named locations connected by exits. Players
+    move between them and spend action points (AP) to act.
+  - Each player has an **AP pool** and a **health pool (HP)**. At 0 AP they are
+    exhausted; at 0 HP they are collapsed and cannot act at all.
+  - AP regenerates over time; HP does not regenerate on its own.
+  - Players carry a bounded **inventory** of items found by searching blocks. Each
+    block type has its own loot table.
+  - Items can be **edible** (applying a random health effect on consumption) or
+    **consumable tools** — e.g. Chalk is spent to write scribble messages on blocks.
   """
 end
