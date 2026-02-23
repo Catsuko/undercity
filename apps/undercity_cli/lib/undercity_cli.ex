@@ -34,6 +34,6 @@ defmodule UndercityCli do
   ## Testing
 
   Command modules accept the gateway and message buffer as injected arguments, so
-  tests replace them with fakes — no real server process is needed to test CLI logic.
+  tests mock them with Mimic per-process — no real server process is needed to test CLI logic.
   """
 end

@@ -19,9 +19,9 @@ Each app has its own `test/` directory and runs independently. Use `mix.bat test
 
 Tests using these helpers are safe to run `async: true`. Tests using the live app (Gateway, world map) must be `async: false`.
 
-## CLI Fakes
+## CLI Mocking
 
-CLI tests inject fake modules in place of the gateway and message buffer. `FakeMessageBuffer` sends `{:warn | :info | :success, msg}` tuples to `self()` — assert with `assert_received`. Common fake gateways (`ExhaustedGateway`, `CollapsedGateway`, etc.) live in `test/support/fakes.ex`; action-specific fakes are defined at the top of the relevant test file.
+CLI tests use [Mimic](https://hex.pm/packages/mimic) to mock `UndercityServer.Gateway`, `UndercityCli.MessageBuffer`, and `UndercityCli.View.InventorySelector` per-process. Modules are registered in `test_helper.exs` with `Mimic.copy/1`. Tests use `expect/3` to set up per-call overrides and verify they were invoked, or `stub/3` for unverified overrides (e.g. loops with variable call counts). Mocks are process-scoped so `async: true` is safe.
 
 ## Common Patterns
 
