@@ -5,7 +5,7 @@ defmodule UndercityServer.Test.Helpers do
   """
 
   alias UndercityServer.Block.Supervisor, as: BlockSupervisor
-  alias UndercityServer.Player
+  alias UndercityServer.Player.Server, as: PlayerServer
 
   @doc """
   Starts a Block under test supervision and registers cleanup of its DETS file
@@ -51,7 +51,7 @@ defmodule UndercityServer.Test.Helpers do
 
     :dets.delete(:player_store, id)
     ExUnit.Callbacks.on_exit(fn -> :dets.delete(:player_store, id) end)
-    ExUnit.Callbacks.start_supervised!({Player, id: id, name: name}, id: id)
+    ExUnit.Callbacks.start_supervised!({PlayerServer, id: id, name: name}, id: id)
 
     id
   end

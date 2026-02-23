@@ -9,6 +9,7 @@ config :undercity_core,
   action_points_regen_interval: 1800
 
 config :undercity_server,
-  data_dir: "data"
+  data_dir: "data",
+  player_idle_timeout_ms: 15 * 60 * 1_000
 
 import_config "#{config_env()}.exs"

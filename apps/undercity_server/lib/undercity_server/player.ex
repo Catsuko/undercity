@@ -1,37 +1,47 @@
 defmodule UndercityServer.Player do
   @moduledoc """
-  GenServer managing a single player's runtime state.
+  Public API for player state.
 
-  Each connected player runs as a dynamically supervised process. Manages
-  inventory (add, use, list items) and action points (AP). Player processes
-  are started on demand by `Player.Supervisor` and persist state through
-  `Player.Store`.
+  ## Architecture
 
-  Owns its own process naming — player IDs are mapped to registered atom
-  names internally. ID generation lives in `Session` where new players are
-  created.
+  Player state is managed by `Player.Server`, a GenServer that runs one
+  process per active player. This module is a pure facade: it holds no
+  state of its own and every function delegates to the underlying
+  GenServer via `GenServer.call/2`.
+
+  ### Lazy loading
+
+  Player processes are not kept alive indefinitely. After
+  `player_idle_timeout_ms` of inactivity (configurable, default 15 minutes)
+  the GenServer stops itself with a normal exit. Before each call this
+  module calls `start_if_inactive/1`, which starts the process from
+  `Player.Store` if it is not already running, so callers never need
+  to manage process lifecycle themselves.
+
+  ### Persistence
+
+  All mutations are written to DETS through `Player.Store` before the
+  GenServer replies. The store is the source of truth; the GenServer is
+  an in-memory cache of a player's current session state.
+
+  ### Process naming
+
+  Processes are registered under `:"player_<id>"` on the server node.
+  Naming is owned by `Player.Server`; everything else goes through
+  `Player.Server.via/1`.
   """
 
-  use GenServer
-
-  alias UndercityCore.ActionPoints
-  alias UndercityCore.Food
-  alias UndercityCore.Health
-  alias UndercityCore.Inventory
   alias UndercityCore.Item
+  alias UndercityServer.Player.Server, as: PlayerServer
   alias UndercityServer.Player.Store, as: PlayerStore
+  alias UndercityServer.Player.Supervisor, as: PlayerSupervisor
 
   # Client API
 
-  def start_link(opts) do
-    id = Keyword.fetch!(opts, :id)
-    name = Keyword.fetch!(opts, :name)
-    GenServer.start_link(__MODULE__, {id, name}, name: process_name(id))
-  end
-
   @spec add_item(String.t(), Item.t()) :: :ok | {:error, :full}
   def add_item(player_id, %Item{} = item) do
-    GenServer.call(via(player_id), {:add_item, item})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:add_item, item})
   end
 
   @spec drop_item(String.t(), non_neg_integer()) ::
@@ -40,7 +50,8 @@ defmodule UndercityServer.Player do
           | {:error, :exhausted}
           | {:error, :collapsed}
   def drop_item(player_id, index) do
-    GenServer.call(via(player_id), {:drop_item, index})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:drop_item, index})
   end
 
   @spec eat_item(String.t(), non_neg_integer()) ::
@@ -50,34 +61,41 @@ defmodule UndercityServer.Player do
           | {:error, :exhausted}
           | {:error, :collapsed}
   def eat_item(player_id, index) do
-    GenServer.call(via(player_id), {:eat_item, index})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:eat_item, index})
   end
 
   @spec check_inventory(String.t()) :: [Item.t()]
   def check_inventory(player_id) do
-    GenServer.call(via(player_id), :check_inventory)
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), :check_inventory)
   end
 
   @spec get_name(String.t()) :: String.t()
   def get_name(player_id) do
-    GenServer.call(via(player_id), :get_name)
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), :get_name)
   end
 
   @spec use_item(String.t(), String.t()) :: :ok | :not_found
   def use_item(player_id, item_name) do
-    GenServer.call(via(player_id), {:use_item, item_name})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:use_item, item_name})
   end
 
   @spec use_item(String.t(), String.t(), pos_integer()) ::
           {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed} | {:error, :item_missing}
   def use_item(player_id, item_name, cost) do
-    GenServer.call(via(player_id), {:use_item, item_name, cost})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:use_item, item_name, cost})
   end
 
   @spec perform(String.t(), pos_integer(), (-> any())) ::
           {:ok, any(), non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed}
   def perform(player_id, cost \\ 1, action_fn) do
-    case GenServer.call(via(player_id), {:spend_ap, cost}) do
+    start_if_inactive(player_id)
+
+    case GenServer.call(PlayerServer.via(player_id), {:spend_ap, cost}) do
       {:ok, ap} -> {:ok, action_fn.(), ap}
       {:error, _} = error -> error
     end
@@ -90,7 +108,8 @@ defmodule UndercityServer.Player do
   """
   @spec constitution(String.t()) :: %{ap: non_neg_integer(), hp: non_neg_integer()}
   def constitution(player_id) do
-    GenServer.call(via(player_id), :constitution)
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), :constitution)
   end
 
   @doc """
@@ -105,187 +124,28 @@ defmodule UndercityServer.Player do
   """
   @spec location(String.t()) :: String.t() | nil
   def location(player_id) do
-    GenServer.call(via(player_id), :location)
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), :location)
   end
 
   @spec move_to(String.t(), String.t()) :: :ok
   def move_to(player_id, block_id) do
-    GenServer.call(via(player_id), {:move_to, block_id})
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:move_to, block_id})
   end
 
-  defp process_name(player_id), do: :"player_#{player_id}"
+  defp start_if_inactive(player_id) do
+    case GenServer.whereis(PlayerServer.process_name(player_id)) do
+      nil ->
+        {:ok, %{name: name}} = PlayerStore.load(player_id)
 
-  defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
-
-  # Server callbacks
-
-  @impl true
-  def init({id, name}) do
-    state =
-      case PlayerStore.load(id) do
-        {:ok, data} ->
-          Map.put_new(data, :block_id, nil)
-
-        :error ->
-          %{
-            id: id,
-            name: name,
-            inventory: Inventory.new(),
-            action_points: ActionPoints.new(),
-            health: Health.new(),
-            block_id: nil
-          }
-      end
-
-    {:ok, state}
-  end
-
-  @impl true
-  def handle_call({:add_item, %Item{} = item}, _from, state) do
-    case Inventory.add_item(state.inventory, item) do
-      {:ok, new_inventory} ->
-        state = %{state | inventory: new_inventory}
-        save!(state)
-        {:reply, :ok, state}
-
-      {:error, :full} ->
-        {:reply, {:error, :full}, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:drop_item, index}, _from, state) do
-    items = Inventory.list_items(state.inventory)
-
-    with {:index, true} <- {:index, index >= 0 and index < length(items)},
-         {:ok, state} <- exert(state, 1) do
-      item_name = Enum.at(items, index).name
-      state = %{state | inventory: Inventory.remove_at(state.inventory, index)}
-      save!(state)
-      {:reply, {:ok, item_name, ActionPoints.current(state.action_points)}, state}
-    else
-      {:index, false} -> {:reply, {:error, :invalid_index}, state}
-      {:error, _} = error -> {:reply, error, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:eat_item, index}, _from, state) do
-    items = Inventory.list_items(state.inventory)
-
-    with {:index, true} <- {:index, index >= 0 and index < length(items)},
-         item = Enum.at(items, index),
-         {:edible, effect} when effect != :not_edible <- {:edible, Food.effect(item.name)},
-         {:ok, state} <- exert(state, 1) do
-      health = Health.apply_effect(state.health, effect)
-      inventory = Inventory.remove_at(state.inventory, index)
-      state = %{state | inventory: inventory, health: health}
-      save!(state)
-      {:reply, {:ok, item, effect, ActionPoints.current(state.action_points), Health.current(health)}, state}
-    else
-      {:index, false} -> {:reply, {:error, :invalid_index}, state}
-      {:edible, :not_edible} -> {:reply, {:error, :not_edible, Enum.at(items, index).name}, state}
-      {:error, _} = error -> {:reply, error, state}
-    end
-  end
-
-  @impl true
-  def handle_call(:check_inventory, _from, state) do
-    {:reply, Inventory.list_items(state.inventory), state}
-  end
-
-  @impl true
-  def handle_call(:get_name, _from, state) do
-    {:reply, state.name, state}
-  end
-
-  @impl true
-  def handle_call({:use_item, item_name}, _from, state) do
-    case consume_item(state.inventory, item_name) do
-      {:ok, inventory} ->
-        state = %{state | inventory: inventory}
-        save!(state)
-        {:reply, :ok, state}
-
-      {:error, :item_missing} ->
-        {:reply, :not_found, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:use_item, item_name, cost}, _from, state) do
-    with {:ok, inventory} <- consume_item(state.inventory, item_name),
-         {:ok, state} <- exert(state, cost) do
-      state = %{state | inventory: inventory}
-      save!(state)
-      {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
-    else
-      {:error, :item_missing} -> {:reply, {:error, :item_missing}, state}
-      {:error, _} = error -> {:reply, error, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:spend_ap, cost}, _from, state) do
-    case exert(state, cost) do
-      {:ok, state} ->
-        save!(state)
-        {:reply, {:ok, ActionPoints.current(state.action_points)}, state}
-
-      {:error, _} = error ->
-        {:reply, error, state}
-    end
-  end
-
-  @impl true
-  def handle_call(:constitution, _from, state) do
-    action_points = ActionPoints.regenerate(state.action_points)
-    state = %{state | action_points: action_points}
-    {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(state.health)}, state}
-  end
-
-  @impl true
-  def handle_call(:location, _from, state) do
-    {:reply, Map.get(state, :block_id), state}
-  end
-
-  @impl true
-  def handle_call({:move_to, block_id}, _from, state) do
-    state = Map.put(state, :block_id, block_id)
-    save!(state)
-    {:reply, :ok, state}
-  end
-
-  defp save!(state) do
-    :ok = PlayerStore.save(state.id, state)
-  end
-
-  defp exert(state, cost) do
-    if Health.current(state.health) == 0 do
-      {:error, :collapsed}
-    else
-      action_points = ActionPoints.regenerate(state.action_points)
-
-      case ActionPoints.spend(action_points, cost) do
-        {:ok, action_points} ->
-          {:ok, %{state | action_points: action_points}}
-
-        {:error, :exhausted} ->
-          {:error, :exhausted}
-      end
-    end
-  end
-
-  defp consume_item(inventory, item_name) do
-    case Inventory.find_item(inventory, item_name) do
-      {:ok, item, index} ->
-        case Item.use(item) do
-          {:ok, updated} -> {:ok, Inventory.replace_at(inventory, index, updated)}
-          :spent -> {:ok, Inventory.remove_at(inventory, index)}
+        case PlayerSupervisor.start_player(player_id, name) do
+          {:ok, _} -> :ok
+          {:error, {:already_started, _}} -> :ok
         end
 
-      :not_found ->
-        {:error, :item_missing}
+      _pid ->
+        :ok
     end
   end
 end
