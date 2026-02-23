@@ -24,7 +24,7 @@ defmodule UndercityServer.Player.Supervisor do
   def start_player(id, name) do
     DynamicSupervisor.start_child(
       {__MODULE__, UndercityServer.server_node()},
-      {UndercityServer.Player, id: id, name: name}
+      {UndercityServer.Player.Server, id: id, name: name}
     )
   end
 end
