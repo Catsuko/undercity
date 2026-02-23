@@ -1,49 +1,39 @@
-defmodule ScribbleSuccessGateway do
-  @moduledoc false
-  def perform(_player_id, _block_id, :scribble, _text), do: {:ok, 9}
-end
-
-defmodule ScribbleEmptyMessageGateway do
-  @moduledoc false
-  def perform(_player_id, _block_id, :scribble, _text), do: {:error, :empty_message}
-end
-
 defmodule UndercityCli.Commands.ScribbleTest do
   use ExUnit.Case, async: true
+  use Mimic
 
   alias UndercityCli.Commands.Scribble
   alias UndercityCli.GameState
+  alias UndercityCli.MessageBuffer
+  alias UndercityServer.Gateway
 
   @street_vicinity %UndercityServer.Vicinity{type: :street}
   @state %GameState{player_id: "player1", vicinity: @street_vicinity, ap: 10, hp: 10}
 
   test "bare scribble returns continue with usage warning and unchanged state" do
-    assert {:continue, new_state} = Scribble.dispatch("scribble", @state, FakeGateway, FakeMessageBuffer)
+    expect(MessageBuffer, :warn, fn "Usage: scribble <text>" -> :ok end)
+    assert {:continue, new_state} = Scribble.dispatch("scribble", @state, Gateway, MessageBuffer)
     assert new_state == @state
-    assert_received {:warn, "Usage: scribble <text>"}
   end
 
   test "scribble with text succeeds and returns continue with success message and updated ap" do
-    assert {:continue, new_state} =
-             Scribble.dispatch({"scribble", "hello"}, @state, ScribbleSuccessGateway, FakeMessageBuffer)
-
+    expect(Gateway, :perform, fn "player1", _, :scribble, "hello" -> {:ok, 9} end)
+    expect(MessageBuffer, :success, fn "You scribble on the ground." -> :ok end)
+    assert {:continue, new_state} = Scribble.dispatch({"scribble", "hello"}, @state, Gateway, MessageBuffer)
     assert new_state.ap == 9
-    assert_received {:success, "You scribble on the ground."}
   end
 
   test "scribble with empty message returns continue with success message and unchanged state" do
-    assert {:continue, new_state} =
-             Scribble.dispatch({"scribble", ""}, @state, ScribbleEmptyMessageGateway, FakeMessageBuffer)
-
+    expect(Gateway, :perform, fn "player1", _, :scribble, "" -> {:error, :empty_message} end)
+    expect(MessageBuffer, :success, fn "You scribble on the ground." -> :ok end)
+    assert {:continue, new_state} = Scribble.dispatch({"scribble", ""}, @state, Gateway, MessageBuffer)
     assert new_state == @state
-    assert_received {:success, "You scribble on the ground."}
   end
 
   test "no chalk returns continue with warning and unchanged state" do
-    assert {:continue, new_state} =
-             Scribble.dispatch({"scribble", "hello"}, @state, FakeGateway, FakeMessageBuffer)
-
+    expect(Gateway, :perform, fn "player1", _, :scribble, "hello" -> {:error, :item_missing} end)
+    expect(MessageBuffer, :warn, fn "You have no chalk." -> :ok end)
+    assert {:continue, new_state} = Scribble.dispatch({"scribble", "hello"}, @state, Gateway, MessageBuffer)
     assert new_state == @state
-    assert_received {:warn, "You have no chalk."}
   end
 end

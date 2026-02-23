@@ -1,44 +1,48 @@
-defmodule DropInvalidIndexGateway do
-  @moduledoc false
-  def drop_item(_player_id, _index), do: {:error, :invalid_index}
-end
-
 defmodule UndercityCli.Commands.DropTest do
   use ExUnit.Case, async: true
+  use Mimic
 
   alias UndercityCli.Commands.Drop
   alias UndercityCli.GameState
+  alias UndercityCli.MessageBuffer
+  alias UndercityCli.View.InventorySelector
+  alias UndercityServer.Gateway
 
   @state %GameState{player_id: "player1", vicinity: %{id: "block1"}, ap: 10, hp: 10}
 
   test "bare drop cancelled returns continue with unchanged state" do
-    assert {:continue, new_state} = Drop.dispatch("drop", @state, FakeGateway, FakeMessageBuffer, CancelSelector)
+    expect(Gateway, :check_inventory, fn "player1" -> [] end)
+    expect(InventorySelector, :select, fn [], "Drop which item?" -> :cancel end)
+    assert {:continue, new_state} = Drop.dispatch("drop", @state, Gateway, MessageBuffer, InventorySelector)
     assert new_state == @state
   end
 
   test "bare drop with selection succeeds and returns continue with info and updated ap" do
-    assert {:continue, new_state} = Drop.dispatch("drop", @state, FakeGateway, FakeMessageBuffer, SelectFirstSelector)
+    expect(Gateway, :check_inventory, fn "player1" -> [] end)
+    expect(InventorySelector, :select, fn [], "Drop which item?" -> {:ok, 0} end)
+    expect(Gateway, :drop_item, fn "player1", 0 -> {:ok, "Sword", 9} end)
+    expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+    assert {:continue, new_state} = Drop.dispatch("drop", @state, Gateway, MessageBuffer, InventorySelector)
     assert new_state.ap == 9
-    assert_received {:info, "You dropped Sword."}
   end
 
   test "indexed drop succeeds and returns continue with info and updated ap" do
-    assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, FakeGateway, FakeMessageBuffer)
+    expect(Gateway, :drop_item, fn "player1", 0 -> {:ok, "Sword", 9} end)
+    expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+    assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, Gateway, MessageBuffer)
     assert new_state.ap == 9
-    assert_received {:info, "You dropped Sword."}
   end
 
   test "invalid index string returns continue with warning and unchanged state" do
-    assert {:continue, new_state} = Drop.dispatch({"drop", "0"}, @state, FakeGateway, FakeMessageBuffer)
+    expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
+    assert {:continue, new_state} = Drop.dispatch({"drop", "0"}, @state, Gateway, MessageBuffer)
     assert new_state == @state
-    assert_received {:warn, "Invalid item selection."}
   end
 
   test "gateway invalid index returns continue with warning and unchanged state" do
-    assert {:continue, new_state} =
-             Drop.dispatch({"drop", "1"}, @state, DropInvalidIndexGateway, FakeMessageBuffer)
-
+    expect(Gateway, :drop_item, fn "player1", 0 -> {:error, :invalid_index} end)
+    expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
+    assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, Gateway, MessageBuffer)
     assert new_state == @state
-    assert_received {:warn, "Invalid item selection."}
   end
 end
