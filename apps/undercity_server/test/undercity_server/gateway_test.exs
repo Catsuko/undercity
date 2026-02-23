@@ -123,6 +123,12 @@ defmodule UndercityServer.GatewayTest do
 
       assert result == :nothing or match?({:found, _item}, result)
     end
+
+    test "returns :not_in_block when player is not in the supplied block" do
+      {player_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+
+      assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :search, nil)
+    end
   end
 
   describe "perform/4 :scribble" do
@@ -168,6 +174,13 @@ defmodule UndercityServer.GatewayTest do
 
       items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 1}] = items
+    end
+
+    test "returns :not_in_block when player is not in the supplied block" do
+      {player_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+
+      assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :scribble, "hello")
     end
   end
 end

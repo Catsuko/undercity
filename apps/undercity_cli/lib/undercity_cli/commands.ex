@@ -58,6 +58,11 @@ defmodule UndercityCli.Commands do
     GameState.continue(state)
   end
 
+  def handle_action({:error, :not_in_block}, state, message_buffer, _callback) do
+    message_buffer.warn("You can't do that from here.")
+    GameState.continue(state)
+  end
+
   def handle_action(result, _state, _message_buffer, callback), do: callback.(result)
 
   defp split(input) do
