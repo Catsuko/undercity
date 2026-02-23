@@ -74,16 +74,42 @@ defmodule UndercityServer.Session do
 
         spawn_block = WorldMap.spawn_block()
         Block.join(spawn_block, player_id)
+        Player.move_to(player_id, spawn_block)
         {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max(), hp: Health.max()}}
     end
   end
 
   defp find_player_block(player_id) do
-    Enum.find_value(WorldMap.blocks(), WorldMap.spawn_block(), fn block ->
-      if Block.has_person?(block.id, player_id) do
-        block.id
-      end
-    end)
+    case Player.location(player_id) do
+      nil ->
+        spawn_block = WorldMap.spawn_block()
+        Block.join(spawn_block, player_id)
+        Player.move_to(player_id, spawn_block)
+        spawn_block
+
+      block_id ->
+        if Block.has_person?(block_id, player_id) do
+          block_id
+        else
+          scan_or_restore(player_id, block_id)
+        end
+    end
+  end
+
+  defp scan_or_restore(player_id, block_id) do
+    found =
+      Enum.find_value(WorldMap.blocks(), fn block ->
+        if Block.has_person?(block.id, player_id), do: block.id
+      end)
+
+    case found do
+      nil ->
+        Block.join(block_id, player_id)
+        block_id
+
+      actual_id ->
+        actual_id
+    end
   end
 
   defp generate_player_id do

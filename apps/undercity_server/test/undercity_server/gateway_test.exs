@@ -1,6 +1,7 @@
 defmodule UndercityServer.GatewayTest do
   use ExUnit.Case
 
+  alias UndercityServer.Block
   alias UndercityServer.Gateway
   alias UndercityServer.Vicinity
 
@@ -46,6 +47,44 @@ defmodule UndercityServer.GatewayTest do
 
       assert vicinity.id == "north_alley"
     end
+
+    test "reconnects via full scan when block_id is stale" do
+      name = unique_name()
+      {player_id, _vicinity, _constitution} = Gateway.enter(name)
+      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
+      # player is in north_alley; corrupt block_id to old value
+      :sys.replace_state(:"player_#{player_id}", fn state -> %{state | block_id: "plaza"} end)
+
+      {_id, %Vicinity{} = vicinity, _constitution} = Gateway.enter(name)
+
+      assert vicinity.id == "north_alley"
+    end
+
+    test "restores player to DETS block when found in no block (crash recovery)" do
+      name = unique_name()
+      {player_id, _vicinity, _constitution} = Gateway.enter(name)
+      # simulate crash: remove from block but leave DETS intact
+      Block.leave("plaza", player_id)
+
+      {_id, %Vicinity{} = vicinity, _constitution} = Gateway.enter(name)
+
+      assert vicinity.id == "plaza"
+      assert Block.has_person?("plaza", player_id)
+    end
+
+    test "reconnects to spawn and joins block when block_id is nil" do
+      name = unique_name()
+      {player_id, _vicinity, _constitution} = Gateway.enter(name)
+      # simulate old DETS record with no block_id
+      :sys.replace_state(:"player_#{player_id}", fn state -> %{state | block_id: nil} end)
+      Block.leave("plaza", player_id)
+
+      {_id, %Vicinity{} = vicinity, _constitution} = Gateway.enter(name)
+
+      assert vicinity.id == "plaza"
+      assert Block.has_person?("plaza", player_id)
+      assert UndercityServer.Player.location(player_id) == "plaza"
+    end
   end
 
   describe "perform/4 :move" do
@@ -65,7 +104,7 @@ defmodule UndercityServer.GatewayTest do
 
       {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
 
-      {"plaza", people} = UndercityServer.Block.info("plaza")
+      {"plaza", people} = Block.info("plaza")
       refute player_id in people
     end
 
@@ -93,7 +132,7 @@ defmodule UndercityServer.GatewayTest do
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello world")
 
-      assert "hello world" = UndercityServer.Block.get_scribble(vicinity.id)
+      assert "hello world" = Block.get_scribble(vicinity.id)
     end
 
     test "returns error when player has no chalk" do
@@ -108,7 +147,7 @@ defmodule UndercityServer.GatewayTest do
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello!")
 
-      assert "hello" = UndercityServer.Block.get_scribble(vicinity.id)
+      assert "hello" = Block.get_scribble(vicinity.id)
     end
 
     test "noops for empty scribble without consuming chalk" do

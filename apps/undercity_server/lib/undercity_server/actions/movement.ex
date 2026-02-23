@@ -21,6 +21,7 @@ defmodule UndercityServer.Actions.Movement do
       with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
            true <- Block.has_person?(from_block_id, player_id) do
         :ok = Block.leave(from_block_id, player_id)
+        :ok = Player.move_to(player_id, destination_id)
         Block.join(destination_id, player_id)
         {:ok, Vicinity.build(destination_id)}
       else

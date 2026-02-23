@@ -247,6 +247,23 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
+  describe "block tracking" do
+    test "location returns nil for a new player", %{id: id} do
+      assert nil == Player.location(id)
+    end
+
+    test "move_to persists the block_id", %{id: id} do
+      assert :ok = Player.move_to(id, "some_block")
+      assert "some_block" == Player.location(id)
+    end
+
+    test "move_to can be updated to a new block", %{id: id} do
+      Player.move_to(id, "block_a")
+      Player.move_to(id, "block_b")
+      assert "block_b" == Player.location(id)
+    end
+  end
+
   describe "spend_ap via perform/3" do
     test "spends AP and runs action", %{id: id} do
       assert {:ok, :acted, 49} = Player.perform(id, fn -> :acted end)
