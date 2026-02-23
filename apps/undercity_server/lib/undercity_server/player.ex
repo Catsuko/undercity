@@ -93,6 +93,26 @@ defmodule UndercityServer.Player do
     GenServer.call(via(player_id), :constitution)
   end
 
+  @doc """
+  Returns the block ID the player is currently located in, or `nil` if no
+  location has been recorded yet.
+
+  This is the player's authoritative position, persisted to DETS on every
+  move. It is used as a fast lookup on reconnect to avoid scanning all blocks,
+  and is always kept consistent with the block's own player list: `move_to/2`
+  is called before `Block.join/2`, so the player can never appear in a block
+  without a matching location record.
+  """
+  @spec location(String.t()) :: String.t() | nil
+  def location(player_id) do
+    GenServer.call(via(player_id), :location)
+  end
+
+  @spec move_to(String.t(), String.t()) :: :ok
+  def move_to(player_id, block_id) do
+    GenServer.call(via(player_id), {:move_to, block_id})
+  end
+
   defp process_name(player_id), do: :"player_#{player_id}"
 
   defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
@@ -104,10 +124,17 @@ defmodule UndercityServer.Player do
     state =
       case PlayerStore.load(id) do
         {:ok, data} ->
-          data
+          Map.put_new(data, :block_id, nil)
 
         :error ->
-          %{id: id, name: name, inventory: Inventory.new(), action_points: ActionPoints.new(), health: Health.new()}
+          %{
+            id: id,
+            name: name,
+            inventory: Inventory.new(),
+            action_points: ActionPoints.new(),
+            health: Health.new(),
+            block_id: nil
+          }
       end
 
     {:ok, state}
@@ -215,6 +242,18 @@ defmodule UndercityServer.Player do
     action_points = ActionPoints.regenerate(state.action_points)
     state = %{state | action_points: action_points}
     {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(state.health)}, state}
+  end
+
+  @impl true
+  def handle_call(:location, _from, state) do
+    {:reply, Map.get(state, :block_id), state}
+  end
+
+  @impl true
+  def handle_call({:move_to, block_id}, _from, state) do
+    state = Map.put(state, :block_id, block_id)
+    save!(state)
+    {:reply, :ok, state}
   end
 
   defp save!(state) do
