@@ -18,15 +18,11 @@ defmodule UndercityServer.Actions.Movement do
   """
   def move(player_id, from_block_id, direction) do
     Player.perform(player_id, fn ->
-      with {:ok, destination_id} <- resolve_exit(from_block_id, direction),
-           true <- Block.has_person?(from_block_id, player_id) do
+      with {:ok, destination_id} <- resolve_exit(from_block_id, direction) do
         :ok = Block.leave(from_block_id, player_id)
         :ok = Player.move_to(player_id, destination_id)
         Block.join(destination_id, player_id)
         {:ok, Vicinity.build(destination_id)}
-      else
-        false -> {:error, :not_found}
-        {:error, _} = error -> error
       end
     end)
   end

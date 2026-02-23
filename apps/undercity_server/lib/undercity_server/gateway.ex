@@ -9,14 +9,24 @@ defmodule UndercityServer.Gateway do
   """
 
   alias UndercityServer.Actions
+  alias UndercityServer.Block
 
   defdelegate connect(player_name), to: UndercityServer.Session
   defdelegate enter(name), to: UndercityServer.Session
   defdelegate check_inventory(player_id), to: UndercityServer.Player
   defdelegate drop_item(player_id, index), to: UndercityServer.Player
 
-  def perform(player_id, block_id, :move, direction), do: Actions.Movement.move(player_id, block_id, direction)
-  def perform(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
-  def perform(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
   def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
+
+  def perform(player_id, block_id, action, args) do
+    if Block.has_person?(block_id, player_id) do
+      dispatch(player_id, block_id, action, args)
+    else
+      {:error, :not_in_block}
+    end
+  end
+
+  defp dispatch(player_id, block_id, :move, direction), do: Actions.Movement.move(player_id, block_id, direction)
+  defp dispatch(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
+  defp dispatch(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
 end
