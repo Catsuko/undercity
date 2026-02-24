@@ -23,7 +23,7 @@ defmodule UndercityCli.Input do
       {:input, input} -> input |> String.trim() |> String.downcase()
     after
       @timeout ->
-        Task.shutdown(task, :kill)
+        Process.exit(task, :kill)
         gets()
     end
   end
