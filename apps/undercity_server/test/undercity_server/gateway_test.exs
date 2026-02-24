@@ -131,6 +131,14 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
+  describe "perform/4 :attack" do
+    test "always returns miss regardless of target or weapon" do
+      {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
+
+      assert {:miss, "Zara", _weapon_name} = Gateway.perform(player_id, vicinity.id, :attack, {"Zara", 0})
+    end
+  end
+
   describe "perform/4 :scribble" do
     test "scribbles text on a block when player has chalk" do
       {player_id, vicinity, _constitution} = Gateway.enter(unique_name())

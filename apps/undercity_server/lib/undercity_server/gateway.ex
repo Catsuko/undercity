@@ -29,4 +29,9 @@ defmodule UndercityServer.Gateway do
   defp dispatch(player_id, block_id, :move, direction), do: Actions.Movement.move(player_id, block_id, direction)
   defp dispatch(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
   defp dispatch(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
+
+  defp dispatch(player_id, _block_id, :attack, {target_name, index}) do
+    weapon_name = player_id |> UndercityServer.Player.check_inventory() |> Enum.at(index) |> then(&(&1 && &1.name))
+    {:miss, target_name, weapon_name}
+  end
 end
