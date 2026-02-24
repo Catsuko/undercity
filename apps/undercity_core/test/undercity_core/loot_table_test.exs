@@ -8,7 +8,13 @@ defmodule UndercityCore.LootTableTest do
     test "returns plaza loot table for :square" do
       table = LootTable.for_block_type(:square)
 
-      assert [{0.20, {"Chalk", 5}}, {0.05, "Junk"}] = table
+      assert [{0.20, {"Chalk", 5}}, {0.05, "Junk"}, {0.05, "Iron Pipe"}] = table
+    end
+
+    test "returns street loot table for :street" do
+      table = LootTable.for_block_type(:street)
+
+      assert [{0.08, "Iron Pipe"}, {0.10, "Junk"}] = table
     end
 
     test "returns graveyard loot table for :graveyard" do
@@ -17,8 +23,13 @@ defmodule UndercityCore.LootTableTest do
       assert [{0.20, "Mushroom"}] = table
     end
 
+    test "returns inn loot table for :inn" do
+      table = LootTable.for_block_type(:inn)
+
+      assert [{0.40, "Iron Pipe"}] = table
+    end
+
     test "returns default loot table for other types" do
-      assert [{0.10, "Junk"}] = LootTable.for_block_type(:street)
       assert [{0.10, "Junk"}] = LootTable.for_block_type(:fountain)
     end
   end
@@ -44,6 +55,18 @@ defmodule UndercityCore.LootTableTest do
 
     test "returns :nothing for empty table" do
       assert :nothing = LootTable.roll([], 0.05)
+    end
+
+    test "returns Iron Pipe from street table" do
+      table = LootTable.for_block_type(:street)
+
+      assert {:found, %Item{name: "Iron Pipe", uses: nil}} = LootTable.roll(table, 0.04)
+    end
+
+    test "returns Iron Pipe from square table" do
+      table = LootTable.for_block_type(:square)
+
+      assert {:found, %Item{name: "Iron Pipe", uses: nil}} = LootTable.roll(table, 0.27)
     end
   end
 end
