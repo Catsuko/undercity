@@ -23,7 +23,8 @@ defmodule UndercityCli.Commands do
     {UndercityCli.Commands.Inventory, ["inventory", "i"]},
     {UndercityCli.Commands.Drop, ["drop"]},
     {UndercityCli.Commands.Eat, ["eat"]},
-    {UndercityCli.Commands.Scribble, ["scribble"]}
+    {UndercityCli.Commands.Scribble, ["scribble"]},
+    {UndercityCli.Commands.Help, ["help"]}
   ]
 
   @commands Map.new(
@@ -32,15 +33,19 @@ defmodule UndercityCli.Commands do
               end)
             )
 
+  def usage_hints do
+    @command_routes
+    |> Enum.map(fn {mod, _verbs} -> mod.usage() end)
+    |> Enum.sort()
+    |> Enum.join("\n")
+  end
+
   def dispatch(input, state, gateway, message_buffer) do
     parsed = split(input)
 
     case Map.get(@commands, verb(parsed)) do
       nil ->
-        message_buffer.warn(
-          "Unknown command. Try: search, inventory, drop [n], eat [n], scribble <text>, north/south/east/west (or n/s/e/w), enter, exit, quit"
-        )
-
+        message_buffer.warn("Unknown command. Type 'help' for a list of commands.")
         GameState.continue(state)
 
       module ->

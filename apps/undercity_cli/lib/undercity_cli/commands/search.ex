@@ -6,6 +6,8 @@ defmodule UndercityCli.Commands.Search do
   alias UndercityCli.Commands
   alias UndercityCli.GameState
 
+  def usage, do: "search"
+
   def dispatch(_verb, state, gateway, message_buffer) do
     state.player_id
     |> gateway.perform(state.vicinity.id, :search, nil)
