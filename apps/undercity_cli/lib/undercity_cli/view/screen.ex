@@ -64,18 +64,4 @@ defmodule UndercityCli.View.Screen do
   def update_selector(data) do
     Owl.LiveScreen.update(:selector, data)
   end
-
-  def read_input do
-    caller = self()
-
-    Task.start(fn ->
-      input = IO.gets("")
-      IO.write(["\r", IO.ANSI.cursor_up(1), "\e[0K"])
-      send(caller, {:input, input})
-    end)
-
-    receive do
-      {:input, input} -> input
-    end
-  end
 end
