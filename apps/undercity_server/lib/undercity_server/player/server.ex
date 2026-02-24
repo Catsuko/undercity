@@ -11,10 +11,10 @@ defmodule UndercityServer.Player.Server do
   use GenServer, restart: :transient
 
   alias UndercityCore.ActionPoints
-  alias UndercityCore.Food
   alias UndercityCore.Health
   alias UndercityCore.Inventory
   alias UndercityCore.Item
+  alias UndercityCore.Player
   alias UndercityServer.Player.Store, as: PlayerStore
 
   @idle_timeout_ms Application.compile_env(:undercity_server, :player_idle_timeout_ms, 15 * 60 * 1_000)
@@ -36,17 +36,11 @@ defmodule UndercityServer.Player.Server do
     state =
       case PlayerStore.load(id) do
         {:ok, data} ->
-          Map.put_new(data, :block_id, nil)
+          player = struct(Player, Map.take(data, [:id, :name, :inventory, :action_points, :health]))
+          %{player: player, block_id: Map.get(data, :block_id)}
 
         :error ->
-          %{
-            id: id,
-            name: name,
-            inventory: Inventory.new(),
-            action_points: ActionPoints.new(),
-            health: Health.new(),
-            block_id: nil
-          }
+          %{player: Player.new(id, name), block_id: nil}
       end
 
     {:ok, state, @idle_timeout_ms}
@@ -54,9 +48,9 @@ defmodule UndercityServer.Player.Server do
 
   @impl true
   def handle_call({:add_item, %Item{} = item}, _from, state) do
-    case Inventory.add_item(state.inventory, item) do
-      {:ok, new_inventory} ->
-        state = %{state | inventory: new_inventory}
+    case Inventory.add_item(state.player.inventory, item) do
+      {:ok, inventory} ->
+        state = %{state | player: %{state.player | inventory: inventory}}
         save!(state)
         {:reply, :ok, state, @idle_timeout_ms}
 
@@ -67,57 +61,47 @@ defmodule UndercityServer.Player.Server do
 
   @impl true
   def handle_call({:drop_item, index}, _from, state) do
-    items = Inventory.list_items(state.inventory)
+    case Player.drop(state.player, index, now()) do
+      {:ok, player, item_name} ->
+        state = %{state | player: player}
+        save!(state)
+        {:reply, {:ok, item_name, ActionPoints.current(player.action_points)}, state, @idle_timeout_ms}
 
-    with {:index, true} <- {:index, index >= 0 and index < length(items)},
-         {:ok, state} <- exert(state, 1) do
-      item_name = Enum.at(items, index).name
-      state = %{state | inventory: Inventory.remove_at(state.inventory, index)}
-      save!(state)
-      {:reply, {:ok, item_name, ActionPoints.current(state.action_points)}, state, @idle_timeout_ms}
-    else
-      {:index, false} -> {:reply, {:error, :invalid_index}, state, @idle_timeout_ms}
-      {:error, _} = error -> {:reply, error, state, @idle_timeout_ms}
+      {:error, _} = error ->
+        {:reply, error, state, @idle_timeout_ms}
     end
   end
 
   @impl true
   def handle_call({:eat_item, index}, _from, state) do
-    items = Inventory.list_items(state.inventory)
+    case Player.eat(state.player, index, now()) do
+      {:ok, player, item, effect} ->
+        state = %{state | player: player}
+        save!(state)
 
-    with {:index, true} <- {:index, index >= 0 and index < length(items)},
-         item = Enum.at(items, index),
-         {:edible, effect} when effect != :not_edible <- {:edible, Food.effect(item.name)},
-         {:ok, state} <- exert(state, 1) do
-      health = Health.apply_effect(state.health, effect)
-      inventory = Inventory.remove_at(state.inventory, index)
-      state = %{state | inventory: inventory, health: health}
-      save!(state)
+        {:reply, {:ok, item, effect, ActionPoints.current(player.action_points), Health.current(player.health)}, state,
+         @idle_timeout_ms}
 
-      {:reply, {:ok, item, effect, ActionPoints.current(state.action_points), Health.current(health)}, state,
-       @idle_timeout_ms}
-    else
-      {:index, false} -> {:reply, {:error, :invalid_index}, state, @idle_timeout_ms}
-      {:edible, :not_edible} -> {:reply, {:error, :not_edible, Enum.at(items, index).name}, state, @idle_timeout_ms}
-      {:error, _} = error -> {:reply, error, state, @idle_timeout_ms}
+      error ->
+        {:reply, error, state, @idle_timeout_ms}
     end
   end
 
   @impl true
   def handle_call(:check_inventory, _from, state) do
-    {:reply, Inventory.list_items(state.inventory), state, @idle_timeout_ms}
+    {:reply, Inventory.list_items(state.player.inventory), state, @idle_timeout_ms}
   end
 
   @impl true
   def handle_call(:get_name, _from, state) do
-    {:reply, state.name, state, @idle_timeout_ms}
+    {:reply, state.player.name, state, @idle_timeout_ms}
   end
 
   @impl true
   def handle_call({:use_item, item_name}, _from, state) do
-    case consume_item(state.inventory, item_name) do
+    case consume_item(state.player.inventory, item_name) do
       {:ok, inventory} ->
-        state = %{state | inventory: inventory}
+        state = %{state | player: %{state.player | inventory: inventory}}
         save!(state)
         {:reply, :ok, state, @idle_timeout_ms}
 
@@ -128,23 +112,23 @@ defmodule UndercityServer.Player.Server do
 
   @impl true
   def handle_call({:use_item, item_name, cost}, _from, state) do
-    with {:ok, inventory} <- consume_item(state.inventory, item_name),
-         {:ok, state} <- exert(state, cost) do
-      state = %{state | inventory: inventory}
+    with {:ok, inventory} <- consume_item(state.player.inventory, item_name),
+         {:ok, player} <- Player.exert(state.player, cost, now()) do
+      state = %{state | player: %{player | inventory: inventory}}
       save!(state)
-      {:reply, {:ok, ActionPoints.current(state.action_points)}, state, @idle_timeout_ms}
+      {:reply, {:ok, ActionPoints.current(state.player.action_points)}, state, @idle_timeout_ms}
     else
-      {:error, :item_missing} -> {:reply, {:error, :item_missing}, state, @idle_timeout_ms}
       {:error, _} = error -> {:reply, error, state, @idle_timeout_ms}
     end
   end
 
   @impl true
   def handle_call({:spend_ap, cost}, _from, state) do
-    case exert(state, cost) do
-      {:ok, state} ->
+    case Player.exert(state.player, cost, now()) do
+      {:ok, player} ->
+        state = %{state | player: player}
         save!(state)
-        {:reply, {:ok, ActionPoints.current(state.action_points)}, state, @idle_timeout_ms}
+        {:reply, {:ok, ActionPoints.current(player.action_points)}, state, @idle_timeout_ms}
 
       {:error, _} = error ->
         {:reply, error, state, @idle_timeout_ms}
@@ -153,19 +137,20 @@ defmodule UndercityServer.Player.Server do
 
   @impl true
   def handle_call(:constitution, _from, state) do
-    action_points = ActionPoints.regenerate(state.action_points)
-    state = %{state | action_points: action_points}
-    {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(state.health)}, state, @idle_timeout_ms}
+    action_points = ActionPoints.regenerate(state.player.action_points)
+    player = %{state.player | action_points: action_points}
+    state = %{state | player: player}
+    {:reply, %{ap: ActionPoints.current(action_points), hp: Health.current(player.health)}, state, @idle_timeout_ms}
   end
 
   @impl true
   def handle_call(:location, _from, state) do
-    {:reply, Map.get(state, :block_id), state, @idle_timeout_ms}
+    {:reply, state.block_id, state, @idle_timeout_ms}
   end
 
   @impl true
   def handle_call({:move_to, block_id}, _from, state) do
-    state = Map.put(state, :block_id, block_id)
+    state = %{state | block_id: block_id}
     save!(state)
     {:reply, :ok, state, @idle_timeout_ms}
   end
@@ -176,23 +161,8 @@ defmodule UndercityServer.Player.Server do
   end
 
   defp save!(state) do
-    :ok = PlayerStore.save(state.id, state)
-  end
-
-  defp exert(state, cost) do
-    if Health.current(state.health) == 0 do
-      {:error, :collapsed}
-    else
-      action_points = ActionPoints.regenerate(state.action_points)
-
-      case ActionPoints.spend(action_points, cost) do
-        {:ok, action_points} ->
-          {:ok, %{state | action_points: action_points}}
-
-        {:error, :exhausted} ->
-          {:error, :exhausted}
-      end
-    end
+    data = state.player |> Map.from_struct() |> Map.put(:block_id, state.block_id)
+    :ok = PlayerStore.save(state.player.id, data)
   end
 
   defp consume_item(inventory, item_name) do
@@ -207,4 +177,6 @@ defmodule UndercityServer.Player.Server do
         {:error, :item_missing}
     end
   end
+
+  defp now, do: System.os_time(:second)
 end

@@ -13,7 +13,7 @@ defmodule UndercityServer.PlayerTest do
 
   defp collapse(id) do
     :sys.replace_state(:"player_#{id}", fn state ->
-      %{state | health: %Health{hp: 0}}
+      %{state | player: %{state.player | health: %Health{hp: 0}}}
     end)
   end
 
