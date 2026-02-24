@@ -55,9 +55,15 @@ defmodule UndercityCli.CommandsTest do
       assert new_state == @state
     end
 
+    test "routes help to Help" do
+      expect(MessageBuffer, :info, fn _ -> :ok end)
+      assert {:continue, new_state} = Commands.dispatch("help", @state, Gateway, MessageBuffer)
+      assert new_state == @state
+    end
+
     test "warns and returns continue for unknown command" do
       expect(MessageBuffer, :warn, fn msg ->
-        assert msg =~ "Unknown command"
+        assert msg == "Unknown command. Type 'help' for a list of commands."
         :ok
       end)
 
@@ -68,6 +74,17 @@ defmodule UndercityCli.CommandsTest do
     test "treats empty input as unknown" do
       expect(MessageBuffer, :warn, fn _ -> :ok end)
       assert {:continue, _} = Commands.dispatch("", @state, Gateway, MessageBuffer)
+    end
+  end
+
+  describe "usage_hints/0" do
+    test "returns a sorted newline-joined string of all command usages" do
+      hints = Commands.usage_hints()
+      assert is_binary(hints)
+      lines = String.split(hints, "\n")
+      assert lines == Enum.sort(lines)
+      assert "help" in lines
+      assert "search" in lines
     end
   end
 

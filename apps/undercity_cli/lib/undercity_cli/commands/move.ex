@@ -19,6 +19,8 @@ defmodule UndercityCli.Commands.Move do
     "exit" => :exit
   }
 
+  def usage, do: "north, south, east, west (or n, s, e, w), enter, exit"
+
   def dispatch(verb, state, gateway, message_buffer) do
     direction = Map.fetch!(@directions, verb)
 

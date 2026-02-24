@@ -5,6 +5,8 @@ defmodule UndercityCli.Commands.Inventory do
 
   alias UndercityCli.GameState
 
+  def usage, do: "inventory (or i)"
+
   def dispatch(_verb, state, gateway, message_buffer) do
     case gateway.check_inventory(state.player_id) do
       [] -> message_buffer.info("Your inventory is empty.")

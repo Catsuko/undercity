@@ -7,6 +7,8 @@ defmodule UndercityCli.Commands.Scribble do
   alias UndercityCli.GameState
   alias UndercityCli.View.BlockDescription
 
+  def usage, do: "scribble <text>"
+
   def dispatch("scribble", state, _gateway, message_buffer) do
     message_buffer.warn("Usage: scribble <text>")
     GameState.continue(state)

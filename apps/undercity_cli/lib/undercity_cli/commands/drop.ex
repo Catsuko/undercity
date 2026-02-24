@@ -7,6 +7,8 @@ defmodule UndercityCli.Commands.Drop do
   alias UndercityCli.GameState
   alias UndercityCli.View.InventorySelector
 
+  def usage, do: "drop [n]"
+
   def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
 
   def dispatch("drop", state, gateway, message_buffer, selector) do

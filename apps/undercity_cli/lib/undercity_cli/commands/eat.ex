@@ -7,6 +7,8 @@ defmodule UndercityCli.Commands.Eat do
   alias UndercityCli.GameState
   alias UndercityCli.View.InventorySelector
 
+  def usage, do: "eat [n]"
+
   def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
 
   def dispatch("eat", state, gateway, message_buffer, selector) do
