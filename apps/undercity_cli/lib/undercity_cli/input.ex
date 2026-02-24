@@ -9,12 +9,12 @@ defmodule UndercityCli.Input do
 
   @timeout 60_000
 
-  def gets do
+  def gets(device \\ :stdio) do
     caller = self()
 
     {:ok, task} =
       Task.start(fn ->
-        input = IO.gets("")
+        input = IO.gets(device, "")
         IO.write(["\r", IO.ANSI.cursor_up(1), "\e[0K"])
         send(caller, {:input, input})
       end)
