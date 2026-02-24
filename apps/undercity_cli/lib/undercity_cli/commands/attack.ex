@@ -1,50 +1,68 @@
 defmodule UndercityCli.Commands.Attack do
   @moduledoc """
   Handles the attack command.
+
+  Supports a full selection pipeline:
+  - `attack` → target selector → weapon selector → dispatch
+  - `attack <target>` → weapon selector → dispatch
+  - `attack <target> <n>` → dispatch directly (n is the 1-based weapon index)
   """
 
   alias UndercityCli.Commands
   alias UndercityCli.GameState
   alias UndercityCli.View.InventorySelector
+  alias UndercityCli.View.TargetSelector
 
-  def usage, do: "attack <player>"
+  def usage, do: "attack [target] [n]"
 
-  def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
+  def dispatch(
+        command,
+        state,
+        gateway,
+        message_buffer,
+        inventory_selector \\ InventorySelector,
+        target_selector \\ TargetSelector
+      )
 
-  def dispatch("attack", state, _gateway, message_buffer, _selector) do
-    message_buffer.warn("Attack who?")
-    GameState.continue(state)
+  def dispatch("attack", state, gateway, message_buffer, inventory_selector, target_selector) do
+    attack(state, gateway, message_buffer, inventory_selector, target_selector)
   end
 
-  def dispatch({"attack", target_name}, state, gateway, message_buffer, selector) do
-    case find_target(state.vicinity.people, target_name) do
-      :not_found ->
-        message_buffer.warn("#{target_name} is not here.")
-        GameState.continue(state)
+  def dispatch({"attack", rest}, state, gateway, message_buffer, inventory_selector, _target_selector) do
+    case parse_rest(rest) do
+      {:target, target_name} ->
+        attack(target_name, state, gateway, message_buffer, inventory_selector)
 
-      {:ok, %{id: id}} when id == state.player_id ->
-        message_buffer.warn("You can't attack yourself.")
-        GameState.continue(state)
-
-      {:ok, target} ->
-        case select_from_inventory(state, gateway, selector) do
-          :cancel -> GameState.continue(state)
-          {:ok, index} -> attack(target, index, state, gateway, message_buffer)
-        end
+      {:target_and_index, target_name, weapon_index} ->
+        attack(target_name, weapon_index, state, gateway, message_buffer)
     end
   end
 
-  defp attack(target, index, state, gateway, message_buffer) do
+  defp attack(%GameState{} = state, gateway, message_buffer, inventory_selector, target_selector) do
+    case target_selector.select(state.vicinity.people, "Attack who?") do
+      :cancel -> GameState.continue(state)
+      {:ok, target} -> attack(target.name, state, gateway, message_buffer, inventory_selector)
+    end
+  end
+
+  defp attack(target_name, %GameState{} = state, gateway, message_buffer, inventory_selector) do
+    case state.player_id |> gateway.check_inventory() |> inventory_selector.select("Attack with what?") do
+      :cancel -> GameState.continue(state)
+      {:ok, index} -> attack(target_name, index, state, gateway, message_buffer)
+    end
+  end
+
+  defp attack(target_name, index, state, gateway, message_buffer) do
     state.player_id
-    |> gateway.perform(state.vicinity.id, :attack, {target.id, index})
+    |> gateway.perform(state.vicinity.id, :attack, {target_name, index})
     |> Commands.handle_action(state, message_buffer, fn
       {:ok, {outcome, target_name, weapon_name, damage}, new_ap} when outcome in [:hit, :collapsed] ->
-        message_buffer.success("You strike #{target_name} with #{weapon_name} for #{damage} damage.")
+        message_buffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
         GameState.continue(state, new_ap, state.hp)
 
-      {:ok, {:miss, target_name}, new_ap} ->
-        message_buffer.warn("You swing at #{target_name} but miss.")
-        GameState.continue(state, new_ap, state.hp)
+      {:miss, target_name, weapon_name} ->
+        message_buffer.warn("You attack #{target_name} with #{weapon_name} and miss.")
+        GameState.continue(state)
 
       {:error, :invalid_weapon} ->
         message_buffer.warn("You can't attack with that.")
@@ -52,16 +70,17 @@ defmodule UndercityCli.Commands.Attack do
     end)
   end
 
-  defp select_from_inventory(state, gateway, selector) do
-    state.player_id
-    |> gateway.check_inventory()
-    |> selector.select("Attack with which weapon?")
-  end
+  defp parse_rest(rest) do
+    parts = String.split(rest, " ")
 
-  defp find_target(people, target_name) do
-    case Enum.find(people, fn p -> p.name == target_name end) do
-      nil -> :not_found
-      person -> {:ok, person}
+    with [_ | _] <- parts,
+         last = List.last(parts),
+         {n, ""} when n >= 1 <- Integer.parse(last),
+         target_parts = Enum.slice(parts, 0..-2//1),
+         [_ | _] <- target_parts do
+      {:target_and_index, Enum.join(target_parts, " "), n - 1}
+    else
+      _ -> {:target, rest}
     end
   end
 end
