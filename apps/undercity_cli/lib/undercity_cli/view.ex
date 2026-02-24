@@ -13,8 +13,6 @@ defmodule UndercityCli.View do
   alias UndercityCli.View.Constitution
   alias UndercityCli.View.Screen
 
-  defdelegate read_input(), to: Screen
-
   def init(vicinity, player, ap, hp) do
     case MessageBuffer.start_link() do
       {:ok, _} -> :ok

@@ -5,6 +5,7 @@ defmodule UndercityCli.GameLoop do
 
   alias UndercityCli.Commands
   alias UndercityCli.GameState
+  alias UndercityCli.Input
   alias UndercityCli.MessageBuffer
   alias UndercityCli.View
   alias UndercityCli.View.Constitution
@@ -17,24 +18,23 @@ defmodule UndercityCli.GameLoop do
 
   defp loop(player, state) do
     View.render_messages(MessageBuffer.flush())
-    input = View.read_input() |> String.trim() |> String.downcase()
 
-    case input do
-      x when x in ["quit", "q"] ->
-        :ok
+    dispatch(Input.gets(), player, state)
+  end
 
-      _ ->
-        case Commands.dispatch(input, state, Gateway, MessageBuffer) do
-          {:moved, new_state} ->
-            View.render_surroundings(new_state.vicinity)
-            View.render_description(new_state.vicinity, player)
-            MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
-            loop(player, new_state)
+  defp dispatch(input, _player, _state) when input in ["quit", "q"], do: :ok
 
-          {:continue, new_state} ->
-            MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
-            loop(player, new_state)
-        end
+  defp dispatch(input, player, state) do
+    case Commands.dispatch(input, state, Gateway, MessageBuffer) do
+      {:moved, new_state} ->
+        View.render_surroundings(new_state.vicinity)
+        View.render_description(new_state.vicinity, player)
+        MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
+        loop(player, new_state)
+
+      {:continue, new_state} ->
+        MessageBuffer.push(Constitution.threshold_messages(state.ap, new_state.ap, state.hp, new_state.hp))
+        loop(player, new_state)
     end
   end
 end
