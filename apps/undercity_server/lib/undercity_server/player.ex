@@ -7,14 +7,14 @@ defmodule UndercityServer.Player do
   Player state is managed by `Player.Server`, a GenServer that runs one
   process per active player. This module is a pure facade: it holds no
   state of its own and every function delegates to the underlying
-  GenServer via `GenServer.call/2`.
+  GenServer via `Player.Server.call/3`.
 
   ### Lazy loading
 
   Player processes are not kept alive indefinitely. After
   `player_idle_timeout_ms` of inactivity (configurable, default 15 minutes)
   the GenServer stops itself with a normal exit. Before each call this
-  module calls `start_if_inactive/1`, which starts the process from
+  module calls `Player.Server.call/3`, which starts the process from
   `Player.Store` if it is not already running, so callers never need
   to manage process lifecycle themselves.
 
@@ -23,25 +23,17 @@ defmodule UndercityServer.Player do
   All mutations are written to DETS through `Player.Store` before the
   GenServer replies. The store is the source of truth; the GenServer is
   an in-memory cache of a player's current session state.
-
-  ### Process naming
-
-  Processes are registered under `:"player_<id>"` on the server node.
-  Naming is owned by `Player.Server`; everything else goes through
-  `Player.Server.via/1`.
   """
 
   alias UndercityCore.Item
   alias UndercityServer.Player.Server, as: PlayerServer
-  alias UndercityServer.Player.Store, as: PlayerStore
   alias UndercityServer.Player.Supervisor, as: PlayerSupervisor
 
   # Client API
 
   @spec add_item(String.t(), Item.t()) :: :ok | {:error, :full}
   def add_item(player_id, %Item{} = item) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:add_item, item})
+    PlayerServer.call(player_id, PlayerSupervisor, {:add_item, item})
   end
 
   @spec drop_item(String.t(), non_neg_integer()) ::
@@ -50,8 +42,7 @@ defmodule UndercityServer.Player do
           | {:error, :exhausted}
           | {:error, :collapsed}
   def drop_item(player_id, index) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:drop_item, index})
+    PlayerServer.call(player_id, PlayerSupervisor, {:drop_item, index})
   end
 
   @spec eat_item(String.t(), non_neg_integer()) ::
@@ -61,35 +52,29 @@ defmodule UndercityServer.Player do
           | {:error, :exhausted}
           | {:error, :collapsed}
   def eat_item(player_id, index) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:eat_item, index})
+    PlayerServer.call(player_id, PlayerSupervisor, {:eat_item, index})
   end
 
   @spec check_inventory(String.t()) :: [Item.t()]
   def check_inventory(player_id) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), :check_inventory)
+    PlayerServer.call(player_id, PlayerSupervisor, :check_inventory)
   end
 
   @spec use_item(String.t(), String.t()) :: :ok | :not_found
   def use_item(player_id, item_name) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:use_item, item_name})
+    PlayerServer.call(player_id, PlayerSupervisor, {:use_item, item_name})
   end
 
   @spec use_item(String.t(), String.t(), pos_integer()) ::
           {:ok, non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed} | {:error, :item_missing}
   def use_item(player_id, item_name, cost) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:use_item, item_name, cost})
+    PlayerServer.call(player_id, PlayerSupervisor, {:use_item, item_name, cost})
   end
 
   @spec perform(String.t(), pos_integer(), (-> any())) ::
           {:ok, any(), non_neg_integer()} | {:error, :exhausted} | {:error, :collapsed}
   def perform(player_id, cost \\ 1, action_fn) do
-    start_if_inactive(player_id)
-
-    case GenServer.call(PlayerServer.via(player_id), {:spend_ap, cost}) do
+    case PlayerServer.call(player_id, PlayerSupervisor, {:spend_ap, cost}) do
       {:ok, ap} -> {:ok, action_fn.(), ap}
       {:error, _} = error -> error
     end
@@ -102,14 +87,12 @@ defmodule UndercityServer.Player do
   """
   @spec constitution(String.t()) :: %{ap: non_neg_integer(), hp: non_neg_integer()}
   def constitution(player_id) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), :constitution)
+    PlayerServer.call(player_id, PlayerSupervisor, :constitution)
   end
 
   @spec take_damage(String.t(), pos_integer()) :: {:ok, non_neg_integer()}
   def take_damage(player_id, amount) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:take_damage, amount})
+    PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, amount})
   end
 
   @doc """
@@ -124,28 +107,11 @@ defmodule UndercityServer.Player do
   """
   @spec location(String.t()) :: String.t() | nil
   def location(player_id) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), :location)
+    PlayerServer.call(player_id, PlayerSupervisor, :location)
   end
 
   @spec move_to(String.t(), String.t()) :: :ok
   def move_to(player_id, block_id) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), {:move_to, block_id})
-  end
-
-  defp start_if_inactive(player_id) do
-    case GenServer.whereis(PlayerServer.process_name(player_id)) do
-      nil ->
-        {:ok, %{name: name}} = PlayerStore.load(player_id)
-
-        case PlayerSupervisor.start_player(player_id, name) do
-          {:ok, _} -> :ok
-          {:error, {:already_started, _}} -> :ok
-        end
-
-      _pid ->
-        :ok
-    end
+    PlayerServer.call(player_id, PlayerSupervisor, {:move_to, block_id})
   end
 end

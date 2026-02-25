@@ -25,9 +25,14 @@ defmodule UndercityServer.Player.Server do
     GenServer.start_link(__MODULE__, {id, name}, name: process_name(id))
   end
 
-  def process_name(player_id), do: :"player_#{player_id}"
+  def call(player_id, supervisor, message) do
+    ensure_started(player_id, supervisor)
+    GenServer.call(via(player_id), message)
+  end
 
-  def via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
+  defp process_name(player_id), do: :"player_#{player_id}"
+
+  defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
 
   # Server callbacks
 
@@ -179,6 +184,21 @@ defmodule UndercityServer.Player.Server do
 
       :not_found ->
         {:error, :item_missing}
+    end
+  end
+
+  defp ensure_started(player_id, supervisor) do
+    case GenServer.whereis(process_name(player_id)) do
+      nil ->
+        {:ok, %{name: name}} = PlayerStore.load(player_id)
+
+        case supervisor.start_player(player_id, name) do
+          {:ok, _} -> :ok
+          {:error, {:already_started, _}} -> :ok
+        end
+
+      _pid ->
+        :ok
     end
   end
 
