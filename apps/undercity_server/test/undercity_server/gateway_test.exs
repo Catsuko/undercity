@@ -154,8 +154,7 @@ defmodule UndercityServer.GatewayTest do
       result = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
 
       assert match?({:ok, {:hit, _, "Iron Pipe", _}, _}, result) or
-               match?({:ok, {:miss, _}, _}, result) or
-               match?({:ok, {:collapsed, _, "Iron Pipe", _}, _}, result)
+               match?({:ok, {:miss, _}, _}, result)
     end
 
     test "spends AP on a successful attack" do
@@ -187,6 +186,15 @@ defmodule UndercityServer.GatewayTest do
                Gateway.perform(attacker_id, "north_alley", :attack, {target_id, 0})
     end
 
+    test "returns miss when target is already collapsed" do
+      {attacker_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      UndercityServer.Player.take_damage(target_id, 50)
+
+      assert {:ok, {:miss, ^target_id}, _ap} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+    end
+
     test "applies damage to the target" do
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
@@ -199,7 +207,6 @@ defmodule UndercityServer.GatewayTest do
         Enum.find_value(1..20, fn _ ->
           case Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0}) do
             {:ok, {:hit, _, _, _}, _} = r -> r
-            {:ok, {:collapsed, _, _, _}, _} = r -> r
             _ -> nil
           end
         end)

@@ -80,22 +80,6 @@ defmodule UndercityCli.Commands.AttackTest do
       assert new_state.ap == 7
     end
 
-    test "collapsed: same success message as hit" do
-      expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
-      expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
-
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
-        {:ok, {:collapsed, @target_id, "Iron Pipe", 4}, 7}
-      end)
-
-      expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 4 damage." -> :ok end)
-
-      assert {:continue, new_state} =
-               Attack.dispatch({"attack", @target_name}, @state_with_people, Gateway, MessageBuffer, InventorySelector)
-
-      assert new_state.ap == 7
-    end
-
     test "miss: warning message, AP spent" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)

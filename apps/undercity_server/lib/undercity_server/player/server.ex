@@ -137,11 +137,15 @@ defmodule UndercityServer.Player.Server do
 
   @impl true
   def handle_call({:take_damage, amount}, _from, state) do
-    health = Health.apply_effect(state.player.health, {:damage, amount})
-    player = %{state.player | health: health}
-    state = %{state | player: player}
-    save!(state)
-    {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
+    if Health.current(state.player.health) == 0 do
+      {:reply, {:error, :collapsed}, state, @idle_timeout_ms}
+    else
+      health = Health.apply_effect(state.player.health, {:damage, amount})
+      player = %{state.player | health: health}
+      state = %{state | player: player}
+      save!(state)
+      {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
+    end
   end
 
   @impl true

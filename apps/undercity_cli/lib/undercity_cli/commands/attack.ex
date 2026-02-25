@@ -71,8 +71,7 @@ defmodule UndercityCli.Commands.Attack do
 
   defp handle_outcome(:cancel, state, _message_buffer), do: GameState.continue(state)
 
-  defp handle_outcome({:ok, {outcome, target_id, weapon_name, damage}, new_ap}, state, message_buffer)
-       when outcome in [:hit, :collapsed] do
+  defp handle_outcome({:ok, {:hit, target_id, weapon_name, damage}, new_ap}, state, message_buffer) do
     target_name = find_target_name(state.vicinity.people, target_id)
     message_buffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
     GameState.continue(state, new_ap, state.hp)
