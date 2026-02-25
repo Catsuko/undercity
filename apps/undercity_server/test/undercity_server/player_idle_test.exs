@@ -37,7 +37,7 @@ defmodule UndercityServer.PlayerIdleTest do
 
       on_exit(fn -> :dets.delete(:player_store, id) end)
 
-      assert Player.get_name(id) == "Grimshaw"
+      assert Player.constitution(id).hp == 50
     end
   end
 
