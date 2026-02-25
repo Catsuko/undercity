@@ -154,8 +154,7 @@ defmodule UndercityServer.GatewayTest do
       result = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
 
       assert match?({:ok, {:hit, _, "Iron Pipe", _}, _}, result) or
-               match?({:ok, {:miss, _}, _}, result) or
-               match?({:ok, {:collapsed, _, "Iron Pipe", _}, _}, result)
+               match?({:ok, {:miss, _}, _}, result)
     end
 
     test "spends AP on a successful attack" do
@@ -199,7 +198,6 @@ defmodule UndercityServer.GatewayTest do
         Enum.find_value(1..20, fn _ ->
           case Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0}) do
             {:ok, {:hit, _, _, _}, _} = r -> r
-            {:ok, {:collapsed, _, _, _}, _} = r -> r
             _ -> nil
           end
         end)
