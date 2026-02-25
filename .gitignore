@@ -23,5 +23,5 @@ erl_crash.dump
 **/data/
 **/test/data/
 
-# Claude Code local settings
-.claude/
+# Claude Code local settings (track commands and agents, ignore personal config)
+.claude/settings.local.json
