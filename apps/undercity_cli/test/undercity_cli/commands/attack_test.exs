@@ -11,7 +11,7 @@ defmodule UndercityCli.Commands.AttackTest do
   @inventory [%{name: "Iron Pipe"}, %{name: "Junk"}]
   @state_with_people %{
     @state
-    | vicinity: %{id: @block_id, people: [@target]}
+    | vicinity: %Vicinity{id: @block_id, people: [@target]}
   }
 
   describe "dispatch/6 with no target" do
@@ -184,7 +184,7 @@ defmodule UndercityCli.Commands.AttackTest do
 
     test "uses trailing number as weapon index, remainder as target name" do
       big_zara = %{id: "big_zara_id", name: "Big Zara"}
-      state = %{@state | vicinity: %{id: @block_id, people: [big_zara]}}
+      state = %{@state | vicinity: %Vicinity{id: @block_id, people: [big_zara]}}
 
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {"big_zara_id", 1} ->
         {:ok, {:hit, "big_zara_id", "Junk", 2}, 7}
