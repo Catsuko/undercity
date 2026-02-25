@@ -90,7 +90,7 @@ defmodule UndercityServer.Player do
     PlayerServer.call(player_id, PlayerSupervisor, :constitution)
   end
 
-  @spec take_damage(String.t(), pos_integer()) :: {:ok, non_neg_integer()}
+  @spec take_damage(String.t(), pos_integer()) :: {:ok, non_neg_integer()} | {:error, :collapsed}
   def take_damage(player_id, amount) do
     PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, amount})
   end

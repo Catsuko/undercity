@@ -186,6 +186,15 @@ defmodule UndercityServer.GatewayTest do
                Gateway.perform(attacker_id, "north_alley", :attack, {target_id, 0})
     end
 
+    test "returns miss when target is already collapsed" do
+      {attacker_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      UndercityServer.Player.take_damage(target_id, 50)
+
+      assert {:ok, {:miss, ^target_id}, _ap} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+    end
+
     test "applies damage to the target" do
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())

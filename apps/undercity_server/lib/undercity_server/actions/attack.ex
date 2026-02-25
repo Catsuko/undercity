@@ -42,8 +42,10 @@ defmodule UndercityServer.Actions.Attack do
   defp resolve_attack(target_id, weapon_name, weapon_stats) do
     case Combat.resolve(weapon_stats) do
       {:hit, damage} ->
-        Player.take_damage(target_id, damage)
-        {:hit, target_id, weapon_name, damage}
+        case Player.take_damage(target_id, damage) do
+          {:ok, _hp} -> {:hit, target_id, weapon_name, damage}
+          {:error, :collapsed} -> {:miss, target_id}
+        end
 
       :miss ->
         {:miss, target_id}

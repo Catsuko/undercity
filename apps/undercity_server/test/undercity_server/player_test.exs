@@ -258,9 +258,9 @@ defmodule UndercityServer.PlayerTest do
       assert 0 = Player.constitution(id).hp
     end
 
-    test "is a no-op when player is already at 0 HP", %{id: id} do
+    test "returns :collapsed when player is already at 0 HP", %{id: id} do
       Player.take_damage(id, 50)
-      assert {:ok, 0} = Player.take_damage(id, 10)
+      assert {:error, :collapsed} = Player.take_damage(id, 10)
     end
   end
 
