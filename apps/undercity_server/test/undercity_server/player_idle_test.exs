@@ -24,7 +24,7 @@ defmodule UndercityServer.PlayerIdleTest do
 
   describe "on-demand start" do
     test "calling Player transparently starts an inactive process" do
-      id = "player_#{:erlang.unique_integer([:positive])}"
+      id = Helpers.player_id()
 
       PlayerStore.save(id, %{
         id: id,
@@ -43,7 +43,7 @@ defmodule UndercityServer.PlayerIdleTest do
 
   describe "reconnect after idle shutdown" do
     test "PlayerSupervisor can restart a stopped player" do
-      id = "player_#{:erlang.unique_integer([:positive])}"
+      id = Helpers.player_id()
       :dets.delete(:player_store, id)
       on_exit(fn -> :dets.delete(:player_store, id) end)
 

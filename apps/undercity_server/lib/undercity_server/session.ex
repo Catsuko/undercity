@@ -67,7 +67,8 @@ defmodule UndercityServer.Session do
           id: player_id,
           name: name,
           inventory: UndercityCore.Inventory.new(),
-          action_points: ActionPoints.new()
+          action_points: ActionPoints.new(),
+          health: Health.new()
         }
 
         PlayerStore.save(player_id, player_data)

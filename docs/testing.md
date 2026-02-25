@@ -16,6 +16,9 @@ Each app has its own `test/` directory and runs independently. Use `mix.bat test
 
 - **`start_block!(opts)`** — starts a `Block.Supervisor` (Store + Block). Key options: `:type` (block type atom), `:random` (zero-arity fn returning a float, for controlling loot rolls deterministically).
 - **`start_player!(opts)`** — starts a `Player` GenServer. Key option: `:name`. New players start at 50 AP / 50 HP.
+- **`enter_player!(name)`** — enters a player into the live world via `Gateway` and registers `on_exit` cleanup that removes them from their block and deletes their DETS record. Use this in gateway/integration tests instead of calling `Gateway.enter` directly.
+- **`player_id/0`** — returns a `"player_<n>"` string for use as a player ID when calling lower-level APIs (Block, Player.Store) directly.
+- **`player_name/0`** — returns a `"player_<n>"` string for use as a player name to pass to `enter_player!`. Both use `:erlang.unique_integer/1`, guaranteeing uniqueness within a VM session.
 
 Tests using these helpers are safe to run `async: true`. Tests using the live app (Gateway, world map) must be `async: false`.
 
