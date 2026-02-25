@@ -4,8 +4,11 @@ defmodule UndercityServer.Test.Helpers do
   persistent state in tests.
   """
 
+  alias UndercityServer.Block
   alias UndercityServer.Block.Supervisor, as: BlockSupervisor
+  alias UndercityServer.Gateway
   alias UndercityServer.Player.Server, as: PlayerServer
+  alias UndercityServer.Player.Store, as: PlayerStore
 
   @doc """
   Starts a Block under test supervision and registers cleanup of its DETS file
@@ -49,6 +52,28 @@ defmodule UndercityServer.Test.Helpers do
   Gateway.
   """
   def player_name, do: "player_#{:erlang.unique_integer([:positive])}"
+
+  @doc """
+  Enters a player into the world via Gateway and registers cleanup of their
+  DETS record on exit. Returns {player_id, vicinity, constitution}.
+  """
+  def enter_player!(name) do
+    {player_id, vicinity, constitution} = Gateway.enter(name)
+    ExUnit.Callbacks.on_exit(fn -> cleanup_player(player_id) end)
+    {player_id, vicinity, constitution}
+  end
+
+  defp cleanup_player(player_id) do
+    case PlayerStore.load(player_id) do
+      {:ok, data} ->
+        if block_id = Map.get(data, :block_id), do: Block.leave(block_id, player_id)
+
+      :error ->
+        :ok
+    end
+
+    :dets.delete(:player_store, player_id)
+  end
 
   @doc """
   Starts a Player under test supervision and registers cleanup of its DETS
