@@ -247,6 +247,23 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
+  describe "take_damage/2" do
+    test "reduces HP by the given amount", %{id: id} do
+      assert {:ok, 45} = Player.take_damage(id, 5)
+      assert 45 = Player.constitution(id).hp
+    end
+
+    test "clamps HP at 0 when damage exceeds current HP", %{id: id} do
+      assert {:ok, 0} = Player.take_damage(id, 100)
+      assert 0 = Player.constitution(id).hp
+    end
+
+    test "is a no-op when player is already at 0 HP", %{id: id} do
+      Player.take_damage(id, 50)
+      assert {:ok, 0} = Player.take_damage(id, 10)
+    end
+  end
+
   describe "block tracking" do
     test "location returns nil for a new player", %{id: id} do
       assert nil == Player.location(id)

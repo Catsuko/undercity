@@ -71,12 +71,6 @@ defmodule UndercityServer.Player do
     GenServer.call(PlayerServer.via(player_id), :check_inventory)
   end
 
-  @spec get_name(String.t()) :: String.t()
-  def get_name(player_id) do
-    start_if_inactive(player_id)
-    GenServer.call(PlayerServer.via(player_id), :get_name)
-  end
-
   @spec use_item(String.t(), String.t()) :: :ok | :not_found
   def use_item(player_id, item_name) do
     start_if_inactive(player_id)
@@ -110,6 +104,12 @@ defmodule UndercityServer.Player do
   def constitution(player_id) do
     start_if_inactive(player_id)
     GenServer.call(PlayerServer.via(player_id), :constitution)
+  end
+
+  @spec take_damage(String.t(), pos_integer()) :: {:ok, non_neg_integer()}
+  def take_damage(player_id, amount) do
+    start_if_inactive(player_id)
+    GenServer.call(PlayerServer.via(player_id), {:take_damage, amount})
   end
 
   @doc """

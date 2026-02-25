@@ -132,10 +132,82 @@ defmodule UndercityServer.GatewayTest do
   end
 
   describe "perform/4 :attack" do
-    test "always returns miss regardless of target or weapon" do
-      {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
+    test "returns :invalid_weapon when item at index is not a weapon" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Junk"))
 
-      assert {:miss, "Zara", _weapon_name} = Gateway.perform(player_id, vicinity.id, :attack, {"Zara", 0})
+      assert {:error, :invalid_weapon} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+    end
+
+    test "returns :invalid_weapon when weapon index is out of bounds" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+
+      assert {:error, :invalid_weapon} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+    end
+
+    test "returns hit or miss result with an iron pipe" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+
+      result = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+
+      assert match?({:ok, {:hit, _, "Iron Pipe", _}, _}, result) or
+               match?({:ok, {:miss, _}, _}, result) or
+               match?({:ok, {:collapsed, _, "Iron Pipe", _}, _}, result)
+    end
+
+    test "spends AP on a successful attack" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+
+      {:ok, _outcome, new_ap} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0})
+
+      assert new_ap < 50
+    end
+
+    test "returns :invalid_target when player attacks themselves" do
+      {player_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Iron Pipe"))
+
+      assert {:error, :invalid_target} = Gateway.perform(player_id, vicinity.id, :attack, {player_id, 0})
+    end
+
+    test "returns :invalid_target when target is not in block" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+
+      # target is in plaza; attacker tries to attack from a different block
+      {:ok, {:ok, _}, _} = Gateway.perform(attacker_id, vicinity.id, :move, :north)
+
+      assert {:error, :invalid_target} =
+               Gateway.perform(attacker_id, "north_alley", :attack, {target_id, 0})
+    end
+
+    test "applies damage to the target" do
+      {attacker_id, vicinity, _constitution} = Gateway.enter(unique_name())
+      {target_id, _vicinity, _constitution} = Gateway.enter(unique_name())
+      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+
+      initial_hp = UndercityServer.Player.constitution(target_id).hp
+
+      # Run attacks until one lands to verify damage is applied
+      result =
+        Enum.find_value(1..20, fn _ ->
+          case Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0}) do
+            {:ok, {:hit, _, _, _}, _} = r -> r
+            {:ok, {:collapsed, _, _, _}, _} = r -> r
+            _ -> nil
+          end
+        end)
+
+      if result do
+        assert UndercityServer.Player.constitution(target_id).hp < initial_hp
+      end
     end
   end
 

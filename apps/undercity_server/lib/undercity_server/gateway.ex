@@ -10,11 +10,12 @@ defmodule UndercityServer.Gateway do
 
   alias UndercityServer.Actions
   alias UndercityServer.Block
+  alias UndercityServer.Player
 
   defdelegate connect(player_name), to: UndercityServer.Session
   defdelegate enter(name), to: UndercityServer.Session
-  defdelegate check_inventory(player_id), to: UndercityServer.Player
-  defdelegate drop_item(player_id, index), to: UndercityServer.Player
+  defdelegate check_inventory(player_id), to: Player
+  defdelegate drop_item(player_id, index), to: Player
 
   def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
 
@@ -30,8 +31,6 @@ defmodule UndercityServer.Gateway do
   defp dispatch(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
   defp dispatch(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
 
-  defp dispatch(player_id, _block_id, :attack, {target_name, index}) do
-    weapon_name = player_id |> UndercityServer.Player.check_inventory() |> Enum.at(index) |> then(&(&1 && &1.name))
-    {:miss, target_name, weapon_name}
-  end
+  defp dispatch(player_id, block_id, :attack, {target_id, weapon_index}),
+    do: Actions.Attack.attack(player_id, block_id, target_id, weapon_index)
 end

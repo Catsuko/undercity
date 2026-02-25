@@ -93,11 +93,6 @@ defmodule UndercityServer.Player.Server do
   end
 
   @impl true
-  def handle_call(:get_name, _from, state) do
-    {:reply, state.player.name, state, @idle_timeout_ms}
-  end
-
-  @impl true
   def handle_call({:use_item, item_name}, _from, state) do
     case consume_item(state.player.inventory, item_name) do
       {:ok, inventory} ->
@@ -133,6 +128,15 @@ defmodule UndercityServer.Player.Server do
       {:error, _} = error ->
         {:reply, error, state, @idle_timeout_ms}
     end
+  end
+
+  @impl true
+  def handle_call({:take_damage, amount}, _from, state) do
+    health = Health.apply_effect(state.player.health, {:damage, amount})
+    player = %{state.player | health: health}
+    state = %{state | player: player}
+    save!(state)
+    {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
   end
 
   @impl true
