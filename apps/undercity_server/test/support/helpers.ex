@@ -39,6 +39,18 @@ defmodule UndercityServer.Test.Helpers do
   end
 
   @doc """
+  Returns a player ID string for use in tests that interact directly with
+  lower-level APIs (Block, Player.Store, etc.).
+  """
+  def player_id, do: "player_#{:erlang.unique_integer([:positive])}"
+
+  @doc """
+  Returns a player name string for use in tests that enter the world via
+  Gateway.
+  """
+  def player_name, do: "player_#{:erlang.unique_integer([:positive])}"
+
+  @doc """
   Starts a Player under test supervision and registers cleanup of its DETS
   entry on exit. Returns the player id.
 

@@ -20,7 +20,7 @@ defmodule UndercityServer.BlockTest do
 
   describe "join/2" do
     test "adds a player id to the block", %{id: id} do
-      player_id = "player_#{:rand.uniform(100_000)}"
+      player_id = Helpers.player_id()
 
       {block_id, people} = Block.join(id, player_id)
 
@@ -30,8 +30,8 @@ defmodule UndercityServer.BlockTest do
     end
 
     test "multiple players can join", %{id: id} do
-      player1 = "player_#{:rand.uniform(100_000)}"
-      player2 = "player_#{:rand.uniform(100_000)}"
+      player1 = Helpers.player_id()
+      player2 = Helpers.player_id()
 
       Block.join(id, player1)
       Block.join(id, player2)
@@ -43,7 +43,7 @@ defmodule UndercityServer.BlockTest do
 
   describe "leave/2" do
     test "removes a player id from the block", %{id: id} do
-      player_id = "player_#{:rand.uniform(100_000)}"
+      player_id = Helpers.player_id()
       Block.join(id, player_id)
 
       assert :ok = Block.leave(id, player_id)
@@ -53,8 +53,8 @@ defmodule UndercityServer.BlockTest do
     end
 
     test "other players remain after someone leaves", %{id: id} do
-      player1 = "player_#{:rand.uniform(100_000)}"
-      player2 = "player_#{:rand.uniform(100_000)}"
+      player1 = Helpers.player_id()
+      player2 = Helpers.player_id()
       Block.join(id, player1)
       Block.join(id, player2)
 
@@ -94,7 +94,7 @@ defmodule UndercityServer.BlockTest do
 
   describe "has_person?/2" do
     test "returns true when player is in the block", %{id: id} do
-      player_id = "player_#{:rand.uniform(100_000)}"
+      player_id = Helpers.player_id()
       Block.join(id, player_id)
 
       assert Block.has_person?(id, player_id)

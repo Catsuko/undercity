@@ -16,6 +16,8 @@ Each app has its own `test/` directory and runs independently. Use `mix.bat test
 
 - **`start_block!(opts)`** — starts a `Block.Supervisor` (Store + Block). Key options: `:type` (block type atom), `:random` (zero-arity fn returning a float, for controlling loot rolls deterministically).
 - **`start_player!(opts)`** — starts a `Player` GenServer. Key option: `:name`. New players start at 50 AP / 50 HP.
+- **`player_id/0`** — returns a `"player_<n>"` string for use as a player ID when calling lower-level APIs (Block, Player.Store) directly.
+- **`player_name/0`** — returns a `"player_<n>"` string for use as a player name when entering the world via `Gateway`. Both use `:erlang.unique_integer/1`, guaranteeing uniqueness within a VM session.
 
 Tests using these helpers are safe to run `async: true`. Tests using the live app (Gateway, world map) must be `async: false`.
 
