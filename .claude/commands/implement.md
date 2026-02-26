@@ -3,13 +3,12 @@ description: Implement a bead or epic — orchestrate specialist agents to build
 allowed-tools: Task, Bash(bd *), Bash(git *)
 ---
 
-## Bead to implement
+## Arguments
 
 $ARGUMENTS
 
-## Bead details
-
-!`bd show $ARGUMENTS`
+The first word is the bead ID. Any flags after it modify orchestrator behaviour:
+- `--dry-run` — go through all the motions (read bead, present plan, describe what each agent would do) but make no changes: no branches, no code, no bead status updates, no commits.
 
 ---
 
@@ -37,7 +36,12 @@ You are an implementation orchestrator. Given a bead ID, you read the bead, plan
 
 ### 1. Read and analyse
 
-From the bead output above, identify:
+Parse `$ARGUMENTS`: extract the bead ID (first word) and check for `--dry-run`. Then fetch the bead:
+```
+bd show <bead-id>
+```
+
+From the bead output, identify:
 - Whether this is a single task or an epic with sub-tasks
 - Which layers are touched (core, server, CLI) and which specialists are needed
 - Whether any thematic elements (names, messages) are unresolved — if so, `content-writer` runs first
@@ -46,6 +50,8 @@ From the bead output above, identify:
 For an epic, list the sub-tasks in dependency order. This is your implementation sequence.
 
 ### 2. Branching
+
+*Skip entirely in `--dry-run` mode. Note what branch would have been created.*
 
 **Ask the user before creating any branches.** Propose a sensible default and wait for confirmation.
 
@@ -69,17 +75,21 @@ Before touching any code, emit a concise plan:
 For each bead or sub-task, work through the following:
 
 **a) Mark in progress**
+
+*Skip in `--dry-run` mode.*
 ```
 bd update <id> --status=in_progress
 ```
 
 **b) Delegate to specialists**
 
+*In `--dry-run` mode: describe which agents you would spawn, what you would ask each, and what you expect them to produce — but do not actually spawn them.*
+
 Spawn agents for all layers touched by this step. Follow dependency order: core → server → CLI. Parallelise only when genuinely independent.
 
 Pass context explicitly. Every agent prompt for later layers must include the key outputs of earlier ones — function signatures, module names, return shapes, thematic names. Agents should not re-discover what was just built.
 
-Spawn `test-expert` in parallel with the final implementation layer so coverage checks are ready when code is done.
+Spawn `test-expert` in parallel with the final implementation layer so test strategy and coverage checks are ready when code is done.
 
 **c) Recap and review**
 
@@ -92,6 +102,8 @@ After agents complete, emit a clear recap:
 
 **d) Commit on approval**
 
+*Skip in `--dry-run` mode. Note what files would be staged and what the commit message would be.*
+
 Stage specific files — never `git add .`:
 ```
 git add <specific files>
@@ -101,6 +113,8 @@ git commit -m "..."
 Keep commit messages concise and outcome-focused.
 
 **e) Close the bead**
+
+*Skip in `--dry-run` mode.*
 ```
 bd close <id>
 ```
