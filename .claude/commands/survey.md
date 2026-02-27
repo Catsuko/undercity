@@ -57,6 +57,7 @@ Apply these filters:
 
 - **Dormant files** (not touched in the last 30 repository commits) — exclude unless all other signals are extreme
 - **Low recency** (recency count of 0–1 in last 20) — deprioritise; size alone is not a concern if the file is stable
+- **Recently refactored** — scan the last 3 commit messages for the file for architectural keywords (refactor, extract, consolidate, simplify, restructure, clean up). If the most recent commit is a refactoring, halve the recency score for that file. A file that was just improved should not immediately reappear. If growth resumes after the refactoring, subsequent non-refactoring commits will naturally restore its score over time.
 
 Score remaining suspects by combining recency count with their Phase 1 score. Retain the **top 3–5** as your final candidates.
 
@@ -107,3 +108,4 @@ After presenting all flagged files, ask the user which file(s) they would like t
 - **Dormant files are noise.** Size without recent activity is not a concern.
 - **Public function count is the structural signal.** A medium file with many public functions is more concerning than a large file with few.
 - **Commit messages tell the story.** Raw numbers show that growth is happening; commit themes explain *why* — and why it will continue.
+- **Recent improvements deserve a grace period.** A file flagged by a previous survey and then refactored should not immediately reappear. Deprioritise it until post-refactoring commits demonstrate the churn has continued.
