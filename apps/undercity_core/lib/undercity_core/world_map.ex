@@ -28,6 +28,9 @@ defmodule UndercityCore.WorldMap do
     ["the_stray", "south_alley", "lame_horse"]
   ]
 
+  @grid_rows length(@grid)
+  @grid_cols @grid |> hd() |> length()
+
   @grid_positions (for {row, r} <- Enum.with_index(@grid),
                        {id, c} <- Enum.with_index(row),
                        into: %{} do
@@ -89,7 +92,7 @@ defmodule UndercityCore.WorldMap do
     end
   end
 
-  defp grid_cell(r, c) when r >= 0 and r < 3 and c >= 0 and c < 3 do
+  defp grid_cell(r, c) when r >= 0 and r < @grid_rows and c >= 0 and c < @grid_cols do
     @grid |> Enum.at(r) |> Enum.at(c)
   end
 

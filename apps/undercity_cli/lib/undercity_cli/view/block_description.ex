@@ -68,6 +68,7 @@ defmodule UndercityCli.View.BlockDescription do
   def scribble_surface(%Vicinity{}), do: "on the ground"
 
   defp description_key(%Vicinity{type: :space, building_type: bt}) when bt != nil, do: :"space_#{bt}"
+
   defp description_key(%Vicinity{type: type}), do: type
 
   defp block_prefix(:space), do: "outside"
