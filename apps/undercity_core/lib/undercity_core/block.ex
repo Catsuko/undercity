@@ -7,7 +7,7 @@ defmodule UndercityCore.Block do
   defstruct [:id, :name, :type, :scribble, people: MapSet.new(), exits: %{}]
 
   @type direction :: :north | :south | :east | :west | :enter | :exit
-  @type block_type :: :street | :square | :fountain | :graveyard | :space | :inn
+  @type block_type :: UndercityCore.BlockType.t()
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
