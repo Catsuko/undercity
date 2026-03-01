@@ -90,9 +90,15 @@ defmodule UndercityServer.Player do
     PlayerServer.call(player_id, PlayerSupervisor, :constitution)
   end
 
-  @spec take_damage(String.t(), pos_integer()) :: {:ok, non_neg_integer()} | {:error, :collapsed}
-  def take_damage(player_id, amount) do
-    PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, amount})
+  @spec take_damage(String.t(), {String.t(), String.t(), pos_integer()}) ::
+          {:ok, non_neg_integer()} | {:error, :collapsed}
+  def take_damage(player_id, {attacker_name, weapon_name, damage}) do
+    PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, {attacker_name, weapon_name, damage}})
+  end
+
+  @spec fetch_inbox(String.t()) :: [{String.t()}]
+  def fetch_inbox(player_id) do
+    PlayerServer.call(player_id, PlayerSupervisor, :fetch_inbox)
   end
 
   @doc """

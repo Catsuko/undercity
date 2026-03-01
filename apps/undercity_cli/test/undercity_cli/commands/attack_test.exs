@@ -40,7 +40,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
       end)
 
@@ -68,7 +68,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
       end)
 
@@ -84,7 +84,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:ok, {:miss, @target_id}, 7}
       end)
 
@@ -100,7 +100,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 1} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 1} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 1, _player_name} ->
         {:error, :invalid_weapon}
       end)
 
@@ -114,7 +114,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:error, :exhausted}
       end)
 
@@ -128,7 +128,7 @@ defmodule UndercityCli.Commands.AttackTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       expect(InventorySelector, :select, fn @inventory, "Attack with what?" -> {:ok, 0} end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:error, :invalid_target}
       end)
 
@@ -154,7 +154,7 @@ defmodule UndercityCli.Commands.AttackTest do
 
   describe "dispatch/6 with target and weapon index" do
     test "attacks directly without any selectors" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _player_name} ->
         {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
       end)
 
@@ -170,7 +170,7 @@ defmodule UndercityCli.Commands.AttackTest do
       big_zara = %{id: "big_zara_id", name: "Big Zara"}
       state = %{@state | vicinity: %Vicinity{id: @block_id, people: [big_zara]}}
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {"big_zara_id", 1} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {"big_zara_id", 1, _player_name} ->
         {:ok, {:hit, "big_zara_id", "Junk", 2}, 7}
       end)
 
