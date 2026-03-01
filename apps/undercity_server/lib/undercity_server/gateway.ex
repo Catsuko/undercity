@@ -17,6 +17,18 @@ defmodule UndercityServer.Gateway do
   defdelegate check_inventory(player_id), to: Player
   defdelegate drop_item(player_id, index), to: Player
 
+  @doc """
+  Returns and clears pending inbox messages for `player_id`.
+
+  Reads the ETS-backed `Player.Inbox` directly — no GenServer hop required.
+  Returns up to 50 messages in newest-first order. Returns `[]` if there
+  are no messages.
+  """
+  @spec messages_for(String.t()) :: [{String.t()}]
+  def messages_for(player_id) do
+    Player.Inbox.fetch(player_id)
+  end
+
   def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
 
   def perform(player_id, block_id, action, args) do

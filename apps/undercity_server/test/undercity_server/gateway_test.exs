@@ -3,6 +3,7 @@ defmodule UndercityServer.GatewayTest do
 
   alias UndercityServer.Block
   alias UndercityServer.Gateway
+  alias UndercityServer.Player.Inbox
   alias UndercityServer.Test.Helpers
   alias UndercityServer.Vicinity
 
@@ -267,6 +268,19 @@ defmodule UndercityServer.GatewayTest do
       UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
       assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :scribble, "hello")
+    end
+  end
+
+  describe "messages_for/1" do
+    test "delegates to Inbox — returns messages sent via Inbox and clears them" do
+      player_id = Helpers.player_id()
+
+      Inbox.send_message(player_id, "first")
+      Inbox.send_message(player_id, "second")
+      :timer.sleep(10)
+
+      assert [{"second"}, {"first"}] = Gateway.messages_for(player_id)
+      assert [] = Gateway.messages_for(player_id)
     end
   end
 end

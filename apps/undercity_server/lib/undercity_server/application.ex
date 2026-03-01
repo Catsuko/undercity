@@ -15,6 +15,7 @@ defmodule UndercityServer.Application do
 
     children =
       [
+        UndercityServer.Player.Inbox,
         UndercityServer.Player.Store,
         UndercityServer.Player.Supervisor
       ] ++ block_children
