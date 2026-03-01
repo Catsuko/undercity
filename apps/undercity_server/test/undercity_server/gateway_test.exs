@@ -288,7 +288,7 @@ defmodule UndercityServer.GatewayTest do
       Inbox.send_message(player_id, "second")
       :timer.sleep(10)
 
-      assert [{"second"}, {"first"}] = Gateway.messages_for(player_id)
+      assert [{"first"}, {"second"}] = Gateway.messages_for(player_id)
       assert [] = Gateway.messages_for(player_id)
     end
   end

@@ -42,7 +42,7 @@ defmodule UndercityServer.Player.Inbox do
   @spec fetch(String.t(), pos_integer()) :: [{String.t()}]
   def fetch(player_id, n \\ 50) do
     case :ets.take(@table, player_id) do
-      [{^player_id, messages}] -> Enum.take(messages, n)
+      [{^player_id, messages}] -> messages |> Enum.take(n) |> Enum.reverse()
       [] -> []
     end
   end
