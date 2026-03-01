@@ -17,9 +17,16 @@ defmodule UndercityCli.GameLoop do
   end
 
   defp loop(player, state) do
-    View.render_messages(MessageBuffer.flush())
-
+    render_messages(state)
     dispatch(Input.gets(), player, state)
+  end
+
+  defp render_messages(state) do
+    state.player_id
+    |> Gateway.messages_for()
+    |> Enum.each(&MessageBuffer.warn(elem(&1, 0)))
+
+    View.render_messages(MessageBuffer.flush())
   end
 
   defp dispatch(input, _player, _state) when input in ["quit", "q"], do: :ok
