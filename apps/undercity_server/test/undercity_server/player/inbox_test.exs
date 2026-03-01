@@ -22,7 +22,7 @@ defmodule UndercityServer.Player.InboxTest do
       assert [{"hello"}] = Inbox.fetch(id)
     end
 
-    test "multiple messages are returned newest-first" do
+    test "multiple messages are returned oldest-first" do
       id = Helpers.player_id()
 
       Inbox.send_message(id, "first")
@@ -30,7 +30,7 @@ defmodule UndercityServer.Player.InboxTest do
       Inbox.send_message(id, "third")
       :timer.sleep(10)
 
-      assert [{"third"}, {"second"}, {"first"}] = Inbox.fetch(id)
+      assert [{"first"}, {"second"}, {"third"}] = Inbox.fetch(id)
     end
 
     test "fetch/1 clears the inbox — a second call returns []" do
@@ -51,6 +51,17 @@ defmodule UndercityServer.Player.InboxTest do
       :timer.sleep(10)
 
       assert [{"newer"}] = Inbox.fetch(id, 1)
+    end
+
+    test "fetch/2 with n: 2 returns messages in order received" do
+      id = Helpers.player_id()
+
+      Inbox.send_message(id, "first")
+      Inbox.send_message(id, "second")
+      Inbox.send_message(id, "third")
+      :timer.sleep(10)
+
+      assert [{"second"}, {"third"}] = Inbox.fetch(id, 2)
     end
 
     test "messages for different player IDs are independent" do

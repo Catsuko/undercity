@@ -11,11 +11,11 @@ defmodule UndercityServer.Actions.Attack do
   alias UndercityServer.Block
   alias UndercityServer.Player
 
-  def attack(player_id, block_id, target_id, weapon_index) do
+  def attack(player_id, player_name, block_id, target_id, weapon_index) do
     with :ok <- validate_target(player_id, block_id, target_id),
          {:ok, item} <- find_weapon(player_id, weapon_index),
          {:ok, stats} <- weapon_stats(item.name) do
-      Player.perform(player_id, fn -> resolve_attack(target_id, item.name, stats) end)
+      Player.perform(player_id, fn -> resolve_attack(player_name, target_id, item.name, stats) end)
     end
   end
 
@@ -39,10 +39,10 @@ defmodule UndercityServer.Actions.Attack do
     end
   end
 
-  defp resolve_attack(target_id, weapon_name, weapon_stats) do
+  defp resolve_attack(attacker_name, target_id, weapon_name, weapon_stats) do
     case Combat.resolve(weapon_stats) do
       {:hit, damage} ->
-        case Player.take_damage(target_id, damage) do
+        case Player.take_damage(target_id, {attacker_name, weapon_name, damage}) do
           {:ok, _hp} -> {:hit, target_id, weapon_name, damage}
           {:error, :collapsed} -> {:miss, target_id}
         end

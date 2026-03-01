@@ -249,18 +249,40 @@ defmodule UndercityServer.PlayerTest do
 
   describe "take_damage/2" do
     test "reduces HP by the given amount", %{id: id} do
-      assert {:ok, 45} = Player.take_damage(id, 5)
+      assert {:ok, 45} = Player.take_damage(id, {"Rat", "Claws", 5})
       assert 45 = Player.constitution(id).hp
     end
 
     test "clamps HP at 0 when damage exceeds current HP", %{id: id} do
-      assert {:ok, 0} = Player.take_damage(id, 100)
+      assert {:ok, 0} = Player.take_damage(id, {"Rat", "Claws", 100})
       assert 0 = Player.constitution(id).hp
     end
 
     test "returns :collapsed when player is already at 0 HP", %{id: id} do
-      Player.take_damage(id, 50)
-      assert {:error, :collapsed} = Player.take_damage(id, 10)
+      Player.take_damage(id, {"Rat", "Claws", 50})
+      assert {:error, :collapsed} = Player.take_damage(id, {"Rat", "Claws", 10})
+    end
+
+    test "queues an inbox message after a valid hit", %{id: id} do
+      Player.take_damage(id, {"Rat", "Claws", 5})
+      :timer.sleep(10)
+
+      assert [{"Rat attacks you with Claws and does 5 damage."}] = Player.fetch_inbox(id)
+    end
+
+    test "inbox message text matches the expected format", %{id: id} do
+      Player.take_damage(id, {"Magnus", "Iron Pipe", 12})
+      :timer.sleep(10)
+
+      assert [{"Magnus attacks you with Iron Pipe and does 12 damage."}] = Player.fetch_inbox(id)
+    end
+
+    test "no inbox message when player is already collapsed", %{id: id} do
+      collapse(id)
+      Player.take_damage(id, {"Rat", "Claws", 5})
+      :timer.sleep(10)
+
+      assert [] = Player.fetch_inbox(id)
     end
   end
 

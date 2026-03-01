@@ -15,6 +15,7 @@ defmodule UndercityServer.Player.Server do
   alias UndercityCore.Inventory
   alias UndercityCore.Item
   alias UndercityCore.Player
+  alias UndercityServer.Player.Inbox, as: PlayerInbox
   alias UndercityServer.Player.Store, as: PlayerStore
 
   @idle_timeout_ms Application.compile_env(:undercity_server, :player_idle_timeout_ms, 15 * 60 * 1_000)
@@ -136,16 +137,23 @@ defmodule UndercityServer.Player.Server do
   end
 
   @impl true
-  def handle_call({:take_damage, amount}, _from, state) do
+  def handle_call({:take_damage, {attacker_name, weapon_name, damage}}, _from, state) do
     if Health.current(state.player.health) == 0 do
       {:reply, {:error, :collapsed}, state, @idle_timeout_ms}
     else
-      health = Health.apply_effect(state.player.health, {:damage, amount})
+      health = Health.apply_effect(state.player.health, {:damage, damage})
       player = %{state.player | health: health}
       state = %{state | player: player}
       save!(state)
+
+      PlayerInbox.send_message(player.id, "#{attacker_name} attacks you with #{weapon_name} and does #{damage} damage.")
       {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
     end
+  end
+
+  @impl true
+  def handle_call(:fetch_inbox, _from, state) do
+    {:reply, PlayerInbox.fetch(state.player.id), state, @idle_timeout_ms}
   end
 
   @impl true

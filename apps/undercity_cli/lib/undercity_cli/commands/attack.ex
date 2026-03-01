@@ -54,7 +54,7 @@ defmodule UndercityCli.Commands.Attack do
     case find_target_id(state.vicinity.people, target_name) do
       {:ok, target_id} ->
         state.player_id
-        |> gateway.perform(state.vicinity.id, :attack, {target_id, index})
+        |> gateway.perform(state.vicinity.id, :attack, {target_id, index, state.player_name})
         |> Commands.handle_action(state, message_buffer, &handle_outcome(&1, state, message_buffer))
 
       {:error, _} = error ->

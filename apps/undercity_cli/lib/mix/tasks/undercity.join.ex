@@ -19,7 +19,15 @@ defmodule Mix.Tasks.Undercity.Join do
       {:ok, {player_id, vicinity, constitution}} ->
         Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
-        state = %GameState{player_id: player_id, vicinity: vicinity, ap: constitution.ap, hp: constitution.hp}
+
+        state = %GameState{
+          player_id: player_id,
+          player_name: player,
+          vicinity: vicinity,
+          ap: constitution.ap,
+          hp: constitution.hp
+        }
+
         GameLoop.run(player, state)
 
       {:error, :server_not_found} ->

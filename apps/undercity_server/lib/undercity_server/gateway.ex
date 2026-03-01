@@ -26,7 +26,7 @@ defmodule UndercityServer.Gateway do
   """
   @spec messages_for(String.t()) :: [{String.t()}]
   def messages_for(player_id) do
-    Player.Inbox.fetch(player_id)
+    Player.fetch_inbox(player_id)
   end
 
   def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
@@ -43,6 +43,6 @@ defmodule UndercityServer.Gateway do
   defp dispatch(player_id, block_id, :search, _args), do: Actions.Search.search(player_id, block_id)
   defp dispatch(player_id, block_id, :scribble, text), do: Actions.Scribble.scribble(player_id, block_id, text)
 
-  defp dispatch(player_id, block_id, :attack, {target_id, weapon_index}),
-    do: Actions.Attack.attack(player_id, block_id, target_id, weapon_index)
+  defp dispatch(player_id, block_id, :attack, {target_id, weapon_index, attacker_name}),
+    do: Actions.Attack.attack(player_id, attacker_name, block_id, target_id, weapon_index)
 end

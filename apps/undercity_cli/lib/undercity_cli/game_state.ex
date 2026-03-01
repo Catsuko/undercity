@@ -7,10 +7,11 @@ defmodule UndercityCli.GameState do
   changed, or `{:continue, state}` for all other actions.
   """
 
-  defstruct [:player_id, :vicinity, :ap, :hp]
+  defstruct [:player_id, :player_name, :vicinity, :ap, :hp]
 
   @type t :: %__MODULE__{
           player_id: String.t(),
+          player_name: String.t(),
           vicinity: term(),
           ap: term(),
           hp: term()

@@ -12,14 +12,22 @@ defmodule UndercityCli.GameLoop do
   alias UndercityServer.Gateway
 
   def run(player, %GameState{} = state) do
+    MessageBuffer.start_link()
+    sync_messages(state)
     View.init(state.vicinity, player, state.ap, state.hp)
     loop(player, state)
   end
 
   defp loop(player, state) do
+    sync_messages(state)
     View.render_messages(MessageBuffer.flush())
-
     dispatch(Input.gets(), player, state)
+  end
+
+  defp sync_messages(state) do
+    state.player_id
+    |> Gateway.messages_for()
+    |> Enum.each(&MessageBuffer.warn(elem(&1, 0)))
   end
 
   defp dispatch(input, _player, _state) when input in ["quit", "q"], do: :ok
