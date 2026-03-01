@@ -13,7 +13,9 @@ defmodule UndercityCli.View.InventorySelector do
 
   @highlight IO.ANSI.color(103)
 
-  @spec select([UndercityCore.Item.t()], Owl.Data.t()) :: {:ok, non_neg_integer()} | :cancel
+  @type named :: %{name: String.t()}
+
+  @spec select([named()], Owl.Data.t()) :: {:ok, non_neg_integer()} | :cancel
   def select([], _label) do
     MessageBuffer.warn("Your inventory is empty.")
     :cancel
