@@ -25,3 +25,7 @@ erl_crash.dump
 
 # Claude Code local settings (track commands and agents, ignore personal config)
 .claude/settings.local.json
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
