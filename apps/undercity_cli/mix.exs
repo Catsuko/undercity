@@ -28,6 +28,7 @@ defmodule UndercityCli.MixProject do
   defp deps do
     [
       {:owl, "~> 0.13.0"},
+      {:ratatouille, "~> 0.5.0"},
       {:undercity_server, in_umbrella: true},
       {:mimic, "~> 2.0", only: :test}
     ]

@@ -4,7 +4,21 @@ defmodule UndercityCli.View.BlockDescriptionTest do
   alias UndercityCli.View.BlockDescription
   alias UndercityServer.Vicinity
 
-  defp render_to_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
+  defp all_elements(%Ratatouille.Renderer.Element{} = el) do
+    [el | Enum.flat_map(el.children, &all_elements/1)]
+  end
+
+  defp all_text(elements) when is_list(elements) do
+    elements
+    |> Enum.flat_map(&all_elements/1)
+    |> Enum.map_join("", &Map.get(&1.attributes, :content, ""))
+  end
+
+  defp find_element_by_content(elements, content) when is_list(elements) do
+    elements
+    |> Enum.flat_map(&all_elements/1)
+    |> Enum.find(&(Map.get(&1.attributes, :content) == content))
+  end
 
   describe "render/2" do
     test "includes name, type-driven description, and people" do
@@ -20,7 +34,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are at"
       assert output =~ "The Plaza"
@@ -42,10 +56,9 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      elements = BlockDescription.render(vicinity, "Grimshaw")
 
-      refute output =~ "┌"
-      refute output =~ "┘"
+      assert Enum.all?(elements, &match?(%{tag: :label}, &1))
     end
 
     test "shows alone message when only current player is present" do
@@ -61,7 +74,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are at"
       assert output =~ "Ashwell"
@@ -82,7 +95,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: :inn
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are outside"
       assert output =~ "The Lame Horse"
@@ -102,7 +115,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "A patch of open ground"
     end
@@ -121,13 +134,15 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "beware the dark"
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      elements = BlockDescription.render(vicinity, "Grimshaw")
+      output = all_text(elements)
 
       assert output =~ "Someone has scribbled"
       assert output =~ "beware the dark"
       assert output =~ "on the ground."
-      # Italic ANSI codes
-      assert output =~ "\e[3m"
+
+      scribble_el = find_element_by_content(elements, "beware the dark")
+      assert scribble_el.attributes.attributes == Ratatouille.Constants.attribute(:bold)
     end
 
     test "does not render scribble line when nil" do
@@ -144,7 +159,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       refute output =~ "scribbled"
     end
@@ -159,7 +174,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "rest in peace"
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "rest in peace"
       assert output =~ "on a tombstone."
@@ -179,7 +194,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "free ale"
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "free ale"
       assert output =~ "on the wall."
@@ -199,7 +214,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         scribble: "enter here"
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "enter here"
       assert output =~ "on the wall."
@@ -218,7 +233,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
         building_type: nil
       }
 
-      output = vicinity |> BlockDescription.render("Grimshaw") |> render_to_string()
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are inside"
       assert output =~ "The Lame Horse Inn"

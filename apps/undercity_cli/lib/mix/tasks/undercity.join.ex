@@ -4,7 +4,7 @@ defmodule Mix.Tasks.Undercity.Join do
   @moduledoc false
   use Mix.Task
 
-  alias UndercityCli.GameLoop
+  alias UndercityCli.App
   alias UndercityCli.GameState
   alias UndercityCli.Spinner
   alias UndercityServer.Vicinity
@@ -28,7 +28,13 @@ defmodule Mix.Tasks.Undercity.Join do
           hp: constitution.hp
         }
 
-        GameLoop.run(player, state)
+        Application.put_env(:undercity_cli, :context, %{
+          player: player,
+          game_state: state,
+          gateway: UndercityServer.Gateway
+        })
+
+        Ratatouille.run(App)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")
