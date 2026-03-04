@@ -2,29 +2,22 @@ defmodule UndercityCli.View.TargetSelector do
   @moduledoc """
   Interactive selector for choosing a target from the current vicinity.
 
-  Renders a numbered list into the LiveScreen `:selector` block so that
-  cancelling (or completing) clears the UI in-place. Numbers and the prompt
-  use the same highlight color as the block name in `BlockDescription`.
-  Returns the selected person struct, or `:cancel`.
+  NOTE: The `select/2` function uses blocking IO and is not compatible with the
+  Ratatouille TEA runtime. It will be replaced with a model state transition in
+  the selector rework (item 3 of the Owl→Ratatouille migration).
   """
 
   alias UndercityCli.MessageBuffer
-  alias UndercityCli.View.Screen
 
-  @highlight IO.ANSI.color(103)
-
-  @spec select([map()], Owl.Data.t()) :: {:ok, map()} | :cancel
+  @spec select([map()], String.t()) :: {:ok, map()} | :cancel
   def select([], _label) do
     MessageBuffer.warn("There is no one else here.")
     :cancel
   end
 
-  def select(people, label) do
+  def select(people, _label) do
     options = build_options(people)
-    Screen.update_selector(render_list(options, label))
-    result = read_loop(options)
-    Screen.update_selector(nil)
-    result
+    read_loop(options)
   end
 
   @doc false
@@ -38,22 +31,6 @@ defmodule UndercityCli.View.TargetSelector do
   def parse_choice(_, _), do: :error
 
   defp build_options(people), do: Enum.with_index(people) ++ [:cancel]
-
-  defp render_option(:cancel), do: Owl.Data.tag("Cancel", :light_black)
-  defp render_option({person, _index}), do: person.name
-
-  defp render_list(options, label) do
-    items =
-      options
-      |> Enum.with_index(1)
-      |> Enum.map_intersperse("  ", fn {option, i} -> [number_tag(i), render_option(option)] end)
-
-    [Owl.Data.tag(label, @highlight), "\n" | items]
-  end
-
-  defp number_tag(i) do
-    Owl.Data.tag("#{i}. ", @highlight)
-  end
 
   defp read_loop(options) do
     n = length(options)

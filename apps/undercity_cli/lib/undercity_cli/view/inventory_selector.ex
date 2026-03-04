@@ -2,31 +2,24 @@ defmodule UndercityCli.View.InventorySelector do
   @moduledoc """
   Interactive selector for choosing an item from inventory.
 
-  Renders a numbered list into the LiveScreen `:selector` block so that
-  cancelling (or completing) clears the UI in-place. Numbers and the prompt
-  use the same highlight color as the block name in `BlockDescription`.
-  Returns the 0-based index of the selected item, or `:cancel`.
+  NOTE: The `select/2` function uses blocking IO and is not compatible with the
+  Ratatouille TEA runtime. It will be replaced with a model state transition in
+  the selector rework (item 3 of the Owl→Ratatouille migration).
   """
 
   alias UndercityCli.MessageBuffer
-  alias UndercityCli.View.Screen
-
-  @highlight IO.ANSI.color(103)
 
   @type named :: %{name: String.t()}
 
-  @spec select([named()], Owl.Data.t()) :: {:ok, non_neg_integer()} | :cancel
+  @spec select([named()], String.t()) :: {:ok, non_neg_integer()} | :cancel
   def select([], _label) do
     MessageBuffer.warn("Your inventory is empty.")
     :cancel
   end
 
-  def select(items, label) do
+  def select(items, _label) do
     options = build_options(items)
-    Screen.update_selector(render_list(options, label))
-    result = read_loop(options)
-    Screen.update_selector(nil)
-    result
+    read_loop(options)
   end
 
   @doc false
@@ -40,22 +33,6 @@ defmodule UndercityCli.View.InventorySelector do
   def parse_choice(_, _), do: :error
 
   defp build_options(items), do: Enum.with_index(items) ++ [:cancel]
-
-  defp render_option(:cancel), do: Owl.Data.tag("Cancel", :light_black)
-  defp render_option({item, _index}), do: item.name
-
-  defp render_list(options, label) do
-    items =
-      options
-      |> Enum.with_index(1)
-      |> Enum.map_intersperse("  ", fn {option, i} -> [number_tag(i), render_option(option)] end)
-
-    [Owl.Data.tag(label, @highlight), "\n" | items]
-  end
-
-  defp number_tag(i) do
-    Owl.Data.tag("#{i}. ", @highlight)
-  end
 
   defp read_loop(options) do
     n = length(options)
