@@ -5,11 +5,11 @@ defmodule UndercityCli do
   Connects to a running `UndercityServer` node via distributed Erlang and provides
   the interactive terminal interface. Started with `mix undercity.join --player <name>`.
 
-  ## Game loop
+  ## Architecture
 
-  The client runs a simple recursive loop: render the current view, read a line of
-  input, dispatch to a command module, update state, repeat. Movement causes a
-  full re-render of the surroundings; other actions only push messages.
+  The client is a Ratatouille TEA application (`UndercityCli.App`). All state lives
+  in the model; keypresses accumulate in `model.input` and are dispatched on Enter.
+  A subscription polls for server messages every 500 ms. Press `q` to quit.
 
   ## Commands
 
@@ -27,9 +27,9 @@ defmodule UndercityCli do
 
   ## Rendering
 
-  `UndercityCli.View` renders to an `Owl.LiveScreen` with named regions
-  (surroundings grid, block description, messages, selector). Messages are
-  accumulated in `MessageBuffer` during command dispatch and flushed once per loop.
+  `UndercityCli.App.render/1` builds a Ratatouille view tree from the current model.
+  Messages are accumulated in `MessageBuffer` during command dispatch and flushed
+  after each command.
 
   ## Testing
 

@@ -117,37 +117,32 @@ defmodule UndercityCli.App do
 
   defp dispatch_input(model) do
     raw = model.input |> String.trim() |> String.downcase()
+    game_state = to_game_state(model)
 
-    if raw in ["quit", "q"] do
-      model
-    else
-      game_state = to_game_state(model)
+    case Commands.dispatch(raw, game_state, model.gateway, MessageBuffer) do
+      {:moved, new_state} ->
+        threshold_msgs =
+          Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
 
-      case Commands.dispatch(raw, game_state, model.gateway, MessageBuffer) do
-        {:moved, new_state} ->
-          threshold_msgs =
-            Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
+        MessageBuffer.push(threshold_msgs)
+        flushed = MessageBuffer.flush()
 
-          MessageBuffer.push(threshold_msgs)
-          flushed = MessageBuffer.flush()
+        model
+        |> apply_state(new_state)
+        |> Map.update!(:messages, &(&1 ++ flushed))
+        |> Map.put(:input, "")
 
-          model
-          |> apply_state(new_state)
-          |> Map.update!(:messages, &(&1 ++ flushed))
-          |> Map.put(:input, "")
+      {:continue, new_state} ->
+        threshold_msgs =
+          Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
 
-        {:continue, new_state} ->
-          threshold_msgs =
-            Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
+        MessageBuffer.push(threshold_msgs)
+        flushed = MessageBuffer.flush()
 
-          MessageBuffer.push(threshold_msgs)
-          flushed = MessageBuffer.flush()
-
-          model
-          |> apply_state(new_state)
-          |> Map.update!(:messages, &(&1 ++ flushed))
-          |> Map.put(:input, "")
-      end
+        model
+        |> apply_state(new_state)
+        |> Map.update!(:messages, &(&1 ++ flushed))
+        |> Map.put(:input, "")
     end
   end
 
