@@ -24,6 +24,8 @@ defmodule UndercityCli.App do
   alias UndercityCli.View.Status
   alias UndercityCli.View.Surroundings
 
+  @panel_padding 1
+
   @impl true
   def init(context) do
     %{
@@ -87,16 +89,16 @@ defmodule UndercityCli.App do
   @impl true
   def render(model) do
     view bottom_bar: bar(do: label(content: "> #{model.input}")) do
-      panel title: "Undercity", height: :fill do
-        panel title: "Surroundings", padding: 0 do
+      panel title: "Undercity", height: :fill, padding: @panel_padding do
+        panel title: "Surroundings", padding: @panel_padding do
           Surroundings.render(model.vicinity, model.window_width)
         end
 
-        panel title: "Location", padding: 0 do
+        panel title: "Location", padding: @panel_padding do
           BlockDescription.render(model.vicinity, model.player_name)
         end
 
-        panel title: "Messages", padding: 0 do
+        panel title: "Messages", padding: @panel_padding do
           Enum.map(model.messages, fn {text, category} ->
             Status.format_message(text, category)
           end)
