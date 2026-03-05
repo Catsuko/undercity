@@ -3,34 +3,32 @@ defmodule UndercityCli.View.StatusTest do
 
   alias UndercityCli.View.Status
 
-  defp render_to_string(data), do: data |> Owl.Data.to_chardata() |> IO.iodata_to_binary()
-
   describe "format_message/2" do
     test "formats info message with icon" do
-      result = "You find nothing." |> Status.format_message() |> render_to_string()
+      element = Status.format_message("You find nothing.")
 
-      assert result =~ "▸ You find nothing."
-      assert result =~ "\e[38;5;67m"
+      assert element.attributes.content == "▸ You find nothing."
+      assert element.attributes.color == Ratatouille.Constants.color(:blue)
     end
 
     test "formats success message in green" do
-      result = "You found Junk!" |> Status.format_message(:success) |> render_to_string()
+      element = Status.format_message("You found Junk!", :success)
 
-      assert result =~ "▸ You found Junk!"
-      assert result =~ "\e[38;5;108m"
+      assert element.attributes.content == "▸ You found Junk!"
+      assert element.attributes.color == Ratatouille.Constants.color(:green)
     end
 
     test "formats warning message in red" do
-      result = "You can't go that way." |> Status.format_message(:warning) |> render_to_string()
+      element = Status.format_message("You can't go that way.", :warning)
 
-      assert result =~ "▸ You can't go that way."
-      assert result =~ "\e[38;5;131m"
+      assert element.attributes.content == "▸ You can't go that way."
+      assert element.attributes.color == Ratatouille.Constants.color(:red)
     end
 
     test "defaults to info category" do
-      result = "Some message." |> Status.format_message() |> render_to_string()
+      element = Status.format_message("Some message.")
 
-      assert result =~ "\e[38;5;67m"
+      assert element.attributes.color == Ratatouille.Constants.color(:blue)
     end
   end
 end

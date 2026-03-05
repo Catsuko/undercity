@@ -4,9 +4,9 @@ defmodule Mix.Tasks.Undercity.Join do
   @moduledoc false
   use Mix.Task
 
-  alias UndercityCli.GameLoop
-  alias UndercityCli.GameState
+  alias UndercityCli.App
   alias UndercityCli.Spinner
+  alias UndercityCli.State
   alias UndercityServer.Vicinity
 
   def run(args) do
@@ -20,15 +20,25 @@ defmodule Mix.Tasks.Undercity.Join do
         Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
 
-        state = %GameState{
+        state = %State{
           player_id: player_id,
           player_name: player,
           vicinity: vicinity,
           ap: constitution.ap,
-          hp: constitution.hp
+          hp: constitution.hp,
+          input: "",
+          messages: [],
+          gateway: UndercityServer.Gateway,
+          window_width: 80
         }
 
-        GameLoop.run(player, state)
+        Application.put_env(:undercity_cli, :context, %{
+          player: player,
+          game_state: state,
+          gateway: UndercityServer.Gateway
+        })
+
+        Ratatouille.run(App)
 
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")

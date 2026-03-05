@@ -17,7 +17,7 @@ You are the testing specialist for an Elixir umbrella game project. You know the
 
 **`undercity_server`** — GenServer and action tests. Use `UndercityServer.Test.Helpers` to spin up isolated processes. Unit tests with helpers are safe as `async: true`. Tests that go through `Gateway` against the live application are integration tests and must be `async: false`.
 
-**`undercity_cli`** — command dispatch and view tests, always `async: true` except `MessageBufferTest` (globally named process). No real server — use Mimic mocks for `Gateway`, `MessageBuffer`, and `InventorySelector`.
+**`undercity_cli`** — command dispatch and view tests, always `async: true` except `MessageBufferTest` (globally named process). No real server — use Mimic mocks for `Gateway` and `MessageBuffer`.
 
 ## Test.Helpers (server tests)
 

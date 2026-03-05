@@ -16,11 +16,11 @@ CLI input → Commands.dispatch → Gateway.perform → Actions module → Playe
 
 ## CLI Side
 
-**`Commands`** routes raw input strings to command modules via a compile-time verb→module map. Each command module implements `dispatch/4` (or `/5` for commands with an interactive selector), taking parsed input, `GameState`, a gateway module, and a message buffer module. Each module also exposes `usage/0` returning a concise syntax string; `Commands.usage_hints/0` aggregates these to power the `help` command.
+**`Commands`** routes raw input strings to command modules via a compile-time verb→module map. Each command module implements `dispatch/2` (parsed input + `State`) or multi-clause variants for progressive re-dispatch after selection. Each module also exposes `usage/0` returning a concise syntax string; `Commands.usage_hints/0` aggregates these to power the `help` command.
 
-Commands return `{:continue, new_state}` or `{:moved, new_state}` via `GameState` helpers. The game loop only re-renders the surroundings view on `:moved`.
+Commands take and return a `UndercityCli.State`. When a command needs user selection (e.g. bare `drop`, `eat`, `attack`), it sets `state.pending` and returns — the App renders a selection panel and re-dispatches with the chosen index via `Commands.redispatch/3`.
 
-**`Commands.handle_action/4`** normalises `:exhausted` and `:collapsed` errors in one place — all commands pipe their gateway result through it, so the callback only receives non-error results.
+**`Commands.handle_action/3`** normalises `:exhausted` and `:collapsed` errors in one place — all commands pipe their gateway result through it, so the callback only receives non-error results.
 
 ## Result Shapes
 
@@ -37,5 +37,5 @@ Commands return `{:continue, new_state}` or `{:moved, new_state}` via `GameState
 1. Create an `Actions.MyAction` module in `undercity_server` with a single public function.
 2. Add a `Player` GenServer callback if new player state needs to be read or mutated.
 3. Add a `perform` clause to `Gateway` routing to the new action.
-4. Create a `Commands.MyCommand` module in `undercity_cli` implementing `dispatch/4` and `usage/0` (a concise syntax string, e.g. `"mycommand <arg>"`).
+4. Create a `Commands.MyCommand` module in `undercity_cli` implementing `dispatch/2` (and additional clauses if selection is needed) and `usage/0` (a concise syntax string, e.g. `"mycommand <arg>"`).
 5. Register the verb in `@command_routes` in `Commands`.

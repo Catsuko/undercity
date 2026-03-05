@@ -28,3 +28,8 @@ Use 'bd' for task tracking.
   - start with `docs/architecture.md` for a system overview
   - agent experts for each app can be consulted
 - Never commit or close beads unless the user has reviewed the changes, unless otherwise specified
+
+## Testing
+
+- All tests: `mix test`
+- Just an app: `mix test apps/<app_name>/test`, e.g. `mix test apps/undercity_cli/test`

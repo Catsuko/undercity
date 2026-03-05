@@ -2,41 +2,46 @@ defmodule UndercityCli.Commands.DropTest do
   use UndercityCli.CommandCase
 
   alias UndercityCli.Commands.Drop
-  alias UndercityCli.View.InventorySelector
 
-  test "bare drop cancelled returns continue with unchanged state" do
+  @items [%{name: "Sword"}, %{name: "Bread"}]
+
+  test "bare drop with empty inventory warns and returns model unchanged" do
     expect(Gateway, :check_inventory, fn @player_id -> [] end)
-    expect(InventorySelector, :select, fn [], "Drop which item?" -> :cancel end)
-    assert {:continue, new_state} = Drop.dispatch("drop", @state, Gateway, MessageBuffer, InventorySelector)
-    assert new_state == @state
+    expect(MessageBuffer, :warn, fn "Your inventory is empty." -> :ok end)
+    assert Drop.dispatch("drop", @state) == @state
   end
 
-  test "bare drop with selection succeeds and returns continue with info and updated ap" do
-    expect(Gateway, :check_inventory, fn @player_id -> [] end)
-    expect(InventorySelector, :select, fn [], "Drop which item?" -> {:ok, 0} end)
+  test "bare drop with items sets pending on model" do
+    expect(Gateway, :check_inventory, fn @player_id -> @items end)
+    result = Drop.dispatch("drop", @state)
+    assert result.pending.command == "drop"
+    assert result.pending.args == []
+    assert result.pending.label == "Drop which item?"
+    assert result.pending.choices == @items
+  end
+
+  test "indexed drop succeeds and returns model with updated ap" do
     expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
     expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
-    assert {:continue, new_state} = Drop.dispatch("drop", @state, Gateway, MessageBuffer, InventorySelector)
-    assert new_state.ap == 9
+    result = Drop.dispatch({"drop", "1"}, @state)
+    assert result.ap == 9
   end
 
-  test "indexed drop succeeds and returns continue with info and updated ap" do
+  test "re-dispatch after selection executes drop" do
     expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
     expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
-    assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, Gateway, MessageBuffer)
-    assert new_state.ap == 9
+    result = Drop.dispatch("drop", 0, @state)
+    assert result.ap == 9
   end
 
-  test "invalid index string returns continue with warning and unchanged state" do
+  test "invalid index string returns model unchanged with warning" do
     expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert {:continue, new_state} = Drop.dispatch({"drop", "0"}, @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Drop.dispatch({"drop", "0"}, @state) == @state
   end
 
-  test "gateway invalid index returns continue with warning and unchanged state" do
+  test "gateway invalid index returns model unchanged with warning" do
     expect(Gateway, :drop_item, fn @player_id, 0 -> {:error, :invalid_index} end)
     expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert {:continue, new_state} = Drop.dispatch({"drop", "1"}, @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Drop.dispatch({"drop", "1"}, @state) == @state
   end
 end

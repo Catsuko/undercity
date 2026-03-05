@@ -4,6 +4,8 @@ defmodule UndercityCli.View.BlockDescription do
   scribbles, and people present.
   """
 
+  import Ratatouille.View
+
   alias UndercityServer.Vicinity
 
   @descriptions %{
@@ -16,41 +18,47 @@ defmodule UndercityCli.View.BlockDescription do
     inn: "Low beams sag overhead in a room thick with the smell of damp wood and old smoke."
   }
 
-  @grid_color IO.ANSI.color(245)
-  @highlight IO.ANSI.color(103)
+  @grid_color Ratatouille.Constants.color(:white)
+  @highlight Ratatouille.Constants.color(:cyan)
 
   def render(%Vicinity{} = vicinity, current_player) do
     description = Map.fetch!(@descriptions, description_key(vicinity))
     prefix = block_prefix(vicinity.type)
     name = Vicinity.name(vicinity)
 
-    sections = [
-      Owl.Data.tag(
-        ["You are #{prefix} ", Owl.Data.tag(name, @highlight), ". ", description],
-        @grid_color
-      )
-    ]
+    location_line =
+      label do
+        text(content: "You are #{prefix} ", color: @grid_color)
+        text(content: name, color: @highlight)
+        text(content: ". #{description}", color: @grid_color)
+      end
 
-    sections =
-      sections ++
-        case vicinity.scribble do
-          nil ->
-            []
+    scribble_elements =
+      case vicinity.scribble do
+        nil ->
+          []
 
-          text ->
-            surface = scribble_surface(vicinity)
+        text ->
+          surface = scribble_surface(vicinity)
 
-            [
-              Owl.Data.tag(
-                ["Someone has scribbled ", Owl.Data.tag(text, :italic), " #{surface}."],
-                @grid_color
+          [
+            label do
+              text(content: "Someone has scribbled ", color: @grid_color)
+
+              text(
+                content: text,
+                color: @grid_color,
+                attributes: Ratatouille.Constants.attribute(:bold)
               )
-            ]
-        end
 
-    sections = sections ++ ["", describe_people(vicinity.people, current_player), ""]
+              text(content: " #{surface}.", color: @grid_color)
+            end
+          ]
+      end
 
-    Enum.intersperse(sections, "\n")
+    people_line = label(content: describe_people(vicinity.people, current_player), color: @grid_color)
+
+    [location_line] ++ scribble_elements ++ [label(content: ""), people_line]
   end
 
   def describe_people(people, current_player) do
