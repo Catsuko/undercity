@@ -123,12 +123,11 @@ defmodule UndercityCli.App do
     end
   end
 
-  # Syncs server inbox messages for player_id into MessageBuffer and returns
-  # the list of {text, category} tuples that were pushed.
+  # Fetches server inbox messages for player_id and returns them as
+  # {text, :warning} tuples. Gateway returns {text} single-element tuples.
   defp sync_messages(gateway, player_id) do
-    messages = gateway.messages_for(player_id)
-    Enum.each(messages, fn {text, _cat} -> MessageBuffer.warn(text) end)
-    messages
+    gateway.messages_for(player_id)
+    |> Enum.map(fn {text} -> {text, :warning} end)
   end
 
   defp dispatch_input(state) do
