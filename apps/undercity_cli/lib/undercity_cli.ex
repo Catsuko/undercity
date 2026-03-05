@@ -8,15 +8,15 @@ defmodule UndercityCli do
   ## Architecture
 
   The client is a Ratatouille TEA application (`UndercityCli.App`). All state lives
-  in the model; keypresses accumulate in `model.input` and are dispatched on Enter.
-  A subscription polls for server messages every 500 ms. Press `q` to quit.
+  in `UndercityCli.State`; keypresses accumulate in `state.input` and are dispatched
+  on Enter. A subscription polls for server messages every 500 ms. Press `q` to quit.
 
   ## Commands
 
   `UndercityCli.Commands` routes input strings to command modules via a compile-time
   verb-to-module map. Each command module calls `Gateway` on the server and returns
-  an updated `GameState`. Exhaustion and collapse errors are normalised in one place
-  by `Commands.handle_action/4` so individual commands don't handle them.
+  an updated `State`. Exhaustion and collapse errors are normalised in one place
+  by `Commands.handle_action/3` so individual commands don't handle them.
 
   ## Talking to the server
 
@@ -27,13 +27,13 @@ defmodule UndercityCli do
 
   ## Rendering
 
-  `UndercityCli.App.render/1` builds a Ratatouille view tree from the current model.
+  `UndercityCli.App.render/1` builds a Ratatouille view tree from the current state.
   Messages are accumulated in `MessageBuffer` during command dispatch and flushed
   after each command.
 
   ## Testing
 
-  Command modules accept the gateway and message buffer as injected arguments, so
-  tests mock them with Mimic per-process — no real server process is needed to test CLI logic.
+  `Gateway` and `MessageBuffer` are injected via the `State` struct, so tests mock
+  them with Mimic per-process — no real server process is needed to test CLI logic.
   """
 end

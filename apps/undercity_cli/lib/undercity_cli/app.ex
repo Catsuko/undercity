@@ -3,7 +3,7 @@ defmodule UndercityCli.App do
   Ratatouille TEA application for the Undercity CLI.
 
   Implements the Ratatouille.App behaviour: init/1, update/2, subscribe/1,
-  and render/1. The model holds all display state and is updated either by
+  and render/1. The state holds all display state and is updated either by
   subscription ticks (message polling) or keyboard events (input building and
   command dispatch).
 
@@ -19,6 +19,7 @@ defmodule UndercityCli.App do
   alias Ratatouille.Runtime.Subscription
   alias UndercityCli.Commands
   alias UndercityCli.MessageBuffer
+  alias UndercityCli.State
   alias UndercityCli.View.BlockDescription
   alias UndercityCli.View.Constitution
   alias UndercityCli.View.Status
@@ -40,7 +41,7 @@ defmodule UndercityCli.App do
     MessageBuffer.push(Constitution.status_messages(game_state.ap, game_state.hp))
     flushed = MessageBuffer.flush()
 
-    %{
+    %State{
       player_id: game_state.player_id,
       player_name: player,
       vicinity: game_state.vicinity,
@@ -49,59 +50,70 @@ defmodule UndercityCli.App do
       input: "",
       messages: initial_messages ++ flushed,
       gateway: gateway,
-      pending: nil,
       window_width: context.window.width
     }
   end
 
   @impl true
-  def update(model, msg) do
+  def update(state, msg) do
     case msg do
       {:sync_messages} ->
-        new_msgs = sync_messages(model.gateway, model.player_id)
+        new_msgs = sync_messages(state.gateway, state.player_id)
         flushed = MessageBuffer.flush()
-        %{model | messages: model.messages ++ new_msgs ++ flushed}
+        %{state | messages: new_msgs ++ flushed}
 
       {:event, %{key: key}} when key == 13 ->
         # Enter key — dispatch the buffered input line
-        dispatch_input(model)
+        dispatch_input(state)
 
       {:event, %{key: key}} when key == 127 or key == 8 ->
         # Backspace / ctrl-h
-        new_input = String.slice(model.input, 0, max(0, String.length(model.input) - 1))
-        %{model | input: new_input}
+        new_input = String.slice(state.input, 0, max(0, String.length(state.input) - 1))
+        %{state | input: new_input}
 
       {:event, %{ch: ch}} when ch > 0 ->
         # Printable character
         char = <<ch::utf8>>
-        %{model | input: model.input <> char}
+        %{state | input: state.input <> char}
 
       _ ->
-        model
+        state
     end
   end
 
   @impl true
-  def subscribe(_model) do
+  def subscribe(_state) do
     Subscription.interval(500, {:sync_messages})
   end
 
   @impl true
-  def render(model) do
-    view bottom_bar: bar(do: label(content: "> #{model.input}")) do
+  def render(state) do
+    view bottom_bar: bar(do: label(content: "> #{state.input}")) do
       panel title: "Undercity", height: :fill, padding: @panel_padding do
         panel title: "Surroundings", padding: @panel_padding do
-          Surroundings.render(model.vicinity, model.window_width)
+          Surroundings.render(state.vicinity, state.window_width)
         end
 
         panel title: "Location", padding: @panel_padding do
-          BlockDescription.render(model.vicinity, model.player_name)
+          BlockDescription.render(state.vicinity, state.player_name)
         end
 
         panel title: "Messages", padding: @panel_padding do
-          Enum.map(model.messages, fn {text, category} ->
+          Enum.map(state.messages, fn {text, category} ->
             Status.format_message(text, category)
           end)
+        end
+
+        if state.pending do
+          %{label: label, choices: choices} = state.pending
+          n_choices = length(choices)
+
+          panel title: label, padding: @panel_padding do
+            choices
+            |> Enum.with_index(1)
+            |> Enum.map(fn {item, i} -> label(content: "#{i}. #{item.name}") end)
+            |> Kernel.++([label(content: "#{n_choices + 1}. Cancel")])
+          end
         end
       end
     end
@@ -115,53 +127,51 @@ defmodule UndercityCli.App do
     messages
   end
 
-  defp dispatch_input(model) do
-    raw = model.input |> String.trim() |> String.downcase()
-    game_state = to_game_state(model)
+  defp dispatch_input(state) do
+    old_ap = state.ap
+    old_hp = state.hp
 
-    case Commands.dispatch(raw, game_state, model.gateway, MessageBuffer) do
-      {:moved, new_state} ->
-        threshold_msgs =
-          Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
+    new_state =
+      case state.pending do
+        nil ->
+          raw = state.input |> String.trim() |> String.downcase()
+          Commands.dispatch(raw, %{state | input: ""})
 
-        MessageBuffer.push(threshold_msgs)
-        flushed = MessageBuffer.flush()
+        pending ->
+          handle_selection(state, pending)
+      end
 
-        model
-        |> apply_state(new_state)
-        |> Map.update!(:messages, &(&1 ++ flushed))
+    threshold_msgs = Constitution.threshold_messages(old_ap, new_state.ap, old_hp, new_state.hp)
+    MessageBuffer.push(threshold_msgs)
+    flushed = MessageBuffer.flush()
+
+    %{new_state | messages: flushed}
+  end
+
+  defp handle_selection(state, pending) do
+    n = length(pending.choices)
+
+    case parse_selection(state.input, n) do
+      {:ok, index} ->
+        updated = state |> State.clear_pending() |> Map.put(:input, "")
+        Commands.redispatch(pending.command, pending.args ++ [index], updated)
+
+      :cancel ->
+        state
+        |> State.clear_pending()
         |> Map.put(:input, "")
 
-      {:continue, new_state} ->
-        threshold_msgs =
-          Constitution.threshold_messages(model.ap, new_state.ap, model.hp, new_state.hp)
-
-        MessageBuffer.push(threshold_msgs)
-        flushed = MessageBuffer.flush()
-
-        model
-        |> apply_state(new_state)
-        |> Map.update!(:messages, &(&1 ++ flushed))
-        |> Map.put(:input, "")
+      :invalid ->
+        # Stay in pending mode, just clear input
+        %{state | input: ""}
     end
   end
 
-  defp to_game_state(model) do
-    %UndercityCli.GameState{
-      player_id: model.player_id,
-      player_name: model.player_name,
-      vicinity: model.vicinity,
-      ap: model.ap,
-      hp: model.hp
-    }
-  end
-
-  defp apply_state(model, new_state) do
-    %{
-      model
-      | vicinity: new_state.vicinity,
-        ap: new_state.ap,
-        hp: new_state.hp
-    }
+  defp parse_selection(input, n_choices) do
+    case Integer.parse(String.trim(input)) do
+      {i, ""} when i >= 1 and i <= n_choices -> {:ok, i - 1}
+      {i, ""} when i == n_choices + 1 -> :cancel
+      _ -> :invalid
+    end
   end
 end

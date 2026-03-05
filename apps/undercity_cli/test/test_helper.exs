@@ -1,5 +1,3 @@
 Mimic.copy(UndercityServer.Gateway)
 Mimic.copy(UndercityCli.MessageBuffer)
-Mimic.copy(UndercityCli.View.InventorySelector)
-Mimic.copy(UndercityCli.View.TargetSelector)
 ExUnit.start()

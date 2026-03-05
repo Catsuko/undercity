@@ -5,8 +5,8 @@ defmodule Mix.Tasks.Undercity.Join do
   use Mix.Task
 
   alias UndercityCli.App
-  alias UndercityCli.GameState
   alias UndercityCli.Spinner
+  alias UndercityCli.State
   alias UndercityServer.Vicinity
 
   def run(args) do
@@ -20,12 +20,16 @@ defmodule Mix.Tasks.Undercity.Join do
         Spinner.success("Woke up in #{Vicinity.name(vicinity)} as #{player}")
         Spinner.dismiss()
 
-        state = %GameState{
+        state = %State{
           player_id: player_id,
           player_name: player,
           vicinity: vicinity,
           ap: constitution.ap,
-          hp: constitution.hp
+          hp: constitution.hp,
+          input: "",
+          messages: [],
+          gateway: UndercityServer.Gateway,
+          window_width: 80
         }
 
         Application.put_env(:undercity_cli, :context, %{

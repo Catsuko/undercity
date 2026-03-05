@@ -4,18 +4,18 @@ defmodule UndercityCli.Commands do
 
   Splits raw input into a verb (and optional rest), looks up the verb in the
   routing table, and delegates to the matching command module. Each command
-  module implements `dispatch/4` and returns `{:moved, state}` or
-  `{:continue, state}`. The game loop uses the tag to decide what to re-render.
+  module takes and returns a State.
 
-  `gateway` and `message_buffer` are passed explicitly so command modules can
-  be tested in isolation without live server processes or terminal I/O.
+  Also exposes `redispatch/3` for App to use after a selection overlay is
+  confirmed — routes directly to the right command dispatch variant with the
+  accumulated args.
 
-  Also exposes `handle_action/4`, a shared helper used by command modules to
-  normalise Gateway results — catching exhaustion/collapse before delegating
-  to the command-specific callback.
+  `handle_action/3` is a shared helper used by command modules to normalise
+  Gateway results — catching exhaustion/collapse before delegating to the
+  command-specific callback.
   """
 
-  alias UndercityCli.GameState
+  alias UndercityCli.MessageBuffer
 
   @command_routes [
     {UndercityCli.Commands.Move, ["north", "south", "east", "west", "n", "s", "e", "w", "enter", "exit"]},
@@ -41,35 +41,45 @@ defmodule UndercityCli.Commands do
     |> Enum.join("\n")
   end
 
-  def dispatch(input, state, gateway, message_buffer) do
+  def dispatch(input, state) do
     parsed = split(input)
 
     case Map.get(@commands, verb(parsed)) do
       nil ->
-        message_buffer.warn("Unknown command. Type 'help' for a list of commands.")
-        GameState.continue(state)
+        MessageBuffer.warn("Unknown command. Type 'help' for a list of commands.")
+        state
 
       module ->
-        module.dispatch(parsed, state, gateway, message_buffer)
+        module.dispatch(parsed, state)
     end
   end
 
-  def handle_action({:error, :exhausted}, state, message_buffer, _callback) do
-    message_buffer.warn("You are too exhausted to act.")
-    GameState.continue(state)
+  @doc """
+  Re-dispatches to a command module after a selection overlay is confirmed.
+  `command` is the verb, `args` is the full accumulated arg list including
+  the newly chosen 0-based index.
+  """
+  def redispatch(command, args, state) do
+    module = Map.fetch!(@commands, command)
+    apply(module, :dispatch, [command | args] ++ [state])
   end
 
-  def handle_action({:error, :collapsed}, state, message_buffer, _callback) do
-    message_buffer.warn("Your body has given out.")
-    GameState.continue(state)
+  def handle_action({:error, :exhausted}, state, _callback) do
+    MessageBuffer.warn("You are too exhausted to act.")
+    state
   end
 
-  def handle_action({:error, :not_in_block}, state, message_buffer, _callback) do
-    message_buffer.warn("You can't do that from here.")
-    GameState.continue(state)
+  def handle_action({:error, :collapsed}, state, _callback) do
+    MessageBuffer.warn("Your body has given out.")
+    state
   end
 
-  def handle_action(result, _state, _message_buffer, callback), do: callback.(result)
+  def handle_action({:error, :not_in_block}, state, _callback) do
+    MessageBuffer.warn("You can't do that from here.")
+    state
+  end
+
+  def handle_action(result, state, callback), do: callback.(result, state)
 
   defp split(input) do
     case String.split(input, " ", parts: 2) do

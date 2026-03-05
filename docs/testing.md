@@ -24,7 +24,7 @@ Tests using these helpers are safe to run `async: true`. Tests using the live ap
 
 ## CLI Mocking
 
-CLI tests use [Mimic](https://hex.pm/packages/mimic) to mock `UndercityServer.Gateway`, `UndercityCli.MessageBuffer`, and `UndercityCli.View.InventorySelector` per-process. Modules are registered in `test_helper.exs` with `Mimic.copy/1`. Tests use `expect/3` to set up per-call overrides and verify they were invoked, or `stub/3` for unverified overrides (e.g. loops with variable call counts). Mocks are process-scoped so `async: true` is safe.
+CLI tests use [Mimic](https://hex.pm/packages/mimic) to mock `UndercityServer.Gateway` and `UndercityCli.MessageBuffer` per-process. Modules are registered in `test_helper.exs` with `Mimic.copy/1`. Tests use `expect/3` to set up per-call overrides and verify they were invoked, or `stub/3` for unverified overrides (e.g. loops with variable call counts). Mocks are process-scoped so `async: true` is safe.
 
 ## Common Patterns
 

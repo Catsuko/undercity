@@ -3,17 +3,15 @@ defmodule UndercityCli.Commands.InventoryTest do
 
   alias UndercityCli.Commands.Inventory
 
-  test "empty inventory returns continue with info message and unchanged state" do
+  test "empty inventory returns model unchanged with info message" do
     expect(Gateway, :check_inventory, fn @player_id -> [] end)
     expect(MessageBuffer, :info, fn "Your inventory is empty." -> :ok end)
-    assert {:continue, new_state} = Inventory.dispatch("inventory", @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Inventory.dispatch("inventory", @state) == @state
   end
 
-  test "items present returns continue with item list and unchanged state" do
+  test "items present returns model unchanged with item list" do
     expect(Gateway, :check_inventory, fn @player_id -> [%{name: "Sword"}, %{name: "Bread"}] end)
     expect(MessageBuffer, :info, fn "Inventory: Sword, Bread" -> :ok end)
-    assert {:continue, new_state} = Inventory.dispatch("inventory", @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Inventory.dispatch("inventory", @state) == @state
   end
 end

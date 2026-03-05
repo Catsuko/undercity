@@ -2,50 +2,53 @@ defmodule UndercityCli.Commands.EatTest do
   use UndercityCli.CommandCase
 
   alias UndercityCli.Commands.Eat
-  alias UndercityCli.View.InventorySelector
 
-  test "bare eat cancelled returns continue with unchanged state" do
+  @items [%{name: "Bread"}, %{name: "Meat"}]
+
+  test "bare eat with empty inventory warns and returns model unchanged" do
     expect(Gateway, :check_inventory, fn @player_id -> [] end)
-    expect(InventorySelector, :select, fn [], "Eat which item?" -> :cancel end)
-    assert {:continue, new_state} = Eat.dispatch("eat", @state, Gateway, MessageBuffer, InventorySelector)
-    assert new_state == @state
+    expect(MessageBuffer, :warn, fn "Your inventory is empty." -> :ok end)
+    assert Eat.dispatch("eat", @state) == @state
   end
 
-  test "bare eat with selection succeeds and returns continue with success message and updated ap and hp" do
-    expect(Gateway, :check_inventory, fn @player_id -> [] end)
-    expect(InventorySelector, :select, fn [], "Eat which item?" -> {:ok, 0} end)
+  test "bare eat with items sets pending on model" do
+    expect(Gateway, :check_inventory, fn @player_id -> @items end)
+    result = Eat.dispatch("eat", @state)
+    assert result.pending.command == "eat"
+    assert result.pending.label == "Eat which item?"
+    assert result.pending.choices == @items
+  end
+
+  test "indexed eat succeeds and returns model with updated ap and hp" do
     expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, %{name: "Bread"}, :restore, 9, 11} end)
     expect(MessageBuffer, :success, fn "Ate a Bread." -> :ok end)
-    assert {:continue, new_state} = Eat.dispatch("eat", @state, Gateway, MessageBuffer, InventorySelector)
-    assert new_state.ap == 9
-    assert new_state.hp == 11
+    result = Eat.dispatch({"eat", "1"}, @state)
+    assert result.ap == 9
+    assert result.hp == 11
   end
 
-  test "successful eat returns continue with success message and updated ap and hp" do
+  test "re-dispatch after selection executes eat" do
     expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, %{name: "Bread"}, :restore, 9, 11} end)
     expect(MessageBuffer, :success, fn "Ate a Bread." -> :ok end)
-    assert {:continue, new_state} = Eat.dispatch({"eat", "1"}, @state, Gateway, MessageBuffer)
-    assert new_state.ap == 9
-    assert new_state.hp == 11
+    result = Eat.dispatch("eat", 0, @state)
+    assert result.ap == 9
+    assert result.hp == 11
   end
 
-  test "not edible returns continue with warning and unchanged state" do
+  test "not edible returns model unchanged with warning" do
     expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :not_edible, "Rock"} end)
     expect(MessageBuffer, :warn, fn "You can't eat Rock." -> :ok end)
-    assert {:continue, new_state} = Eat.dispatch({"eat", "1"}, @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Eat.dispatch({"eat", "1"}, @state) == @state
   end
 
-  test "invalid index string returns continue with warning and unchanged state" do
+  test "invalid index string returns model unchanged with warning" do
     expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert {:continue, new_state} = Eat.dispatch({"eat", "0"}, @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Eat.dispatch({"eat", "0"}, @state) == @state
   end
 
-  test "gateway invalid index returns continue with warning and unchanged state" do
+  test "gateway invalid index returns model unchanged with warning" do
     expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :invalid_index} end)
     expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert {:continue, new_state} = Eat.dispatch({"eat", "1"}, @state, Gateway, MessageBuffer)
-    assert new_state == @state
+    assert Eat.dispatch({"eat", "1"}, @state) == @state
   end
 end

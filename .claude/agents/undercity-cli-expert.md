@@ -13,22 +13,22 @@ You are an expert in `undercity_cli` — the terminal client for an Elixir umbre
 
 ## Key Concepts
 
-**`Commands`** routes raw input strings to command modules via a compile-time verb→module map. Each command module implements `dispatch/4` (or `/5` for interactive selectors) taking parsed input, `GameState`, a gateway module, and a message buffer module. Each module also exposes `usage/0` returning a concise syntax string.
+**`Commands`** routes raw input strings to command modules via a compile-time verb→module map. Each command module implements `dispatch/2` (parsed input + `State`) with additional clauses for progressive re-dispatch after selection. Each module also exposes `usage/0` returning a concise syntax string.
 
-**`Commands.handle_action/4`** normalises `:exhausted` and `:collapsed` errors in one place — all commands pipe their gateway result through it.
+**`Commands.handle_action/3`** normalises `:exhausted` and `:collapsed` errors in one place — all commands pipe their gateway result through it.
 
-**Return values** — commands return `{:continue, new_state}` or `{:moved, new_state}`. The game loop only re-renders the surroundings view on `:moved`.
+**Return values** — commands take and return a `UndercityCli.State` directly. Commands that need user selection set `state.pending` and return; App renders a selection panel below Messages and re-dispatches via `Commands.redispatch/3` once the user confirms.
 
 **Decoupling rule** — the CLI must not reference `undercity_core` types directly. All interaction goes through `Gateway` and the types it returns. This is intentional and must be preserved.
 
-**Rendering** — views are composed of named regions rendered via `Owl.LiveScreen`. Read the `@moduledoc` on `UndercityCli` for the view module index before touching rendering.
+**Rendering** — `UndercityCli.App` is a Ratatouille TEA application. Views are composed using Ratatouille's `panel`/`view` DSL in `render/1`. Read the `@moduledoc` on `UndercityCli` before touching rendering.
 
 ## Adding a New Command
 
-1. Create a `Commands.MyCommand` module implementing `dispatch/4` and `usage/0`
+1. Create a `Commands.MyCommand` module implementing `dispatch/2` (plus additional clauses if selection is needed) and `usage/0`
 2. Register the verb in `@command_routes` in `Commands`
 
-Tests use Mimic to mock `Gateway`, `MessageBuffer`, and `InventorySelector` — no real server needed.
+Tests use Mimic to mock `Gateway` and `MessageBuffer` — no real server needed.
 
 ## Examples
 

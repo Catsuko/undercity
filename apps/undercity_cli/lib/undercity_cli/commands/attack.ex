@@ -3,63 +3,108 @@ defmodule UndercityCli.Commands.Attack do
   Handles the attack command.
 
   Supports a full selection pipeline:
-  - `attack` → target selector → weapon selector → dispatch
-  - `attack <target>` → weapon selector → dispatch
+  - `attack` → target overlay → weapon overlay → dispatch
+  - `attack <target>` → weapon overlay → dispatch
   - `attack <target> <n>` → dispatch directly (n is the 1-based weapon index)
   """
 
   alias UndercityCli.Commands
-  alias UndercityCli.GameState
-  alias UndercityCli.View.InventorySelector
-  alias UndercityCli.View.TargetSelector
+  alias UndercityCli.MessageBuffer
+  alias UndercityCli.State
 
   def usage, do: "attack [target] [n]"
 
-  def dispatch(
-        command,
-        state,
-        gateway,
-        message_buffer,
-        inventory_selector \\ InventorySelector,
-        target_selector \\ TargetSelector
-      )
+  # Bare "attack" — set up target selection from vicinity
+  def dispatch("attack", state) do
+    case state.vicinity.people do
+      nil ->
+        MessageBuffer.warn("There is no one else here.")
+        state
 
-  def dispatch("attack", state, gateway, message_buffer, inventory_selector, target_selector) do
-    case target_selector.select(state.vicinity.people, "Attack who?") do
-      {:ok, target} -> attack(target.name, state, gateway, message_buffer, inventory_selector)
-      :cancel -> handle_outcome(:cancel, state, message_buffer)
+      [] ->
+        MessageBuffer.warn("There is no one else here.")
+        state
+
+      people ->
+        state
+        |> State.pending("attack", [])
+        |> State.select("Attack who?", people)
     end
   end
 
-  def dispatch({"attack", rest}, state, gateway, message_buffer, inventory_selector, _target_selector) do
+  # Typed "attack goblin" or "attack goblin 1"
+  def dispatch({"attack", rest}, state) do
     case parse_rest(rest) do
       {:target, target_name} ->
-        attack(target_name, state, gateway, message_buffer, inventory_selector)
+        attack_with_target(target_name, state)
 
       {:target_and_index, target_name, weapon_index} ->
-        attack(target_name, weapon_index, state, gateway, message_buffer)
+        do_attack(target_name, weapon_index, state)
     end
   end
 
-  # Pipeline step 1: target known by name, weapon not yet selected
-  defp attack(target_name, %GameState{} = state, gateway, message_buffer, inventory_selector) do
-    case state.player_id |> gateway.check_inventory() |> inventory_selector.select("Attack with what?") do
-      {:ok, index} -> attack(target_name, index, state, gateway, message_buffer)
-      :cancel -> handle_outcome(:cancel, state, message_buffer)
+  # Re-dispatch after target overlay — target_idx is 0-based position in people list
+  def dispatch("attack", target_idx, state) when is_integer(target_idx) do
+    person = Enum.at(state.vicinity.people, target_idx)
+    attack_with_target(person.name, state)
+  end
+
+  # Re-dispatch or typed path — target name known, need weapon selection
+  def dispatch("attack", target_name, state) when is_binary(target_name) do
+    attack_with_target(target_name, state)
+  end
+
+  # Fully specified — execute the attack
+  def dispatch("attack", target_name, weapon_idx, state) do
+    do_attack(target_name, weapon_idx, state)
+  end
+
+  defp attack_with_target(target_name, state) do
+    case state.gateway.check_inventory(state.player_id) do
+      [] ->
+        MessageBuffer.warn("You have nothing to attack with.")
+        state
+
+      items ->
+        state
+        |> State.pending("attack", [target_name])
+        |> State.select("Attack with what?", items)
     end
   end
 
-  # Pipeline step 2: target and weapon known, execute the attack
-  defp attack(target_name, index, %GameState{} = state, gateway, message_buffer) do
+  defp do_attack(target_name, weapon_idx, state) do
     case find_target_id(state.vicinity.people, target_name) do
       {:ok, target_id} ->
         state.player_id
-        |> gateway.perform(state.vicinity.id, :attack, {target_id, index, state.player_name})
-        |> Commands.handle_action(state, message_buffer, &handle_outcome(&1, state, message_buffer))
+        |> state.gateway.perform(state.vicinity.id, :attack, {target_id, weapon_idx, state.player_name})
+        |> Commands.handle_action(state, &handle_outcome/2)
 
-      {:error, _} = error ->
-        handle_outcome(error, state, message_buffer)
+      {:error, _} ->
+        MessageBuffer.warn("You miss.")
+        state
     end
+  end
+
+  defp handle_outcome({:ok, {:hit, target_id, weapon_name, damage}, new_ap}, state) do
+    target_name = find_target_name(state.vicinity.people, target_id)
+    MessageBuffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
+    %{state | ap: new_ap}
+  end
+
+  defp handle_outcome({:ok, {:miss, target_id}, new_ap}, state) do
+    target_name = find_target_name(state.vicinity.people, target_id)
+    MessageBuffer.warn("You attack #{target_name} and miss.")
+    %{state | ap: new_ap}
+  end
+
+  defp handle_outcome({:error, :invalid_weapon}, state) do
+    MessageBuffer.warn("You can't attack with that.")
+    state
+  end
+
+  defp handle_outcome({:error, :invalid_target}, state) do
+    MessageBuffer.warn("You miss.")
+    state
   end
 
   defp find_target_id(people, name) do
@@ -67,30 +112,6 @@ defmodule UndercityCli.Commands.Attack do
       nil -> {:error, :invalid_target}
       target -> {:ok, target.id}
     end
-  end
-
-  defp handle_outcome(:cancel, state, _message_buffer), do: GameState.continue(state)
-
-  defp handle_outcome({:ok, {:hit, target_id, weapon_name, damage}, new_ap}, state, message_buffer) do
-    target_name = find_target_name(state.vicinity.people, target_id)
-    message_buffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
-    GameState.continue(state, new_ap, state.hp)
-  end
-
-  defp handle_outcome({:ok, {:miss, target_id}, new_ap}, state, message_buffer) do
-    target_name = find_target_name(state.vicinity.people, target_id)
-    message_buffer.warn("You attack #{target_name} and miss.")
-    GameState.continue(state, new_ap, state.hp)
-  end
-
-  defp handle_outcome({:error, :invalid_weapon}, state, message_buffer) do
-    message_buffer.warn("You can't attack with that.")
-    GameState.continue(state)
-  end
-
-  defp handle_outcome({:error, :invalid_target}, state, message_buffer) do
-    message_buffer.warn("You miss.")
-    GameState.continue(state)
   end
 
   defp find_target_name(people, target_id) do

@@ -1,10 +1,8 @@
 defmodule UndercityCli.Commands.Move do
-  @moduledoc """
-  Handles movement commands (north, south, east, west, enter, exit).
-  """
+  @moduledoc "Handles movement commands."
 
   alias UndercityCli.Commands
-  alias UndercityCli.GameState
+  alias UndercityCli.MessageBuffer
 
   @directions %{
     "north" => :north,
@@ -21,18 +19,18 @@ defmodule UndercityCli.Commands.Move do
 
   def usage, do: "north, south, east, west (or n, s, e, w), enter, exit"
 
-  def dispatch(verb, state, gateway, message_buffer) do
+  def dispatch(verb, state) do
     direction = Map.fetch!(@directions, verb)
 
     state.player_id
-    |> gateway.perform(state.vicinity.id, :move, direction)
-    |> Commands.handle_action(state, message_buffer, fn
-      {:ok, {:ok, new_vicinity}, new_ap} ->
-        GameState.moved(state, new_vicinity, new_ap, state.hp)
+    |> state.gateway.perform(state.vicinity.id, :move, direction)
+    |> Commands.handle_action(state, fn
+      {:ok, {:ok, new_vicinity}, new_ap}, state ->
+        %{state | vicinity: new_vicinity, ap: new_ap}
 
-      {:ok, {:error, :no_exit}, new_ap} ->
-        message_buffer.warn("You can't go that way.")
-        GameState.continue(state, new_ap, state.hp)
+      {:ok, {:error, :no_exit}, new_ap}, state ->
+        MessageBuffer.warn("You can't go that way.")
+        %{state | ap: new_ap}
     end)
   end
 end

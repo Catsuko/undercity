@@ -1,51 +1,54 @@
 defmodule UndercityCli.Commands.Drop do
-  @moduledoc """
-  Handles drop commands (bare and indexed).
-  """
+  @moduledoc "Handles drop commands (bare and indexed)."
 
   alias UndercityCli.Commands
-  alias UndercityCli.GameState
-  alias UndercityCli.View.InventorySelector
+  alias UndercityCli.MessageBuffer
+  alias UndercityCli.State
 
   def usage, do: "drop [n]"
 
-  def dispatch(command, state, gateway, message_buffer, selector \\ InventorySelector)
+  # Bare "drop" — fetch inventory and set up selection overlay
+  def dispatch("drop", state) do
+    case state.gateway.check_inventory(state.player_id) do
+      [] ->
+        MessageBuffer.warn("Your inventory is empty.")
+        state
 
-  def dispatch("drop", state, gateway, message_buffer, selector) do
-    case select_from_inventory(state, gateway, selector, "Drop which item?") do
-      :cancel -> GameState.continue(state)
-      {:ok, index} -> drop(index, state, gateway, message_buffer)
+      items ->
+        state
+        |> State.pending("drop", [])
+        |> State.select("Drop which item?", items)
     end
   end
 
-  def dispatch({"drop", index_str}, state, gateway, message_buffer, _selector) do
+  # Typed "drop 1" — parse index and execute
+  def dispatch({"drop", index_str}, state) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
-        drop(n - 1, state, gateway, message_buffer)
+        do_drop(n - 1, state)
 
       _ ->
-        message_buffer.warn("Invalid item selection.")
-        GameState.continue(state)
+        MessageBuffer.warn("Invalid item selection.")
+        state
     end
   end
 
-  defp drop(index, state, gateway, message_buffer) do
-    state.player_id
-    |> gateway.drop_item(index)
-    |> Commands.handle_action(state, message_buffer, fn
-      {:ok, item_name, new_ap} ->
-        message_buffer.info("You dropped #{item_name}.")
-        GameState.continue(state, new_ap, state.hp)
-
-      {:error, :invalid_index} ->
-        message_buffer.warn("Invalid item selection.")
-        GameState.continue(state)
-    end)
+  # Re-dispatch after overlay selection — index is 0-based
+  def dispatch("drop", index, state) when is_integer(index) do
+    do_drop(index, state)
   end
 
-  defp select_from_inventory(state, gateway, selector, label) do
+  defp do_drop(index, state) do
     state.player_id
-    |> gateway.check_inventory()
-    |> selector.select(label)
+    |> state.gateway.drop_item(index)
+    |> Commands.handle_action(state, fn
+      {:ok, item_name, new_ap}, state ->
+        MessageBuffer.info("You dropped #{item_name}.")
+        %{state | ap: new_ap}
+
+      {:error, :invalid_index}, state ->
+        MessageBuffer.warn("Invalid item selection.")
+        state
+    end)
   end
 end
