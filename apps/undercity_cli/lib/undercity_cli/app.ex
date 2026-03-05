@@ -71,6 +71,10 @@ defmodule UndercityCli.App do
         new_input = String.slice(state.input, 0, max(0, String.length(state.input) - 1))
         %{state | input: new_input}
 
+      {:event, %{key: key}} when key == 0x20 ->
+        # Space (comes through as a key, not a character)
+        %{state | input: state.input <> " "}
+
       {:event, %{ch: ch}} when ch > 0 ->
         # Printable character
         char = <<ch::utf8>>
