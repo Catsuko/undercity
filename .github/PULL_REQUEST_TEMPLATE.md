@@ -13,3 +13,4 @@
 ## Notes
 
 <!-- Anything reviewers should know: edge cases, follow-up beads, known gaps. -->
+<!-- Use <details><summary>Title</summary>...</details> to include design discussions. -->
