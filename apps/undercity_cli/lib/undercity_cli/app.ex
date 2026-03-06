@@ -68,15 +68,16 @@ defmodule UndercityCli.App do
   end
 
   @impl true
+  def update(state, {:sync_messages}) do
+    new_msgs = sync_messages(state.gateway, state.player_id)
+    flushed = MessageBuffer.flush()
+    %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
+  end
+
   def update(%{pending: %{cursor: cursor, choices: choices} = pending} = state, msg) do
     n = length(choices)
 
     case msg do
-      {:sync_messages} ->
-        new_msgs = sync_messages(state.gateway, state.player_id)
-        flushed = MessageBuffer.flush()
-        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
-
       {:event, %{key: @arrow_up}} ->
         %{state | pending: %{pending | cursor: max(0, cursor - 1)}}
 
@@ -96,11 +97,6 @@ defmodule UndercityCli.App do
 
   def update(state, msg) do
     case msg do
-      {:sync_messages} ->
-        new_msgs = sync_messages(state.gateway, state.player_id)
-        flushed = MessageBuffer.flush()
-        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
-
       {:event, %{key: @enter}} ->
         # Enter key — dispatch the buffered input line
         dispatch_input(state)
