@@ -25,6 +25,10 @@ defmodule UndercityCli.App do
   alias UndercityCli.View.Status
   alias UndercityCli.View.Surroundings
 
+  @arrow_up Ratatouille.Constants.key(:arrow_up)
+  @arrow_down Ratatouille.Constants.key(:arrow_down)
+  @key_escape Ratatouille.Constants.key(:esc)
+
   @panel_padding 1
   @max_log_size 35
   # Ratatouille 12-column grid: 10 (main) + 2 (message log)
@@ -60,6 +64,32 @@ defmodule UndercityCli.App do
   end
 
   @impl true
+  def update(%{pending: %{cursor: cursor, choices: choices} = pending} = state, msg) do
+    n = length(choices)
+
+    case msg do
+      {:sync_messages} ->
+        new_msgs = sync_messages(state.gateway, state.player_id)
+        flushed = MessageBuffer.flush()
+        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
+
+      {:event, %{key: @arrow_up}} ->
+        %{state | pending: %{pending | cursor: max(0, cursor - 1)}}
+
+      {:event, %{key: @arrow_down}} ->
+        %{state | pending: %{pending | cursor: min(n - 1, cursor + 1)}}
+
+      {:event, %{key: 13}} ->
+        confirm_selection(state, pending, cursor)
+
+      {:event, %{key: @key_escape}} ->
+        State.clear_pending(state)
+
+      _ ->
+        state
+    end
+  end
+
   def update(state, msg) do
     case msg do
       {:sync_messages} ->
@@ -99,7 +129,14 @@ defmodule UndercityCli.App do
   def render(state) do
     left_col_width = div(state.window_width * @main_col_size, 12)
 
-    view bottom_bar: bar(do: label(content: "> #{state.input}")) do
+    bottom_bar =
+      if state.pending do
+        bar(do: label(content: "↑↓ navigate  ·  Enter confirm  ·  Esc cancel"))
+      else
+        bar(do: label(content: "> #{state.input}"))
+      end
+
+    view bottom_bar: bottom_bar do
       panel title: "Undercity", height: :fill, padding: 0 do
         row do
           column size: @main_col_size do
@@ -112,14 +149,12 @@ defmodule UndercityCli.App do
             end
 
             if state.pending do
-              %{label: label, choices: choices} = state.pending
-              n_choices = length(choices)
+              %{label: label, choices: choices, cursor: cursor} = state.pending
 
               panel title: label, padding: @panel_padding do
                 choices
-                |> Enum.with_index(1)
-                |> Enum.map(fn {item, i} -> label(content: "#{i}. #{item.name}") end)
-                |> Kernel.++([label(content: "#{n_choices + 1}. Cancel")])
+                |> Enum.with_index()
+                |> Enum.map(fn {item, i} -> selector_label(item, i == cursor) end)
               end
             end
           end
@@ -148,15 +183,8 @@ defmodule UndercityCli.App do
     old_ap = state.ap
     old_hp = state.hp
 
-    new_state =
-      case state.pending do
-        nil ->
-          raw = state.input |> String.trim() |> String.downcase()
-          Commands.dispatch(raw, %{state | input: ""})
-
-        pending ->
-          handle_selection(state, pending)
-      end
+    raw = state.input |> String.trim() |> String.downcase()
+    new_state = Commands.dispatch(raw, %{state | input: ""})
 
     threshold_msgs = Constitution.threshold_messages(old_ap, new_state.ap, old_hp, new_state.hp)
     MessageBuffer.push(threshold_msgs)
@@ -165,32 +193,24 @@ defmodule UndercityCli.App do
     %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
   end
 
-  defp handle_selection(state, pending) do
-    n = length(pending.choices)
+  defp confirm_selection(state, pending, cursor) do
+    old_ap = state.ap
+    old_hp = state.hp
 
-    case parse_selection(state.input, n) do
-      {:ok, index} ->
-        updated = state |> State.clear_pending() |> Map.put(:input, "")
-        Commands.redispatch(pending.command, pending.args ++ [index], updated)
+    new_state =
+      state
+      |> State.clear_pending()
+      |> then(&Commands.redispatch(pending.command, pending.args ++ [cursor], &1))
 
-      :cancel ->
-        state
-        |> State.clear_pending()
-        |> Map.put(:input, "")
+    threshold_msgs = Constitution.threshold_messages(old_ap, new_state.ap, old_hp, new_state.hp)
+    MessageBuffer.push(threshold_msgs)
+    flushed = MessageBuffer.flush()
 
-      :invalid ->
-        # Stay in pending mode, just clear input
-        %{state | input: ""}
-    end
+    %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
   end
 
-  defp parse_selection(input, n_choices) do
-    case Integer.parse(String.trim(input)) do
-      {i, ""} when i >= 1 and i <= n_choices -> {:ok, i - 1}
-      {i, ""} when i == n_choices + 1 -> :cancel
-      _ -> :invalid
-    end
-  end
+  defp selector_label(item, true), do: label(content: "> #{item.name}", color: :cyan)
+  defp selector_label(item, false), do: label(content: "  #{item.name}")
 
   defp trim_log(log) do
     Enum.take(log, -@max_log_size)

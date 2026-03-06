@@ -30,7 +30,8 @@ defmodule UndercityCli.State do
           command: String.t(),
           args: list(),
           label: String.t(),
-          choices: list()
+          choices: list(),
+          cursor: non_neg_integer()
         }
 
   @type t :: %__MODULE__{
@@ -59,7 +60,7 @@ defmodule UndercityCli.State do
   Always called immediately after `pending/3`.
   """
   def select(state, label, choices) do
-    %{state | pending: Map.merge(state.pending || %{}, %{label: label, choices: choices})}
+    %{state | pending: Map.merge(state.pending || %{}, %{label: label, choices: choices, cursor: 0})}
   end
 
   @doc "Clears any pending selection state, returning the state to normal mode."
