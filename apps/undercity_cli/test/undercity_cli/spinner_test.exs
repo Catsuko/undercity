@@ -9,6 +9,13 @@ defmodule UndercityCli.SpinnerTest do
     :ok
   end
 
+  defp stop_and_wait do
+    pid = Process.whereis(Spinner)
+    ref = Process.monitor(pid)
+    Spinner.stop()
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}
+  end
+
   describe "start/1" do
     test "registers the process under its module name" do
       assert is_pid(Process.whereis(Spinner))
@@ -20,7 +27,7 @@ defmodule UndercityCli.SpinnerTest do
     end
 
     test "accepts a custom initial message" do
-      Spinner.stop()
+      stop_and_wait()
       Spinner.start(message: "Connecting")
       state = :sys.get_state(Spinner)
       assert state.message == "Connecting"
@@ -37,12 +44,12 @@ defmodule UndercityCli.SpinnerTest do
 
   describe "stop/0" do
     test "stops the process" do
-      Spinner.stop()
+      stop_and_wait()
       refute Process.whereis(Spinner)
     end
 
     test "is safe to call when already stopped" do
-      Spinner.stop()
+      stop_and_wait()
       assert Spinner.stop() == :ok
     end
   end
@@ -69,7 +76,6 @@ defmodule UndercityCli.SpinnerTest do
     test "advances frame index" do
       %{frame_index: before_frame} = :sys.get_state(Spinner)
       send(Spinner, :tick)
-      # Synchronise — :sys.get_state waits for the GenServer mailbox to drain
       %{frame_index: after_frame} = :sys.get_state(Spinner)
       assert after_frame != before_frame
     end
