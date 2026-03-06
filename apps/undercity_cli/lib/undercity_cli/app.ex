@@ -22,6 +22,7 @@ defmodule UndercityCli.App do
   alias UndercityCli.State
   alias UndercityCli.View.BlockDescription
   alias UndercityCli.View.Constitution
+  alias UndercityCli.View.Selection
   alias UndercityCli.View.Status
   alias UndercityCli.View.Surroundings
 
@@ -149,13 +150,7 @@ defmodule UndercityCli.App do
             end
 
             if state.pending do
-              %{label: label, choices: choices, cursor: cursor} = state.pending
-
-              panel title: label, padding: @panel_padding do
-                choices
-                |> Enum.with_index()
-                |> Enum.map(fn {item, i} -> selector_label(item, i == cursor) end)
-              end
+              Selection.render(state.pending)
             end
           end
 
@@ -208,9 +203,6 @@ defmodule UndercityCli.App do
 
     %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
   end
-
-  defp selector_label(item, true), do: label(content: "> #{item.name}", color: :cyan)
-  defp selector_label(item, false), do: label(content: "  #{item.name}")
 
   defp trim_log(log) do
     Enum.take(log, -@max_log_size)
