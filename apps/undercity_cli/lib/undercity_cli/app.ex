@@ -28,6 +28,10 @@ defmodule UndercityCli.App do
   @arrow_up Ratatouille.Constants.key(:arrow_up)
   @arrow_down Ratatouille.Constants.key(:arrow_down)
   @key_escape Ratatouille.Constants.key(:esc)
+  @enter Ratatouille.Constants.key(:enter)
+  @backspace Ratatouille.Constants.key(:backspace)
+  @backspace2 Ratatouille.Constants.key(:backspace2)
+  @space Ratatouille.Constants.key(:space)
 
   @panel_padding 1
   @max_log_size 35
@@ -79,7 +83,7 @@ defmodule UndercityCli.App do
       {:event, %{key: @arrow_down}} ->
         %{state | pending: %{pending | cursor: min(n - 1, cursor + 1)}}
 
-      {:event, %{key: 13}} ->
+      {:event, %{key: @enter}} ->
         confirm_selection(state, pending, cursor)
 
       {:event, %{key: @key_escape}} ->
@@ -97,16 +101,16 @@ defmodule UndercityCli.App do
         flushed = MessageBuffer.flush()
         %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
 
-      {:event, %{key: key}} when key == 13 ->
+      {:event, %{key: @enter}} ->
         # Enter key — dispatch the buffered input line
         dispatch_input(state)
 
-      {:event, %{key: key}} when key == 127 or key == 8 ->
+      {:event, %{key: key}} when key == @backspace or key == @backspace2 ->
         # Backspace / ctrl-h
         new_input = String.slice(state.input, 0, max(0, String.length(state.input) - 1))
         %{state | input: new_input}
 
-      {:event, %{key: key}} when key == 0x20 ->
+      {:event, %{key: @space}} ->
         # Space (comes through as a key, not a character)
         %{state | input: state.input <> " "}
 
