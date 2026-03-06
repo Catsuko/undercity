@@ -1,6 +1,6 @@
 ---
 description: Test, lint, commit, push, close bead, and summarise PR
-allowed-tools: Bash(mix.bat:*), Bash(git:*), Bash(bd:*)
+allowed-tools: Bash(mix.bat:*), Bash(git:*), Bash(bd:*), Bash(gh:*)
 ---
 
 ## Context
@@ -40,18 +40,15 @@ The branch follows the `{bead-id}-{descriptor}` naming convention (e.g. `bus-don
 
 If the branch is `main` or does not match the convention, skip this step and note it.
 
-### Step 5: Generate PR summary
+### Step 5: Create PR
 
-Generate a PR title and summary based on the branch name and the commits on this branch vs main. Output it for the user in this format:
+Generate a PR title and body based on the branch name and the commits on this branch vs main. Use `.github/PULL_REQUEST_TEMPLATE.md` as the body structure, filling in each section from the diff and commits. Create the PR with:
 
 ```
-PR Title: <title>
-
-PR Summary:
-<body>
+gh pr create --title "<title>" --body "<filled-in template>"
 ```
 
-Do not create the PR — just output the title and summary.
+Output the PR URL when done.
 
 ---
 
