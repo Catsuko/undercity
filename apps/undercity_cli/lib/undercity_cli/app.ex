@@ -26,6 +26,10 @@ defmodule UndercityCli.App do
   alias UndercityCli.View.Surroundings
 
   @panel_padding 1
+  @max_log_size 35
+  # Ratatouille 12-column grid: 10 (main) + 2 (message log)
+  @main_col_size 10
+  @log_col_size 2
 
   @impl true
   def init(context) do
@@ -48,7 +52,7 @@ defmodule UndercityCli.App do
       ap: game_state.ap,
       hp: game_state.hp,
       input: "",
-      messages: initial_messages ++ flushed,
+      message_log: trim_log(initial_messages ++ flushed),
       gateway: gateway,
       window_width: context.window.width
     }
@@ -60,7 +64,7 @@ defmodule UndercityCli.App do
       {:sync_messages} ->
         new_msgs = sync_messages(state.gateway, state.player_id)
         flushed = MessageBuffer.flush()
-        %{state | messages: new_msgs ++ flushed}
+        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
 
       {:event, %{key: key}} when key == 13 ->
         # Enter key — dispatch the buffered input line
@@ -92,31 +96,39 @@ defmodule UndercityCli.App do
 
   @impl true
   def render(state) do
+    left_col_width = div(state.window_width * @main_col_size, 12)
+
     view bottom_bar: bar(do: label(content: "> #{state.input}")) do
-      panel title: "Undercity", height: :fill, padding: @panel_padding do
-        panel title: "Surroundings", padding: @panel_padding do
-          Surroundings.render(state.vicinity, state.window_width)
-        end
+      panel title: "Undercity", height: :fill, padding: 0 do
+        row do
+          column size: @main_col_size do
+            panel title: "Surroundings", padding: @panel_padding do
+              Surroundings.render(state.vicinity, left_col_width)
+            end
 
-        panel title: "Location", padding: @panel_padding do
-          BlockDescription.render(state.vicinity, state.player_name)
-        end
+            panel title: "Location", padding: @panel_padding do
+              BlockDescription.render(state.vicinity, state.player_name)
+            end
 
-        panel title: "Messages", padding: @panel_padding do
-          Enum.map(state.messages, fn {text, category} ->
-            Status.format_message(text, category)
-          end)
-        end
+            if state.pending do
+              %{label: label, choices: choices} = state.pending
+              n_choices = length(choices)
 
-        if state.pending do
-          %{label: label, choices: choices} = state.pending
-          n_choices = length(choices)
+              panel title: label, padding: @panel_padding do
+                choices
+                |> Enum.with_index(1)
+                |> Enum.map(fn {item, i} -> label(content: "#{i}. #{item.name}") end)
+                |> Kernel.++([label(content: "#{n_choices + 1}. Cancel")])
+              end
+            end
+          end
 
-          panel title: label, padding: @panel_padding do
-            choices
-            |> Enum.with_index(1)
-            |> Enum.map(fn {item, i} -> label(content: "#{i}. #{item.name}") end)
-            |> Kernel.++([label(content: "#{n_choices + 1}. Cancel")])
+          column size: @log_col_size do
+            panel title: "Log", height: :fill, padding: @panel_padding do
+              Enum.map(state.message_log, fn {text, category} ->
+                Status.format_message(text, category)
+              end)
+            end
           end
         end
       end
@@ -126,7 +138,8 @@ defmodule UndercityCli.App do
   # Fetches server inbox messages for player_id and returns them as
   # {text, :warning} tuples. Gateway returns {text} single-element tuples.
   defp sync_messages(gateway, player_id) do
-    gateway.messages_for(player_id)
+    player_id
+    |> gateway.messages_for()
     |> Enum.map(fn {text} -> {text, :warning} end)
   end
 
@@ -148,7 +161,7 @@ defmodule UndercityCli.App do
     MessageBuffer.push(threshold_msgs)
     flushed = MessageBuffer.flush()
 
-    %{new_state | messages: flushed}
+    %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
   end
 
   defp handle_selection(state, pending) do
@@ -176,5 +189,9 @@ defmodule UndercityCli.App do
       {i, ""} when i == n_choices + 1 -> :cancel
       _ -> :invalid
     end
+  end
+
+  defp trim_log(log) do
+    Enum.take(log, -@max_log_size)
   end
 end
