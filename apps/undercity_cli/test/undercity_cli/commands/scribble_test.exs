@@ -11,7 +11,7 @@ defmodule UndercityCli.Commands.ScribbleTest do
     ap: 10,
     hp: 10,
     input: "",
-    messages: [],
+    message_log: [],
     gateway: Gateway,
     window_width: 80
   }

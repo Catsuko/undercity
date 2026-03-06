@@ -27,7 +27,7 @@ defmodule Mix.Tasks.Undercity.Join do
           ap: constitution.ap,
           hp: constitution.hp,
           input: "",
-          messages: [],
+          message_log: [],
           gateway: UndercityServer.Gateway,
           window_width: 80
         }

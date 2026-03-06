@@ -20,7 +20,7 @@ defmodule UndercityCli.State do
     :ap,
     :hp,
     :input,
-    :messages,
+    :message_log,
     :gateway,
     :window_width,
     pending: nil
@@ -40,7 +40,7 @@ defmodule UndercityCli.State do
           ap: term(),
           hp: term(),
           input: String.t(),
-          messages: list(),
+          message_log: list(),
           gateway: module(),
           window_width: non_neg_integer(),
           pending: pending() | nil
