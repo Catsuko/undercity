@@ -5,7 +5,8 @@ defmodule UndercityCli.CommandsTest do
 
   describe "routing" do
     test "routes all direction verbs to Move" do
-      stub(Gateway, :perform, fn _, _, :move, _ -> {:ok, {:ok, %{id: "dest_block"}}, 9} end)
+      stub(Gateway, :perform, fn _, _, :move, _ -> {:ok, {:ok, %Vicinity{id: "dest_block"}}, 9} end)
+      stub(MessageBuffer, :info, fn _ -> :ok end)
 
       for verb <- ~w(north south east west n s e w enter exit) do
         result = Commands.dispatch(verb, @state)

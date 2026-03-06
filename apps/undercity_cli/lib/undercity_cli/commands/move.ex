@@ -3,6 +3,7 @@ defmodule UndercityCli.Commands.Move do
 
   alias UndercityCli.Commands
   alias UndercityCli.MessageBuffer
+  alias UndercityServer.Vicinity
 
   @directions %{
     "north" => :north,
@@ -26,6 +27,7 @@ defmodule UndercityCli.Commands.Move do
     |> state.gateway.perform(state.vicinity.id, :move, direction)
     |> Commands.handle_action(state, fn
       {:ok, {:ok, new_vicinity}, new_ap}, state ->
+        MessageBuffer.info("You move to #{Vicinity.name(new_vicinity)}.")
         %{state | vicinity: new_vicinity, ap: new_ap}
 
       {:ok, {:error, :no_exit}, new_ap}, state ->

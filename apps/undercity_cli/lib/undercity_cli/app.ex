@@ -42,6 +42,7 @@ defmodule UndercityCli.App do
     {:ok, _pid} = MessageBuffer.start_link()
 
     initial_messages = sync_messages(gateway, game_state.player_id)
+    MessageBuffer.info("You wake up.")
     MessageBuffer.push(Constitution.status_messages(game_state.ap, game_state.hp))
     flushed = MessageBuffer.flush()
 

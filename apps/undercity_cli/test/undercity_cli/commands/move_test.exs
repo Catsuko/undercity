@@ -4,7 +4,9 @@ defmodule UndercityCli.Commands.MoveTest do
   alias UndercityCli.Commands.Move
 
   test "successful move returns model with updated vicinity and ap" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :move, _ -> {:ok, {:ok, %{id: "dest_block"}}, 9} end)
+    dest = %Vicinity{id: "dest_block"}
+    expect(Gateway, :perform, fn @player_id, @block_id, :move, _ -> {:ok, {:ok, dest}, 9} end)
+    expect(MessageBuffer, :info, fn "You move to " <> _ -> :ok end)
     result = Move.dispatch("north", @state)
     assert result.vicinity.id == "dest_block"
     assert result.ap == 9
