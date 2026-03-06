@@ -22,12 +22,17 @@ defmodule UndercityCli.App do
   alias UndercityCli.State
   alias UndercityCli.View.BlockDescription
   alias UndercityCli.View.Constitution
+  alias UndercityCli.View.Selection
   alias UndercityCli.View.Status
   alias UndercityCli.View.Surroundings
 
   @arrow_up Ratatouille.Constants.key(:arrow_up)
   @arrow_down Ratatouille.Constants.key(:arrow_down)
   @key_escape Ratatouille.Constants.key(:esc)
+  @enter Ratatouille.Constants.key(:enter)
+  @backspace Ratatouille.Constants.key(:backspace)
+  @backspace2 Ratatouille.Constants.key(:backspace2)
+  @space Ratatouille.Constants.key(:space)
 
   @panel_padding 1
   @max_log_size 35
@@ -64,22 +69,23 @@ defmodule UndercityCli.App do
   end
 
   @impl true
+  def update(state, {:sync_messages}) do
+    new_msgs = sync_messages(state.gateway, state.player_id)
+    flushed = MessageBuffer.flush()
+    %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
+  end
+
   def update(%{pending: %{cursor: cursor, choices: choices} = pending} = state, msg) do
     n = length(choices)
 
     case msg do
-      {:sync_messages} ->
-        new_msgs = sync_messages(state.gateway, state.player_id)
-        flushed = MessageBuffer.flush()
-        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
-
       {:event, %{key: @arrow_up}} ->
         %{state | pending: %{pending | cursor: max(0, cursor - 1)}}
 
       {:event, %{key: @arrow_down}} ->
         %{state | pending: %{pending | cursor: min(n - 1, cursor + 1)}}
 
-      {:event, %{key: 13}} ->
+      {:event, %{key: @enter}} ->
         confirm_selection(state, pending, cursor)
 
       {:event, %{key: @key_escape}} ->
@@ -92,21 +98,16 @@ defmodule UndercityCli.App do
 
   def update(state, msg) do
     case msg do
-      {:sync_messages} ->
-        new_msgs = sync_messages(state.gateway, state.player_id)
-        flushed = MessageBuffer.flush()
-        %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
-
-      {:event, %{key: key}} when key == 13 ->
+      {:event, %{key: @enter}} ->
         # Enter key — dispatch the buffered input line
         dispatch_input(state)
 
-      {:event, %{key: key}} when key == 127 or key == 8 ->
+      {:event, %{key: key}} when key == @backspace or key == @backspace2 ->
         # Backspace / ctrl-h
         new_input = String.slice(state.input, 0, max(0, String.length(state.input) - 1))
         %{state | input: new_input}
 
-      {:event, %{key: key}} when key == 0x20 ->
+      {:event, %{key: @space}} ->
         # Space (comes through as a key, not a character)
         %{state | input: state.input <> " "}
 
@@ -149,13 +150,7 @@ defmodule UndercityCli.App do
             end
 
             if state.pending do
-              %{label: label, choices: choices, cursor: cursor} = state.pending
-
-              panel title: label, padding: @panel_padding do
-                choices
-                |> Enum.with_index()
-                |> Enum.map(fn {item, i} -> selector_label(item, i == cursor) end)
-              end
+              Selection.render(state.pending)
             end
           end
 
@@ -208,9 +203,6 @@ defmodule UndercityCli.App do
 
     %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
   end
-
-  defp selector_label(item, true), do: label(content: "> #{item.name}", color: :cyan)
-  defp selector_label(item, false), do: label(content: "  #{item.name}")
 
   defp trim_log(log) do
     Enum.take(log, -@max_log_size)
