@@ -13,6 +13,6 @@ defmodule UndercityCli.View.Status do
   end
 
   defp message_color(:success), do: Ratatouille.Constants.color(:green)
-  defp message_color(:info), do: Ratatouille.Constants.color(:blue)
+  defp message_color(:info), do: Ratatouille.Constants.color(:white)
   defp message_color(:warning), do: Ratatouille.Constants.color(:red)
 end

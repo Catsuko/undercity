@@ -8,7 +8,7 @@ defmodule UndercityCli.View.StatusTest do
       element = Status.format_message("You find nothing.")
 
       assert element.attributes.content == "▸ You find nothing."
-      assert element.attributes.color == Ratatouille.Constants.color(:blue)
+      assert element.attributes.color == Ratatouille.Constants.color(:white)
     end
 
     test "formats success message in green" do
@@ -28,7 +28,7 @@ defmodule UndercityCli.View.StatusTest do
     test "defaults to info category" do
       element = Status.format_message("Some message.")
 
-      assert element.attributes.color == Ratatouille.Constants.color(:blue)
+      assert element.attributes.color == Ratatouille.Constants.color(:white)
     end
   end
 end

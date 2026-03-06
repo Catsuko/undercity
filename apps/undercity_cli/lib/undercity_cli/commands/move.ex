@@ -27,7 +27,7 @@ defmodule UndercityCli.Commands.Move do
     |> state.gateway.perform(state.vicinity.id, :move, direction)
     |> Commands.handle_action(state, fn
       {:ok, {:ok, new_vicinity}, new_ap}, state ->
-        MessageBuffer.info("You move to #{Vicinity.name(new_vicinity)}.")
+        MessageBuffer.info(move_message(direction, new_vicinity))
         %{state | vicinity: new_vicinity, ap: new_ap}
 
       {:ok, {:error, :no_exit}, new_ap}, state ->
@@ -35,4 +35,8 @@ defmodule UndercityCli.Commands.Move do
         %{state | ap: new_ap}
     end)
   end
+
+  defp move_message(:enter, vicinity), do: "You enter #{Vicinity.name(vicinity)}."
+  defp move_message(:exit, vicinity), do: "You exit #{Vicinity.name(vicinity)}."
+  defp move_message(_direction, vicinity), do: "You move to #{Vicinity.name(vicinity)}."
 end
