@@ -25,9 +25,15 @@ defmodule UndercityCli.Commands.Attack do
 
   # Typed "attack goblin" or "attack goblin 1" — parse and delegate to canonical form
   def dispatch({verb, rest}, state) when is_binary(rest) do
-    case parse_rest(rest) do
-      {:target, target_name} -> select_weapon(verb, target_name, state)
-      {:target_and_index, target_name, weapon_index} -> dispatch({verb, target_name, weapon_index}, state)
+    case String.split(rest, " ", parts: 2) do
+      [name] ->
+        select_weapon(verb, name, state)
+
+      [name, n_str] ->
+        case Integer.parse(n_str) do
+          {n, ""} when n >= 1 -> dispatch({verb, name, n - 1}, state)
+          _ -> select_weapon(verb, rest, state)
+        end
     end
   end
 
@@ -85,19 +91,5 @@ defmodule UndercityCli.Commands.Attack do
 
   defp find_target_name(people, target_id) do
     Enum.find_value(people || [], target_id, fn p -> if p.id == target_id, do: p.name end)
-  end
-
-  defp parse_rest(rest) do
-    parts = String.split(rest, " ")
-
-    with [_ | _] <- parts,
-         last = List.last(parts),
-         {n, ""} when n >= 1 <- Integer.parse(last),
-         target_parts = Enum.slice(parts, 0..-2//1),
-         [_ | _] <- target_parts do
-      {:target_and_index, Enum.join(target_parts, " "), n - 1}
-    else
-      _ -> {:target, rest}
-    end
   end
 end

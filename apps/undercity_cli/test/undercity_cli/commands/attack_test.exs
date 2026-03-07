@@ -110,16 +110,13 @@ defmodule UndercityCli.Commands.AttackTest do
       assert result.pending.args == [@target_name]
     end
 
-    test "uses trailing number as weapon index, remainder as target name" do
-      big_zara = %{id: "big_zara_id", name: "Big Zara"}
-      state = %{@state | vicinity: %Vicinity{id: @block_id, people: [big_zara]}}
-
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {"big_zara_id", 1, _} ->
-        {:ok, {:hit, "big_zara_id", "Junk", 2}, 7}
+    test "uses trailing number as weapon index" do
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 1, _} ->
+        {:ok, {:hit, @target_id, "Junk", 2}, 7}
       end)
 
-      expect(MessageBuffer, :success, fn "You attack Big Zara with Junk and do 2 damage." -> :ok end)
-      result = Attack.dispatch({"attack", "Big Zara 2"}, state)
+      expect(MessageBuffer, :success, fn "You attack Zara with Junk and do 2 damage." -> :ok end)
+      result = Attack.dispatch({"attack", "#{@target_name} 2"}, @state_with_people)
       assert result.ap == 7
     end
   end
