@@ -40,6 +40,9 @@ defmodule Mix.Tasks.Undercity.Join do
 
         Ratatouille.run(App)
 
+      {:error, :invalid_name} ->
+        Spinner.failure("Player name must be alphanumeric (letters and numbers only)")
+
       {:error, :server_not_found} ->
         Spinner.failure("Could not reach the server")
 

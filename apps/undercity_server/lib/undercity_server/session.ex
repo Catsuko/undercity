@@ -33,8 +33,10 @@ defmodule UndercityServer.Session do
   defp connect(_player_name, 0), do: {:error, :server_not_found}
 
   defp connect(player_name, retries) do
-    {player_id, vicinity, ap} = enter(player_name)
-    {:ok, {player_id, vicinity, ap}}
+    case enter(player_name) do
+      {:error, :invalid_name} -> {:error, :invalid_name}
+      result -> {:ok, result}
+    end
   catch
     :exit, {:noproc, _} ->
       attempt = @connect_retries + 1 - retries
@@ -61,7 +63,6 @@ defmodule UndercityServer.Session do
 
       :error ->
         player_id = generate_player_id()
-        PlayerSupervisor.start_player(player_id, name)
 
         player_data = %{
           id: player_id,
@@ -71,12 +72,17 @@ defmodule UndercityServer.Session do
           health: Health.new()
         }
 
-        PlayerStore.save(player_id, player_data)
+        case PlayerStore.register(player_id, player_data) do
+          :ok ->
+            PlayerSupervisor.start_player(player_id, name)
+            spawn_block = WorldMap.spawn_block()
+            Block.join(spawn_block, player_id)
+            Player.move_to(player_id, spawn_block)
+            {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max(), hp: Health.max()}}
 
-        spawn_block = WorldMap.spawn_block()
-        Block.join(spawn_block, player_id)
-        Player.move_to(player_id, spawn_block)
-        {player_id, Vicinity.build(spawn_block), %{ap: ActionPoints.max(), hp: Health.max()}}
+          {:error, :invalid_name} ->
+            {:error, :invalid_name}
+        end
     end
   end
 
