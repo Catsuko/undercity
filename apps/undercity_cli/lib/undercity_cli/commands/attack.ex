@@ -23,17 +23,19 @@ defmodule UndercityCli.Commands.Attack do
     Selection.from_people(state, verb, "There is no one else here.", "Attack who?")
   end
 
-  # Typed "attack goblin" or "attack goblin 1" — parse and delegate to canonical form
+  # Typed "attack goblin" or "attack goblin 1" — tokenize and re-dispatch
   def dispatch({verb, rest}, state) when is_binary(rest) do
     case String.split(rest, " ", parts: 2) do
-      [name] ->
-        select_weapon(verb, name, state)
+      [name] -> select_weapon(verb, name, state)
+      [name, weapon_index] -> dispatch({verb, name, weapon_index}, state)
+    end
+  end
 
-      [name, n_str] ->
-        case Integer.parse(n_str) do
-          {n, ""} when n >= 1 -> dispatch({verb, name, n - 1}, state)
-          _ -> select_weapon(verb, rest, state)
-        end
+  # String weapon index from typed input — parse and delegate to canonical form
+  def dispatch({verb, name, weapon_index}, state) when is_binary(weapon_index) do
+    case Integer.parse(weapon_index) do
+      {n, ""} when n >= 1 -> dispatch({verb, name, n - 1}, state)
+      _ -> select_weapon(verb, name, state)
     end
   end
 
@@ -44,7 +46,7 @@ defmodule UndercityCli.Commands.Attack do
   end
 
   # Canonical fully-specified form — execute the attack
-  def dispatch({_verb, target_name, weapon_idx}, state) do
+  def dispatch({_verb, target_name, weapon_idx}, state) when is_integer(weapon_idx) do
     case find_target_id(state.vicinity.people, target_name) do
       {:ok, target_id} ->
         state.player_id

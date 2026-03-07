@@ -92,6 +92,32 @@ defmodule UndercityCli.Commands.AttackTest do
     end
   end
 
+  describe "string weapon index" do
+    test "valid index executes attack" do
+      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _} ->
+        {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
+      end)
+
+      expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 4 damage." -> :ok end)
+      result = Attack.dispatch({"attack", @target_name, "1"}, @state_with_people)
+      assert result.ap == 7
+    end
+
+    test "non-numeric index falls back to weapon selection" do
+      expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
+      result = Attack.dispatch({"attack", @target_name, "notanumber"}, @state_with_people)
+      assert result.pending.command == "attack"
+      assert result.pending.args == [@target_name]
+    end
+
+    test "zero index falls back to weapon selection" do
+      expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
+      result = Attack.dispatch({"attack", @target_name, "0"}, @state_with_people)
+      assert result.pending.command == "attack"
+      assert result.pending.args == [@target_name]
+    end
+  end
+
   describe "typed attack with rest string" do
     test "attack goblin 1 executes directly without overlay" do
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _} ->
