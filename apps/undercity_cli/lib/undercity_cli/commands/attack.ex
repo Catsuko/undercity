@@ -13,48 +13,32 @@ defmodule UndercityCli.Commands.Attack do
   """
 
   alias UndercityCli.Commands
+  alias UndercityCli.Commands.Selection
   alias UndercityCli.MessageBuffer
-  alias UndercityCli.State
 
   def usage, do: "attack [target] [n]"
 
   # Bare "attack" — set up target selection from vicinity
-  def dispatch("attack", state) do
-    case state.vicinity.people do
-      nil ->
-        MessageBuffer.warn("There is no one else here.")
-        state
-
-      [] ->
-        MessageBuffer.warn("There is no one else here.")
-        state
-
-      people ->
-        state
-        |> State.pending("attack", [])
-        |> State.select("Attack who?", people)
-    end
+  def dispatch(verb, state) when is_binary(verb) do
+    Selection.from_people(state, verb, "There is no one else here.", "Attack who?")
   end
 
   # Typed "attack goblin" or "attack goblin 1" — parse and delegate to canonical form
-  def dispatch({"attack", rest}, state) when is_binary(rest) do
+  def dispatch({verb, rest}, state) when is_binary(rest) do
     case parse_rest(rest) do
-      {:target, target_name} ->
-        attack_with_target(target_name, state)
-
-      {:target_and_index, target_name, weapon_index} ->
-        dispatch({"attack", target_name, weapon_index}, state)
+      {:target, target_name} -> select_weapon(verb, target_name, state)
+      {:target_and_index, target_name, weapon_index} -> dispatch({verb, target_name, weapon_index}, state)
     end
   end
 
   # Re-dispatch after target overlay — resolve index, show weapon selector
-  def dispatch({"attack", target_idx}, state) when is_integer(target_idx) do
+  def dispatch({verb, target_idx}, state) when is_integer(target_idx) do
     person = Enum.at(state.vicinity.people, target_idx)
-    attack_with_target(person.name, state)
+    select_weapon(verb, person.name, state)
   end
 
   # Canonical fully-specified form — execute the attack
-  def dispatch({"attack", target_name, weapon_idx}, state) do
+  def dispatch({_verb, target_name, weapon_idx}, state) do
     case find_target_id(state.vicinity.people, target_name) do
       {:ok, target_id} ->
         state.player_id
@@ -66,17 +50,8 @@ defmodule UndercityCli.Commands.Attack do
     end
   end
 
-  defp attack_with_target(target_name, state) do
-    case state.gateway.check_inventory(state.player_id) do
-      [] ->
-        MessageBuffer.warn("You have nothing to attack with.")
-        state
-
-      items ->
-        state
-        |> State.pending("attack", [target_name])
-        |> State.select("Attack with what?", items)
-    end
+  defp select_weapon(verb, target_name, state) do
+    Selection.from_inventory(state, verb, [target_name], "You have nothing to attack with.", "Attack with what?")
   end
 
   defp handle_outcome({:ok, {:hit, target_id, weapon_name, damage}, new_ap}, state) do
