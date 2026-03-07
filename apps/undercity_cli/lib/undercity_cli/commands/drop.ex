@@ -13,8 +13,8 @@ defmodule UndercityCli.Commands.Drop do
   end
 
   # Typed "drop 1" — parse index and delegate to canonical form
-  def dispatch({verb, index_str}, state) when is_binary(index_str) do
-    case Integer.parse(index_str) do
+  def dispatch({verb, index}, state) when is_binary(index) do
+    case Integer.parse(index) do
       {n, ""} when n >= 1 -> dispatch({verb, n - 1}, state)
       _ -> handle_outcome({:error, :invalid_index}, state)
     end
