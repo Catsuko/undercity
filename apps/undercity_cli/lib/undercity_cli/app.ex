@@ -86,7 +86,7 @@ defmodule UndercityCli.App do
         %{state | pending: %{pending | cursor: min(n - 1, cursor + 1)}}
 
       {:event, %{key: @enter}} ->
-        confirm_selection(state, pending, cursor)
+        dispatch_command(%{state | pending: %{pending | args: pending.args ++ [cursor]}})
 
       {:event, %{key: @key_escape}} ->
         State.clear_pending(state)
@@ -100,7 +100,7 @@ defmodule UndercityCli.App do
     case msg do
       {:event, %{key: @enter}} ->
         # Enter key — dispatch the buffered input line
-        dispatch_input(state)
+        dispatch_command(state)
 
       {:event, %{key: key}} when key == @backspace or key == @backspace2 ->
         # Backspace / ctrl-h
@@ -174,28 +174,11 @@ defmodule UndercityCli.App do
     |> Enum.map(fn {text} -> {text, :warning} end)
   end
 
-  defp dispatch_input(state) do
+  defp dispatch_command(state) do
     old_ap = state.ap
     old_hp = state.hp
 
-    raw = state.input |> String.trim() |> String.downcase()
-    new_state = Commands.dispatch(raw, %{state | input: ""})
-
-    threshold_msgs = Constitution.threshold_messages(old_ap, new_state.ap, old_hp, new_state.hp)
-    MessageBuffer.push(threshold_msgs)
-    flushed = MessageBuffer.flush()
-
-    %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
-  end
-
-  defp confirm_selection(state, pending, cursor) do
-    old_ap = state.ap
-    old_hp = state.hp
-
-    new_state =
-      state
-      |> State.clear_pending()
-      |> then(&Commands.redispatch(pending.command, pending.args ++ [cursor], &1))
+    new_state = Commands.dispatch(state)
 
     threshold_msgs = Constitution.threshold_messages(old_ap, new_state.ap, old_hp, new_state.hp)
     MessageBuffer.push(threshold_msgs)

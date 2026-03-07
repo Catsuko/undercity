@@ -20,36 +20,33 @@ defmodule UndercityCli.Commands.Eat do
     end
   end
 
-  def dispatch({"eat", index_str}, state) do
+  # Typed "eat 1" — parse index and delegate to canonical form
+  def dispatch({"eat", index_str}, state) when is_binary(index_str) do
     case Integer.parse(index_str) do
-      {n, ""} when n >= 1 ->
-        do_eat(n - 1, state)
-
-      _ ->
-        MessageBuffer.warn("Invalid item selection.")
-        state
+      {n, ""} when n >= 1 -> dispatch({"eat", n - 1}, state)
+      _ -> handle_outcome({:error, :invalid_index}, state)
     end
   end
 
-  def dispatch("eat", index, state) when is_integer(index) do
-    do_eat(index, state)
-  end
-
-  defp do_eat(index, state) do
+  # Canonical form — execute
+  def dispatch({"eat", index}, state) when is_integer(index) do
     state.player_id
     |> state.gateway.perform(state.vicinity.id, :eat, index)
-    |> Commands.handle_action(state, fn
-      {:ok, item, _effect, new_ap, new_hp}, state ->
-        MessageBuffer.success("Ate a #{item.name}.")
-        %{state | ap: new_ap, hp: new_hp}
+    |> Commands.handle_action(state, &handle_outcome/2)
+  end
 
-      {:error, :not_edible, item_name}, state ->
-        MessageBuffer.warn("You can't eat #{item_name}.")
-        state
+  defp handle_outcome({:ok, item, _effect, new_ap, new_hp}, state) do
+    MessageBuffer.success("Ate a #{item.name}.")
+    %{state | ap: new_ap, hp: new_hp}
+  end
 
-      {:error, :invalid_index}, state ->
-        MessageBuffer.warn("Invalid item selection.")
-        state
-    end)
+  defp handle_outcome({:error, :not_edible, item_name}, state) do
+    MessageBuffer.warn("You can't eat #{item_name}.")
+    state
+  end
+
+  defp handle_outcome({:error, :invalid_index}, state) do
+    MessageBuffer.warn("Invalid item selection.")
+    state
   end
 end

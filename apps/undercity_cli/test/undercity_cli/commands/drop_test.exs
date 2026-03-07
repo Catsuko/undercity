@@ -30,7 +30,7 @@ defmodule UndercityCli.Commands.DropTest do
   test "re-dispatch after selection executes drop" do
     expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
     expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
-    result = Drop.dispatch("drop", 0, @state)
+    result = Drop.dispatch({"drop", 0}, @state)
     assert result.ap == 9
   end
 
