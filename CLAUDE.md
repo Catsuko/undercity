@@ -6,12 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Use 'bd' for task tracking.
 
-## Branching
+## Git
 
 - Branch naming: `{bead-id}-{descriptor}`, e.g. `67e-branching-convention`
 - Always branch from `main` unless specified otherwise
 - One branch per bead; sub-tasks use the parent bead's branch unless specified otherwise
 - Merges are handled manually (not by Claude)
+- Commit messages must use `git commit -m "..."` with the message inline — no heredoc or `$()` substitution
 
 ## Code Quality
 
