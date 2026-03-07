@@ -16,6 +16,15 @@ defmodule UndercityServer.Player.Store do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  @spec register(String.t(), map()) :: :ok | {:error, :invalid_name}
+  def register(player_id, player_data) do
+    if player_data.name =~ ~r/^[a-zA-Z0-9]+$/ do
+      save(player_id, player_data)
+    else
+      {:error, :invalid_name}
+    end
+  end
+
   @spec save(String.t(), map()) :: :ok
   def save(player_id, player_data) do
     GenServer.call(via(), {:save, player_id, player_data})

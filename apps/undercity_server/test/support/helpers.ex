@@ -51,7 +51,7 @@ defmodule UndercityServer.Test.Helpers do
   Returns a player name string for use in tests that enter the world via
   Gateway.
   """
-  def player_name, do: "player_#{:erlang.unique_integer([:positive])}"
+  def player_name, do: "player#{:erlang.unique_integer([:positive])}"
 
   @doc """
   Enters a player into the world via Gateway and registers cleanup of their

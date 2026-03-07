@@ -4,6 +4,20 @@ defmodule UndercityServer.Integration.JoinTest do
   alias UndercityServer.Test.Helpers
   alias UndercityServer.Vicinity
 
+  describe "invalid names" do
+    test "returns :invalid_name for a name with spaces" do
+      assert {:error, :invalid_name} = UndercityServer.Session.enter("Big Zara")
+    end
+
+    test "returns :invalid_name for a name with special characters" do
+      assert {:error, :invalid_name} = UndercityServer.Session.enter("zara!")
+    end
+
+    test "returns :invalid_name for an empty name" do
+      assert {:error, :invalid_name} = UndercityServer.Session.enter("")
+    end
+  end
+
   describe "joining the world" do
     test "returns a player id and Vicinity struct with expected shape" do
       {player_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
