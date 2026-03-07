@@ -3,9 +3,13 @@ defmodule UndercityCli.Commands.Attack do
   Handles the attack command.
 
   Supports a full selection pipeline:
-  - `attack` → target overlay → weapon overlay → dispatch
-  - `attack <target>` → weapon overlay → dispatch
-  - `attack <target> <n>` → dispatch directly (n is the 1-based weapon index)
+  - `attack` → target overlay → weapon overlay → execute
+  - `attack <target>` → weapon overlay → execute
+  - `attack <target> <n>` → execute directly (n is the 1-based weapon index)
+
+  Re-dispatch stages (via Commands.dispatch/1 pending reconstruction):
+  - `{"attack", target_idx}` when integer → resolve target, show weapon overlay
+  - `{"attack", target_name, weapon_idx}` → execute
   """
 
   alias UndercityCli.Commands
@@ -32,31 +36,35 @@ defmodule UndercityCli.Commands.Attack do
     end
   end
 
-  # Typed "attack goblin" or "attack goblin 1"
-  def dispatch({"attack", rest}, state) do
+  # Typed "attack goblin" or "attack goblin 1" — parse and delegate to canonical form
+  def dispatch({"attack", rest}, state) when is_binary(rest) do
     case parse_rest(rest) do
       {:target, target_name} ->
         attack_with_target(target_name, state)
 
       {:target_and_index, target_name, weapon_index} ->
-        do_attack(target_name, weapon_index, state)
+        dispatch({"attack", target_name, weapon_index}, state)
     end
   end
 
-  # Re-dispatch after target overlay — target_idx is 0-based position in people list
-  def dispatch("attack", target_idx, state) when is_integer(target_idx) do
+  # Re-dispatch after target overlay — resolve index, show weapon selector
+  def dispatch({"attack", target_idx}, state) when is_integer(target_idx) do
     person = Enum.at(state.vicinity.people, target_idx)
     attack_with_target(person.name, state)
   end
 
-  # Re-dispatch or typed path — target name known, need weapon selection
-  def dispatch("attack", target_name, state) when is_binary(target_name) do
-    attack_with_target(target_name, state)
-  end
+  # Canonical fully-specified form — execute the attack
+  def dispatch({"attack", target_name, weapon_idx}, state) do
+    case find_target_id(state.vicinity.people, target_name) do
+      {:ok, target_id} ->
+        state.player_id
+        |> state.gateway.perform(state.vicinity.id, :attack, {target_id, weapon_idx, state.player_name})
+        |> Commands.handle_action(state, &handle_outcome/2)
 
-  # Fully specified — execute the attack
-  def dispatch("attack", target_name, weapon_idx, state) do
-    do_attack(target_name, weapon_idx, state)
+      {:error, _} ->
+        MessageBuffer.warn("You miss.")
+        state
+    end
   end
 
   defp attack_with_target(target_name, state) do
@@ -69,19 +77,6 @@ defmodule UndercityCli.Commands.Attack do
         state
         |> State.pending("attack", [target_name])
         |> State.select("Attack with what?", items)
-    end
-  end
-
-  defp do_attack(target_name, weapon_idx, state) do
-    case find_target_id(state.vicinity.people, target_name) do
-      {:ok, target_id} ->
-        state.player_id
-        |> state.gateway.perform(state.vicinity.id, :attack, {target_id, weapon_idx, state.player_name})
-        |> Commands.handle_action(state, &handle_outcome/2)
-
-      {:error, _} ->
-        MessageBuffer.warn("You miss.")
-        state
     end
   end
 

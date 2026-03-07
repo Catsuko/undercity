@@ -20,10 +20,11 @@ defmodule UndercityCli.Commands.Eat do
     end
   end
 
-  def dispatch({"eat", index_str}, state) do
+  # Typed "eat 1" — parse index and delegate to canonical form
+  def dispatch({"eat", index_str}, state) when is_binary(index_str) do
     case Integer.parse(index_str) do
       {n, ""} when n >= 1 ->
-        do_eat(n - 1, state)
+        dispatch({"eat", n - 1}, state)
 
       _ ->
         MessageBuffer.warn("Invalid item selection.")
@@ -31,11 +32,8 @@ defmodule UndercityCli.Commands.Eat do
     end
   end
 
-  def dispatch("eat", index, state) when is_integer(index) do
-    do_eat(index, state)
-  end
-
-  defp do_eat(index, state) do
+  # Canonical form — execute
+  def dispatch({"eat", index}, state) when is_integer(index) do
     state.player_id
     |> state.gateway.perform(state.vicinity.id, :eat, index)
     |> Commands.handle_action(state, fn

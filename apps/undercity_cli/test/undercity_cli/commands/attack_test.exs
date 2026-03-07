@@ -10,9 +10,15 @@ defmodule UndercityCli.Commands.AttackTest do
   @state_with_people %{@state | vicinity: %Vicinity{id: @block_id, people: [@target]}}
 
   describe "bare attack" do
-    test "no people warns and returns model unchanged" do
+    test "nil people warns and returns model unchanged" do
       expect(MessageBuffer, :warn, fn "There is no one else here." -> :ok end)
       assert Attack.dispatch("attack", @state) == @state
+    end
+
+    test "empty people warns and returns model unchanged" do
+      expect(MessageBuffer, :warn, fn "There is no one else here." -> :ok end)
+      state = %{@state | vicinity: %Vicinity{id: @block_id, people: []}}
+      assert Attack.dispatch("attack", state) == state
     end
 
     test "with people sets pending for target selection" do
@@ -27,27 +33,17 @@ defmodule UndercityCli.Commands.AttackTest do
   describe "re-dispatch after target overlay" do
     test "sets pending for weapon selection" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
-      result = Attack.dispatch("attack", 0, @state_with_people)
+      result = Attack.dispatch({"attack", 0}, @state_with_people)
       assert result.pending.command == "attack"
       assert result.pending.args == [@target_name]
       assert result.pending.label == "Attack with what?"
       assert result.pending.choices == @inventory
     end
-  end
-
-  describe "attack with target name (typed or re-dispatch)" do
-    test "sets pending for weapon selection" do
-      expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
-      result = Attack.dispatch("attack", @target_name, @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == [@target_name]
-      assert result.pending.label == "Attack with what?"
-    end
 
     test "empty inventory warns and returns model unchanged" do
       expect(Gateway, :check_inventory, fn @player_id -> [] end)
       expect(MessageBuffer, :warn, fn "You have nothing to attack with." -> :ok end)
-      assert Attack.dispatch("attack", @target_name, @state_with_people) == @state_with_people
+      assert Attack.dispatch({"attack", 0}, @state_with_people) == @state_with_people
     end
   end
 
@@ -58,7 +54,7 @@ defmodule UndercityCli.Commands.AttackTest do
       end)
 
       expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 4 damage." -> :ok end)
-      result = Attack.dispatch("attack", @target_name, 0, @state_with_people)
+      result = Attack.dispatch({"attack", @target_name, 0}, @state_with_people)
       assert result.ap == 7
     end
 
@@ -68,7 +64,7 @@ defmodule UndercityCli.Commands.AttackTest do
       end)
 
       expect(MessageBuffer, :warn, fn "You attack Zara and miss." -> :ok end)
-      result = Attack.dispatch("attack", @target_name, 0, @state_with_people)
+      result = Attack.dispatch({"attack", @target_name, 0}, @state_with_people)
       assert result.ap == 7
     end
 
@@ -78,7 +74,7 @@ defmodule UndercityCli.Commands.AttackTest do
       end)
 
       expect(MessageBuffer, :warn, fn "You can't attack with that." -> :ok end)
-      assert Attack.dispatch("attack", @target_name, 1, @state_with_people) == @state_with_people
+      assert Attack.dispatch({"attack", @target_name, 1}, @state_with_people) == @state_with_people
     end
 
     test "exhausted: standard exhaustion message" do
@@ -87,12 +83,12 @@ defmodule UndercityCli.Commands.AttackTest do
       end)
 
       expect(MessageBuffer, :warn, fn "You are too exhausted to act." -> :ok end)
-      assert Attack.dispatch("attack", @target_name, 0, @state_with_people) == @state_with_people
+      assert Attack.dispatch({"attack", @target_name, 0}, @state_with_people) == @state_with_people
     end
 
     test "target not in vicinity: miss message, model unchanged" do
       expect(MessageBuffer, :warn, fn "You miss." -> :ok end)
-      assert Attack.dispatch("attack", @target_name, 0, @state) == @state
+      assert Attack.dispatch({"attack", @target_name, 0}, @state) == @state
     end
   end
 
