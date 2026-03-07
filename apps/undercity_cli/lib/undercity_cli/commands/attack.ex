@@ -23,75 +23,63 @@ defmodule UndercityCli.Commands.Attack do
     Selection.from_people(state, verb, "There is no one else here.", "Attack who?")
   end
 
-  # Typed "attack goblin" or "attack goblin 1" — tokenize and re-dispatch
+  # Typed "attack goblin" or "attack goblin 1" — tokenize and dispatch
   def dispatch({verb, rest}, state) when is_binary(rest) do
     case String.split(rest, " ", parts: 2) do
-      [name] -> select_weapon(verb, name, state)
-      [name, weapon_index] -> dispatch({verb, name, weapon_index}, state)
-    end
-  end
+      [name] ->
+        show_weapon_overlay(verb, name, state)
 
-  # String weapon index from typed input — parse and delegate to canonical form
-  def dispatch({verb, name, weapon_index}, state) when is_binary(weapon_index) do
-    case Integer.parse(weapon_index) do
-      {n, ""} when n >= 1 -> dispatch({verb, name, n - 1}, state)
-      _ -> select_weapon(verb, name, state)
+      [name, weapon_index] ->
+        case Integer.parse(weapon_index) do
+          {n, ""} when n >= 1 -> dispatch({verb, name, n - 1}, state)
+          _ -> show_weapon_overlay(verb, name, state)
+        end
     end
   end
 
   # Re-dispatch after target overlay — resolve index, show weapon selector
   def dispatch({verb, target_idx}, state) when is_integer(target_idx) do
     person = Enum.at(state.vicinity.people, target_idx)
-    select_weapon(verb, person.name, state)
+    show_weapon_overlay(verb, person.name, state)
   end
 
   # Canonical fully-specified form — execute the attack
   def dispatch({_verb, target_name, weapon_idx}, state) when is_integer(weapon_idx) do
-    case find_target_id(state.vicinity.people, target_name) do
-      {:ok, target_id} ->
+    case find_person(state.vicinity.people, target_name) do
+      {:ok, person} ->
         state.player_id
-        |> state.gateway.perform(state.vicinity.id, :attack, {target_id, weapon_idx, state.player_name})
-        |> Commands.handle_action(state, &handle_outcome/2)
+        |> state.gateway.perform(state.vicinity.id, :attack, {person.id, weapon_idx, state.player_name})
+        |> Commands.handle_action(state, &handle_outcome(&1, &2, target_name))
 
-      error ->
-        handle_outcome(error, state)
+      {:error, :invalid_target} ->
+        MessageBuffer.warn("You miss.")
+        state
     end
   end
 
-  defp select_weapon(verb, target_name, state) do
+  defp show_weapon_overlay(verb, target_name, state) do
     Selection.from_inventory(state, verb, [target_name], "You have nothing to attack with.", "Attack with what?")
   end
 
-  defp handle_outcome({:ok, {:hit, target_id, weapon_name, damage}, new_ap}, state) do
-    target_name = find_target_name(state.vicinity.people, target_id)
+  defp handle_outcome({:ok, {:hit, _target_id, weapon_name, damage}, new_ap}, state, target_name) do
     MessageBuffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
     %{state | ap: new_ap}
   end
 
-  defp handle_outcome({:ok, {:miss, target_id}, new_ap}, state) do
-    target_name = find_target_name(state.vicinity.people, target_id)
+  defp handle_outcome({:ok, {:miss, _target_id}, new_ap}, state, target_name) do
     MessageBuffer.warn("You attack #{target_name} and miss.")
     %{state | ap: new_ap}
   end
 
-  defp handle_outcome({:error, :invalid_weapon}, state) do
+  defp handle_outcome({:error, :invalid_weapon}, state, _target_name) do
     MessageBuffer.warn("You can't attack with that.")
     state
   end
 
-  defp handle_outcome({:error, :invalid_target}, state) do
-    MessageBuffer.warn("You miss.")
-    state
-  end
-
-  defp find_target_id(people, name) do
+  defp find_person(people, name) do
     case Enum.find(people || [], fn p -> p.name == name end) do
       nil -> {:error, :invalid_target}
-      target -> {:ok, target.id}
+      person -> {:ok, person}
     end
-  end
-
-  defp find_target_name(people, target_id) do
-    Enum.find_value(people || [], target_id, fn p -> if p.id == target_id, do: p.name end)
   end
 end
