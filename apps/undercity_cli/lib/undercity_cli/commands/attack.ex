@@ -61,9 +61,8 @@ defmodule UndercityCli.Commands.Attack do
         |> state.gateway.perform(state.vicinity.id, :attack, {target_id, weapon_idx, state.player_name})
         |> Commands.handle_action(state, &handle_outcome/2)
 
-      {:error, _} ->
-        MessageBuffer.warn("You miss.")
-        state
+      error ->
+        handle_outcome(error, state)
     end
   end
 
