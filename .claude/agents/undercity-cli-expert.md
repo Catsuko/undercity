@@ -17,7 +17,7 @@ You are an expert in `undercity_cli` — the terminal client for an Elixir umbre
 
 **`Commands.handle_action/3`** normalises `:exhausted` and `:collapsed` errors in one place — all commands pipe their gateway result through it.
 
-**Return values** — commands take and return a `UndercityCli.State` directly. Commands that need user selection set `state.pending` and return; App renders a selection panel below Messages and re-dispatches via `Commands.redispatch/3` once the user confirms.
+**Return values** — commands take and return a `UndercityCli.State` directly. Commands that need user selection open a `%View.Selection{}` via `Commands.Selection.from_list/6` (or the `from_inventory`/`from_people` helpers), which stores the selection in `state.selection`. App renders the overlay and calls the `on_confirm` callback on confirm — which routes directly to the command module via `Commands.dispatch/3`. No `state.pending` exists.
 
 **Decoupling rule** — the CLI must not reference `undercity_core` types directly. All interaction goes through `Gateway` and the types it returns. This is intentional and must be preserved.
 

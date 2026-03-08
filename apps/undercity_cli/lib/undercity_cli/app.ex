@@ -75,21 +75,19 @@ defmodule UndercityCli.App do
     %{state | message_log: trim_log(state.message_log ++ new_msgs ++ flushed)}
   end
 
-  def update(%{pending: %{cursor: cursor, choices: choices} = pending} = state, msg) do
-    n = length(choices)
-
+  def update(%{selection: %Selection{} = selection} = state, msg) do
     case msg do
       {:event, %{key: @arrow_up}} ->
-        %{state | pending: %{pending | cursor: max(0, cursor - 1)}}
+        %{state | selection: Selection.move_up(selection)}
 
       {:event, %{key: @arrow_down}} ->
-        %{state | pending: %{pending | cursor: min(n - 1, cursor + 1)}}
+        %{state | selection: Selection.move_down(selection)}
 
       {:event, %{key: @enter}} ->
-        dispatch_command(%{state | pending: %{pending | args: pending.args ++ [cursor]}})
+        Selection.confirm(selection, state)
 
       {:event, %{key: @key_escape}} ->
-        State.clear_pending(state)
+        Selection.cancel(selection, state)
 
       _ ->
         state
@@ -131,7 +129,7 @@ defmodule UndercityCli.App do
     left_col_width = div(state.window_width * @main_col_size, 12)
 
     bottom_bar =
-      if state.pending do
+      if state.selection do
         bar(do: label(content: "↑↓ navigate  ·  Enter confirm  ·  Esc cancel"))
       else
         bar(do: label(content: "> #{state.input}"))
@@ -149,8 +147,8 @@ defmodule UndercityCli.App do
               BlockDescription.render(state.vicinity, state.player_name)
             end
 
-            if state.pending do
-              Selection.render(state.pending)
+            if state.selection do
+              Selection.render(state.selection)
             end
           end
 

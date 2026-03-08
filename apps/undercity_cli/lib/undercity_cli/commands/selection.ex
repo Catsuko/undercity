@@ -6,12 +6,14 @@ defmodule UndercityCli.Commands.Selection do
   - `from_inventory/5` — fetches the player's inventory via gateway, then prompts selection
   - `from_people/5`   — reads people from the current vicinity, then prompts selection
 
-  Both delegates to `from_list/6`, which handles the empty/nil guard and sets up
-  the pending selection state.
+  Both delegate to `from_list/6`, which handles the empty/nil guard and builds a
+  `%View.Selection{}` whose `on_confirm` callback closes over the command and
+  accumulated args, routing directly to the command module on confirm.
   """
 
+  alias UndercityCli.Commands
   alias UndercityCli.MessageBuffer
-  alias UndercityCli.State
+  alias UndercityCli.View.Selection
 
   @doc """
   Fetches the player's inventory and presents a selector overlay.
@@ -45,9 +47,20 @@ defmodule UndercityCli.Commands.Selection do
         state
 
       items ->
-        state
-        |> State.pending(command, args)
-        |> State.select(prompt, items)
+        selection = %Selection{
+          label: prompt,
+          choices: items,
+          cursor: 0,
+          on_confirm: fn state ->
+            cursor = state.selection.cursor
+            Commands.dispatch(command, args ++ [cursor], %{state | selection: nil})
+          end,
+          on_cancel: fn state ->
+            %{state | selection: nil}
+          end
+        }
+
+        %{state | selection: selection}
     end
   end
 end

@@ -7,7 +7,7 @@ defmodule UndercityCli.Commands.Attack do
   - `attack <target>` → weapon overlay → execute
   - `attack <target> <n>` → execute directly (n is the 1-based weapon index)
 
-  Re-dispatch stages (via Commands.dispatch/1 pending reconstruction):
+  Selection confirm stages (routed via Commands.dispatch/3):
   - `{"attack", target_idx}` when integer → resolve target, show weapon overlay
   - `{"attack", target_name, weapon_idx}` → execute
   """

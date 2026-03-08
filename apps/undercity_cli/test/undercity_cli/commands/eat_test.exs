@@ -11,12 +11,11 @@ defmodule UndercityCli.Commands.EatTest do
     assert Eat.dispatch("eat", @state) == @state
   end
 
-  test "bare eat with items sets pending on model" do
+  test "bare eat with items opens selection overlay" do
     expect(Gateway, :check_inventory, fn @player_id -> @items end)
     result = Eat.dispatch("eat", @state)
-    assert result.pending.command == "eat"
-    assert result.pending.label == "Eat which item?"
-    assert result.pending.choices == @items
+    assert result.selection.label == "Eat which item?"
+    assert result.selection.choices == @items
   end
 
   test "indexed eat succeeds and returns model with updated ap and hp" do

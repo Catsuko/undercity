@@ -21,23 +21,19 @@ defmodule UndercityCli.Commands.AttackTest do
       assert Attack.dispatch("attack", state) == state
     end
 
-    test "with people sets pending for target selection" do
+    test "with people opens target selection overlay" do
       result = Attack.dispatch("attack", @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == []
-      assert result.pending.label == "Attack who?"
-      assert result.pending.choices == [@target]
+      assert result.selection.label == "Attack who?"
+      assert result.selection.choices == [@target]
     end
   end
 
   describe "re-dispatch after target overlay" do
-    test "sets pending for weapon selection" do
+    test "opens weapon selection overlay" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       result = Attack.dispatch({"attack", 0}, @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == [@target_name]
-      assert result.pending.label == "Attack with what?"
-      assert result.pending.choices == @inventory
+      assert result.selection.label == "Attack with what?"
+      assert result.selection.choices == @inventory
     end
 
     test "empty inventory warns and returns model unchanged" do
@@ -106,8 +102,8 @@ defmodule UndercityCli.Commands.AttackTest do
     test "attack goblin sets up weapon selection overlay" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       result = Attack.dispatch({"attack", @target_name}, @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == [@target_name]
+      assert result.selection.label == "Attack with what?"
+      assert result.selection.choices == @inventory
     end
 
     test "uses trailing number as weapon index" do
@@ -123,15 +119,13 @@ defmodule UndercityCli.Commands.AttackTest do
     test "non-numeric trailing token falls back to weapon selection" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       result = Attack.dispatch({"attack", "#{@target_name} notanumber"}, @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == [@target_name]
+      assert result.selection
     end
 
     test "zero trailing index falls back to weapon selection" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
       result = Attack.dispatch({"attack", "#{@target_name} 0"}, @state_with_people)
-      assert result.pending.command == "attack"
-      assert result.pending.args == [@target_name]
+      assert result.selection
     end
   end
 end

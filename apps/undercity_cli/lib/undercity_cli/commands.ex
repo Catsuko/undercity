@@ -2,29 +2,19 @@ defmodule UndercityCli.Commands do
   @moduledoc """
   Routes parsed input to the appropriate command module.
 
-  `dispatch/1` is the single entry point for all dispatch — both fresh input
-  and post-selection re-dispatch. App always calls this function regardless of
-  whether a selection just happened.
+  `dispatch/1` is the single entry point for fresh input dispatch. It reads
+  `state.input`, parses it, and calls the matching command module.
 
-  ## Dispatch convention
-
-  When a command needs user selection it sets `state.pending` with:
-  - `command` — the verb used for routing on the next dispatch
-  - `args` — resolved values accumulated from previous selections
-
-  On each selection confirm, App appends the raw cursor index to `pending.args`
-  and calls `dispatch/1` again. Commands reconstructs the canonical parsed form
-  via `List.to_tuple([command | args])` and calls the module with a cleared
-  pending state.
+  `dispatch/3` is used by `Commands.Selection` to route confirmed
+  selections directly to a command module, bypassing input parsing.
 
   Command modules must follow this pattern:
-  - `dispatch(verb, state)` — bare command, show selector, set pending
+  - `dispatch(verb, state)` — bare command, show selector
   - `dispatch({verb, arg_str}, state)` — dumb string parser, delegates to typed form
   - `dispatch({verb, arg}, state)` — typed/canonical form, contains real logic
 
   Multi-stage commands (e.g. Attack) add extra clauses for each intermediate
-  stage, pattern matching on the tuple shape. `pending.args` always holds
-  resolved values (e.g. target name), never raw indices from prior stages.
+  stage, pattern matching on the tuple shape.
 
   `handle_action/3` is a shared helper used by command modules to normalise
   Gateway results — catching exhaustion/collapse before delegating to the
@@ -32,7 +22,6 @@ defmodule UndercityCli.Commands do
   """
 
   alias UndercityCli.MessageBuffer
-  alias UndercityCli.State
 
   @command_routes [
     {UndercityCli.Commands.Move, ["north", "south", "east", "west", "n", "s", "e", "w", "enter", "exit"]},
@@ -58,7 +47,7 @@ defmodule UndercityCli.Commands do
     |> Enum.join("\n")
   end
 
-  def dispatch(%{pending: nil} = state) do
+  def dispatch(state) do
     parsed = state.input |> String.trim() |> String.downcase() |> split()
     state = %{state | input: ""}
 
@@ -72,10 +61,9 @@ defmodule UndercityCli.Commands do
     end
   end
 
-  def dispatch(%{pending: %{command: command, args: args}} = state) do
+  def dispatch(command, args, state) do
     module = Map.fetch!(@commands, command)
-    parsed = reconstruct(command, args)
-    module.dispatch(parsed, State.clear_pending(state))
+    module.dispatch(reconstruct(command, args), state)
   end
 
   def handle_action({:error, :exhausted}, state, _callback) do
