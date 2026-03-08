@@ -11,13 +11,11 @@ defmodule UndercityCli.Commands.DropTest do
     assert Drop.dispatch("drop", @state) == @state
   end
 
-  test "bare drop with items sets pending on model" do
+  test "bare drop with items opens selection overlay" do
     expect(Gateway, :check_inventory, fn @player_id -> @items end)
     result = Drop.dispatch("drop", @state)
-    assert result.pending.command == "drop"
-    assert result.pending.args == []
-    assert result.pending.label == "Drop which item?"
-    assert result.pending.choices == @items
+    assert result.selection.label == "Drop which item?"
+    assert result.selection.choices == @items
   end
 
   test "indexed drop succeeds and returns model with updated ap" do
