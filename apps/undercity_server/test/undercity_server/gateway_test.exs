@@ -3,6 +3,7 @@ defmodule UndercityServer.GatewayTest do
 
   alias UndercityServer.Block
   alias UndercityServer.Gateway
+  alias UndercityServer.Player
   alias UndercityServer.Player.Inbox
   alias UndercityServer.Test.Helpers
   alias UndercityServer.Vicinity
@@ -53,7 +54,7 @@ defmodule UndercityServer.GatewayTest do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
       {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
       # player is in north_alley; corrupt block_id to old value
-      :sys.replace_state(:"player_#{player_id}", fn state -> %{state | block_id: "plaza"} end)
+      Player.move_to(player_id, "plaza")
 
       {_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
@@ -83,7 +84,7 @@ defmodule UndercityServer.GatewayTest do
 
       assert vicinity.id == "plaza"
       assert Block.has_person?("plaza", player_id)
-      assert UndercityServer.Player.location(player_id) == "plaza"
+      assert Player.location(player_id) == "plaza"
     end
   end
 
@@ -136,7 +137,7 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Junk"))
+      Player.add_item(attacker_id, UndercityCore.Item.new("Junk"))
 
       assert {:error, :invalid_weapon} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
     end
@@ -153,7 +154,7 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
 
       result = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
 
@@ -165,7 +166,7 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
 
       {:ok, _outcome, new_ap} = Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
 
@@ -175,7 +176,7 @@ defmodule UndercityServer.GatewayTest do
     test "returns :invalid_target when player attacks themselves" do
       attacker_name = Helpers.player_name()
       {player_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.add_item(player_id, UndercityCore.Item.new("Iron Pipe"))
 
       assert {:error, :invalid_target} = Gateway.perform(player_id, vicinity.id, :attack, {player_id, 0, attacker_name})
     end
@@ -184,7 +185,7 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
 
       # target is in plaza; attacker tries to attack from a different block
       {:ok, {:ok, _}, _} = Gateway.perform(attacker_id, vicinity.id, :move, :north)
@@ -197,8 +198,8 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
-      UndercityServer.Player.take_damage(target_id, {"Rat", "Claws", 50})
+      Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.take_damage(target_id, {"Rat", "Claws", 50})
 
       assert {:ok, {:miss, ^target_id}, _ap} =
                Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
@@ -208,9 +209,9 @@ defmodule UndercityServer.GatewayTest do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
+      Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
 
-      initial_hp = UndercityServer.Player.constitution(target_id).hp
+      initial_hp = Player.constitution(target_id).hp
 
       # Run attacks until one lands to verify damage is applied
       result =
@@ -222,7 +223,7 @@ defmodule UndercityServer.GatewayTest do
         end)
 
       if result do
-        assert UndercityServer.Player.constitution(target_id).hp < initial_hp
+        assert Player.constitution(target_id).hp < initial_hp
       end
     end
   end
@@ -230,7 +231,7 @@ defmodule UndercityServer.GatewayTest do
   describe "perform/4 :scribble" do
     test "scribbles text on a block when player has chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
+      Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello world")
 
@@ -245,7 +246,7 @@ defmodule UndercityServer.GatewayTest do
 
     test "strips invalid characters from scribble text" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
+      Player.add_item(player_id, UndercityCore.Item.new("Chalk", 5))
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello!")
 
@@ -254,7 +255,7 @@ defmodule UndercityServer.GatewayTest do
 
     test "noops for empty scribble without consuming chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
       assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
@@ -264,7 +265,7 @@ defmodule UndercityServer.GatewayTest do
 
     test "consumes a chalk use" do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
       Gateway.perform(player_id, "plaza", :scribble, "first")
 
@@ -274,7 +275,7 @@ defmodule UndercityServer.GatewayTest do
 
     test "returns :not_in_block when player is not in the supplied block" do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
-      UndercityServer.Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
       assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :scribble, "hello")
     end
