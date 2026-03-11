@@ -20,7 +20,7 @@ You are an expert in `undercity_core` — the pure domain layer of an Elixir umb
 ## Domain Concepts
 
 The core layer defines:
-- **World model** — blocks, block types, the world map, exit connections
+- **World model** — blocks, block types, the world map, exit connections. World data (blocks, grid layout, connections) is defined in `priv/world.json` and loaded at compile time. Interior blocks (e.g. inn rooms) appear in the blocks list but not the grid; they inherit their parent block's neighbourhood.
 - **Player state** — AP (action points), HP, inventory
 - **AP** — lazy regeneration: stored as a last-updated timestamp, recalculated on access
 - **Inventory** — has a size limit; items are structs
