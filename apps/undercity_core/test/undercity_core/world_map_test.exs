@@ -9,7 +9,7 @@ defmodule UndercityCore.WorldMapTest do
     end
 
     test "returns error for invalid direction" do
-      assert :error = WorldMap.resolve_exit("ashwell", :north)
+      assert :error = WorldMap.resolve_exit("wardhouse", :north)
     end
 
     test "returns error for unknown block" do
@@ -67,12 +67,12 @@ defmodule UndercityCore.WorldMapTest do
     end
 
     test "pads with nils at edges" do
-      grid = WorldMap.surrounding("ashwell")
+      grid = WorldMap.surrounding("wardhouse")
 
       assert [
                [nil, nil, nil],
-               [nil, "ashwell", "north_alley"],
-               [nil, "west_street", "plaza"]
+               [nil, "wardhouse", "fellside"],
+               [nil, "bleachfield", "ashwell"]
              ] = grid
     end
   end
