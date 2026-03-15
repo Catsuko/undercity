@@ -1,82 +1,2078 @@
 {
   "blocks": [
-    {"id": "wardhouse",          "name": "Wardhouse",          "type": "space"},
-    {"id": "fellside",           "name": "Fellside",           "type": "street"},
-    {"id": "ashgate_tollbooth",  "name": "Ashgate Tollbooth",  "type": "space"},
-    {"id": "the_narrows",        "name": "The Narrows",        "type": "street"},
-    {"id": "ashworks",           "name": "Ashworks",           "type": "space"},
-    {"id": "bleachfield",        "name": "Bleachfield",        "type": "space"},
-    {"id": "ashwell",            "name": "Ashwell",            "type": "fountain"},
-    {"id": "north_alley",        "name": "North Alley",        "type": "street"},
-    {"id": "wormgarden",         "name": "Wormgarden",         "type": "graveyard"},
-    {"id": "saltbone",           "name": "Saltbone",           "type": "space"},
-    {"id": "quietside",          "name": "Quietside",          "type": "street"},
-    {"id": "west_street",        "name": "West Street",        "type": "street"},
-    {"id": "plaza",              "name": "The Plaza",          "type": "square"},
-    {"id": "east_street",        "name": "East Street",        "type": "street"},
-    {"id": "ashgate_cistern",    "name": "Ashgate Cistern",    "type": "space"},
-    {"id": "sluice_gate",        "name": "Sluice Gate",        "type": "fountain"},
-    {"id": "the_stray",          "name": "The Stray",          "type": "street"},
-    {"id": "south_alley",        "name": "South Alley",        "type": "street"},
-    {"id": "lame_horse",         "name": "The Lame Horse",     "type": "space"},
-    {"id": "bonehouse",          "name": "Bonehouse",          "type": "space"},
-    {"id": "mudgate",            "name": "Mudgate",            "type": "street"},
-    {"id": "shambles",           "name": "Shambles",           "type": "street"},
-    {"id": "charnel_cross",      "name": "Charnel Cross",      "type": "square"},
-    {"id": "crosswarden",        "name": "Crosswarden",        "type": "space"},
-    {"id": "the_breach",         "name": "The Breach",         "type": "street"},
-    {"id": "lame_horse_interior","name": "The Lame Horse Inn", "type": "inn"},
-    {"id": "saltbone_interior",  "name": "Saltbone Inn",       "type": "inn"}
+    {
+      "id": "wormgarden",
+      "name": "Wormgarden",
+      "type": "graveyard"
+    },
+    {
+      "id": "hollow_house",
+      "name": "Hollow House",
+      "type": "space"
+    },
+    {
+      "id": "hollow_house_interior",
+      "name": "Hollow House",
+      "type": "townhouse"
+    },
+    {
+      "id": "church_walk",
+      "name": "Church Walk",
+      "type": "street"
+    },
+    {
+      "id": "church_of_the_hollow_saint",
+      "name": "Church of the Hollow Saint",
+      "type": "space"
+    },
+    {
+      "id": "church_of_the_hollow_saint_interior",
+      "name": "Church of the Hollow Saint",
+      "type": "church"
+    },
+    {
+      "id": "wardens_archive",
+      "name": "Warden's Archive",
+      "type": "space"
+    },
+    {
+      "id": "wardens_archive_interior",
+      "name": "Warden's Archive",
+      "type": "archive"
+    },
+    {
+      "id": "little_lane",
+      "name": "Little Lane",
+      "type": "street"
+    },
+    {
+      "id": "lethemoor_hall",
+      "name": "Lethemoor Hall",
+      "type": "space"
+    },
+    {
+      "id": "lethemoor_hall_interior",
+      "name": "Lethemoor Hall",
+      "type": "guild"
+    },
+    {
+      "id": "suthen_well",
+      "name": "Suthen Well",
+      "type": "fountain"
+    },
+    {
+      "id": "raven_manor",
+      "name": "Raven Manor",
+      "type": "space"
+    },
+    {
+      "id": "raven_manor_interior",
+      "name": "Raven Manor",
+      "type": "manor"
+    },
+    {
+      "id": "north_wardens_post",
+      "name": "North Warden's Post",
+      "type": "space"
+    },
+    {
+      "id": "north_wardens_post_interior",
+      "name": "North Warden's Post",
+      "type": "garrison"
+    },
+    {
+      "id": "sextons_close",
+      "name": "Sexton's Close",
+      "type": "space"
+    },
+    {
+      "id": "sextons_close_interior",
+      "name": "Sexton's Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "sextons_row",
+      "name": "Sexton's Row",
+      "type": "space"
+    },
+    {
+      "id": "sextons_row_interior",
+      "name": "Sexton's Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "bell_court",
+      "name": "Bell Court",
+      "type": "street"
+    },
+    {
+      "id": "aldermans_well",
+      "name": "Alderman's Well",
+      "type": "fountain"
+    },
+    {
+      "id": "ashwarden_square",
+      "name": "Ashwarden Square",
+      "type": "square"
+    },
+    {
+      "id": "needle_lane",
+      "name": "Needle Lane",
+      "type": "street"
+    },
+    {
+      "id": "kazans_stall",
+      "name": "Kazan's Stall",
+      "type": "space"
+    },
+    {
+      "id": "kazans_stall_interior",
+      "name": "Kazan's Stall",
+      "type": "bazaar"
+    },
+    {
+      "id": "brocade_house",
+      "name": "Brocade House",
+      "type": "space"
+    },
+    {
+      "id": "brocade_house_interior",
+      "name": "Brocade House",
+      "type": "townhouse"
+    },
+    {
+      "id": "cobweb_inn",
+      "name": "The Cobweb Inn",
+      "type": "space"
+    },
+    {
+      "id": "cobweb_inn_interior",
+      "name": "The Cobweb Inn",
+      "type": "inn"
+    },
+    {
+      "id": "suthen_estate",
+      "name": "Suthen Estate",
+      "type": "space"
+    },
+    {
+      "id": "suthen_estate_interior",
+      "name": "Suthen Estate",
+      "type": "manor"
+    },
+    {
+      "id": "coopers_lane",
+      "name": "Cooper's Lane",
+      "type": "street"
+    },
+    {
+      "id": "low_lane",
+      "name": "Low Lane",
+      "type": "street"
+    },
+    {
+      "id": "bell_crossing",
+      "name": "Bell Crossing",
+      "type": "street"
+    },
+    {
+      "id": "broad_alley",
+      "name": "Broad Alley",
+      "type": "street"
+    },
+    {
+      "id": "coin_street",
+      "name": "Coin Street",
+      "type": "street"
+    },
+    {
+      "id": "cut_passage",
+      "name": "Cut Passage",
+      "type": "street"
+    },
+    {
+      "id": "tallow_lane",
+      "name": "Tallow Lane",
+      "type": "street"
+    },
+    {
+      "id": "salt_crossing",
+      "name": "Salt Crossing",
+      "type": "street"
+    },
+    {
+      "id": "east_street",
+      "name": "East Street",
+      "type": "street"
+    },
+    {
+      "id": "long_row",
+      "name": "Long Row",
+      "type": "street"
+    },
+    {
+      "id": "tallow_candle",
+      "name": "The Tallow Candle",
+      "type": "space"
+    },
+    {
+      "id": "tallow_candle_interior",
+      "name": "The Tallow Candle",
+      "type": "inn"
+    },
+    {
+      "id": "tallow_close",
+      "name": "Tallow Close",
+      "type": "space"
+    },
+    {
+      "id": "tallow_close_interior",
+      "name": "Tallow Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "cloister_alley",
+      "name": "Cloister Alley",
+      "type": "street"
+    },
+    {
+      "id": "blind_warrens",
+      "name": "Blind Warrens",
+      "type": "space"
+    },
+    {
+      "id": "blind_warrens_interior",
+      "name": "Blind Warrens",
+      "type": "townhouse"
+    },
+    {
+      "id": "east_warrens",
+      "name": "East Warrens",
+      "type": "space"
+    },
+    {
+      "id": "east_warrens_interior",
+      "name": "East Warrens",
+      "type": "townhouse"
+    },
+    {
+      "id": "marens_apothecary",
+      "name": "Maren's Apothecary",
+      "type": "space"
+    },
+    {
+      "id": "marens_apothecary_interior",
+      "name": "Maren's Apothecary",
+      "type": "apothecary"
+    },
+    {
+      "id": "nettlers_row",
+      "name": "Nettler's Row",
+      "type": "space"
+    },
+    {
+      "id": "nettlers_row_interior",
+      "name": "Nettler's Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "salt_lane",
+      "name": "Salt Lane",
+      "type": "street"
+    },
+    {
+      "id": "cord_lane_houses",
+      "name": "Cord Lane Houses",
+      "type": "space"
+    },
+    {
+      "id": "cord_lane_houses_interior",
+      "name": "Cord Lane Houses",
+      "type": "townhouse"
+    },
+    {
+      "id": "pale_end",
+      "name": "Pale End",
+      "type": "space"
+    },
+    {
+      "id": "pale_end_interior",
+      "name": "Pale End",
+      "type": "townhouse"
+    },
+    {
+      "id": "cobbets_yard",
+      "name": "Cobbet's Yard",
+      "type": "space"
+    },
+    {
+      "id": "cobbets_yard_interior",
+      "name": "Cobbet's Yard",
+      "type": "storehouse"
+    },
+    {
+      "id": "upper_yard",
+      "name": "Upper Yard",
+      "type": "space"
+    },
+    {
+      "id": "upper_yard_interior",
+      "name": "Upper Yard",
+      "type": "storehouse"
+    },
+    {
+      "id": "vestry_lane",
+      "name": "Vestry Lane",
+      "type": "street"
+    },
+    {
+      "id": "cordwainers_row",
+      "name": "Cordwainer's Row",
+      "type": "space"
+    },
+    {
+      "id": "cordwainers_row_interior",
+      "name": "Cordwainer's Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "ashwarden_guild",
+      "name": "Ashwarden Guild",
+      "type": "space"
+    },
+    {
+      "id": "ashwarden_guild_interior",
+      "name": "Ashwarden Guild",
+      "type": "guild"
+    },
+    {
+      "id": "black_hog",
+      "name": "The Black Hog",
+      "type": "space"
+    },
+    {
+      "id": "black_hog_interior",
+      "name": "The Black Hog",
+      "type": "tavern"
+    },
+    {
+      "id": "pig_alley_houses",
+      "name": "Pig Alley Houses",
+      "type": "space"
+    },
+    {
+      "id": "pig_alley_houses_interior",
+      "name": "Pig Alley Houses",
+      "type": "townhouse"
+    },
+    {
+      "id": "salters_alley",
+      "name": "Salter's Alley",
+      "type": "street"
+    },
+    {
+      "id": "wrens_yard",
+      "name": "Wren's Yard",
+      "type": "space"
+    },
+    {
+      "id": "wrens_yard_interior",
+      "name": "Wren's Yard",
+      "type": "townhouse"
+    },
+    {
+      "id": "wrens_end",
+      "name": "Wren's End",
+      "type": "space"
+    },
+    {
+      "id": "wrens_end_interior",
+      "name": "Wren's End",
+      "type": "townhouse"
+    },
+    {
+      "id": "cobbets_forge",
+      "name": "Cobbet's Forge",
+      "type": "space"
+    },
+    {
+      "id": "cobbets_forge_interior",
+      "name": "Cobbet's Forge",
+      "type": "blacksmith"
+    },
+    {
+      "id": "tanners_workshop",
+      "name": "Tanner's Workshop",
+      "type": "space"
+    },
+    {
+      "id": "tanners_workshop_interior",
+      "name": "Tanner's Workshop",
+      "type": "workshop"
+    },
+    {
+      "id": "monks_row",
+      "name": "Monk's Row",
+      "type": "street"
+    },
+    {
+      "id": "rookery_close",
+      "name": "Rookery Close",
+      "type": "space"
+    },
+    {
+      "id": "rookery_close_interior",
+      "name": "Rookery Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "dung_lane_houses",
+      "name": "Dung Lane Houses",
+      "type": "space"
+    },
+    {
+      "id": "dung_lane_houses_interior",
+      "name": "Dung Lane Houses",
+      "type": "townhouse"
+    },
+    {
+      "id": "forge_cut",
+      "name": "Forge Cut",
+      "type": "street"
+    },
+    {
+      "id": "guild_lane",
+      "name": "Guild Lane",
+      "type": "space"
+    },
+    {
+      "id": "guild_lane_interior",
+      "name": "Guild Lane",
+      "type": "townhouse"
+    },
+    {
+      "id": "drovers_way",
+      "name": "Drover's Way",
+      "type": "street"
+    },
+    {
+      "id": "salt_row",
+      "name": "Salt Row",
+      "type": "space"
+    },
+    {
+      "id": "salt_row_interior",
+      "name": "Salt Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "wrens_close",
+      "name": "Wren's Close",
+      "type": "space"
+    },
+    {
+      "id": "wrens_close_interior",
+      "name": "Wren's Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "forge_lane",
+      "name": "Forge Lane",
+      "type": "street"
+    },
+    {
+      "id": "tanners_row",
+      "name": "Tanner's Row",
+      "type": "street"
+    },
+    {
+      "id": "mill_lane",
+      "name": "Mill Lane",
+      "type": "street"
+    },
+    {
+      "id": "back_street",
+      "name": "Back Street",
+      "type": "street"
+    },
+    {
+      "id": "middle_row",
+      "name": "Middle Row",
+      "type": "street"
+    },
+    {
+      "id": "smiths_row",
+      "name": "Smiths Row",
+      "type": "street"
+    },
+    {
+      "id": "market_lane",
+      "name": "Market Lane",
+      "type": "street"
+    },
+    {
+      "id": "wheel_lane",
+      "name": "Wheel Lane",
+      "type": "street"
+    },
+    {
+      "id": "cobbler_street",
+      "name": "Cobbler Street",
+      "type": "street"
+    },
+    {
+      "id": "far_lane",
+      "name": "Far Lane",
+      "type": "street"
+    },
+    {
+      "id": "ironhook",
+      "name": "Ironhook",
+      "type": "space"
+    },
+    {
+      "id": "ironhook_interior",
+      "name": "Ironhook",
+      "type": "blacksmith"
+    },
+    {
+      "id": "joiners_yard",
+      "name": "Joiner's Yard",
+      "type": "space"
+    },
+    {
+      "id": "joiners_yard_interior",
+      "name": "Joiner's Yard",
+      "type": "workshop"
+    },
+    {
+      "id": "slabber_row",
+      "name": "Slabber Row",
+      "type": "space"
+    },
+    {
+      "id": "slabber_row_interior",
+      "name": "Slabber Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "hobbs_remedies",
+      "name": "Hobb's Remedies",
+      "type": "space"
+    },
+    {
+      "id": "hobbs_remedies_interior",
+      "name": "Hobb's Remedies",
+      "type": "apothecary"
+    },
+    {
+      "id": "crooked_row",
+      "name": "Crooked Row",
+      "type": "space"
+    },
+    {
+      "id": "crooked_row_interior",
+      "name": "Crooked Row",
+      "type": "townhouse"
+    },
+    {
+      "id": "leaking_cup",
+      "name": "The Leaking Cup",
+      "type": "space"
+    },
+    {
+      "id": "leaking_cup_interior",
+      "name": "The Leaking Cup",
+      "type": "tavern"
+    },
+    {
+      "id": "buckled_boot",
+      "name": "The Buckled Boot",
+      "type": "space"
+    },
+    {
+      "id": "buckled_boot_interior",
+      "name": "The Buckled Boot",
+      "type": "inn"
+    },
+    {
+      "id": "carriers_lane",
+      "name": "Carrier's Lane",
+      "type": "street"
+    },
+    {
+      "id": "rotten_board",
+      "name": "The Rotten Board",
+      "type": "space"
+    },
+    {
+      "id": "rotten_board_interior",
+      "name": "The Rotten Board",
+      "type": "tavern"
+    },
+    {
+      "id": "splint_close",
+      "name": "Splint Close",
+      "type": "space"
+    },
+    {
+      "id": "splint_close_interior",
+      "name": "Splint Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "rat_warrens",
+      "name": "Rat Warrens",
+      "type": "space"
+    },
+    {
+      "id": "rat_warrens_interior",
+      "name": "Rat Warrens",
+      "type": "townhouse"
+    },
+    {
+      "id": "old_maltings",
+      "name": "Old Maltings",
+      "type": "space"
+    },
+    {
+      "id": "old_maltings_interior",
+      "name": "Old Maltings",
+      "type": "townhouse"
+    },
+    {
+      "id": "malt_close",
+      "name": "Malt Close",
+      "type": "space"
+    },
+    {
+      "id": "malt_close_interior",
+      "name": "Malt Close",
+      "type": "townhouse"
+    },
+    {
+      "id": "packmans_stores",
+      "name": "Packman's Stores",
+      "type": "space"
+    },
+    {
+      "id": "packmans_stores_interior",
+      "name": "Packman's Stores",
+      "type": "storehouse"
+    },
+    {
+      "id": "malt_cut",
+      "name": "Malt Cut",
+      "type": "street"
+    },
+    {
+      "id": "salt_lane_houses",
+      "name": "Salt Lane Houses",
+      "type": "space"
+    },
+    {
+      "id": "salt_lane_houses_interior",
+      "name": "Salt Lane Houses",
+      "type": "townhouse"
+    },
+    {
+      "id": "spur_lodge",
+      "name": "Spur Lodge",
+      "type": "space"
+    },
+    {
+      "id": "spur_lodge_interior",
+      "name": "Spur Lodge",
+      "type": "guild"
+    },
+    {
+      "id": "pack_row",
+      "name": "Pack Row",
+      "type": "street"
+    },
+    {
+      "id": "deep_hold",
+      "name": "Deep Hold",
+      "type": "space"
+    },
+    {
+      "id": "deep_hold_interior",
+      "name": "Deep Hold",
+      "type": "dungeon"
+    },
+    {
+      "id": "cinder_watch",
+      "name": "Cinder Watch",
+      "type": "space"
+    },
+    {
+      "id": "cinder_watch_interior",
+      "name": "Cinder Watch",
+      "type": "garrison"
+    },
+    {
+      "id": "mudlark_houses",
+      "name": "Mudlark Houses",
+      "type": "space"
+    },
+    {
+      "id": "mudlark_houses_interior",
+      "name": "Mudlark Houses",
+      "type": "townhouse"
+    },
+    {
+      "id": "spire_end",
+      "name": "Spire End",
+      "type": "space"
+    },
+    {
+      "id": "spire_end_interior",
+      "name": "Spire End",
+      "type": "townhouse"
+    },
+    {
+      "id": "leaning_spire",
+      "name": "Leaning Spire",
+      "type": "space"
+    },
+    {
+      "id": "leaning_spire_interior",
+      "name": "Leaning Spire",
+      "type": "bell_tower"
+    },
+    {
+      "id": "well_lane",
+      "name": "Well Lane",
+      "type": "street"
+    },
+    {
+      "id": "south_street",
+      "name": "South Street",
+      "type": "street"
+    },
+    {
+      "id": "pilgrim_way",
+      "name": "Pilgrim Way",
+      "type": "street"
+    },
+    {
+      "id": "church_row",
+      "name": "Church Row",
+      "type": "street"
+    },
+    {
+      "id": "sextons_lane",
+      "name": "Sexton's Lane",
+      "type": "street"
+    },
+    {
+      "id": "grove_lane",
+      "name": "Grove Lane",
+      "type": "street"
+    },
+    {
+      "id": "ashwarden_grove",
+      "name": "Ashwarden Grove",
+      "type": "graveyard"
+    }
   ],
   "grid": [
-    ["wardhouse",   "fellside",    "ashgate_tollbooth", "the_narrows",  "ashworks"],
-    ["bleachfield", "ashwell",     "north_alley",       "wormgarden",   "saltbone"],
-    ["quietside",   "west_street", "plaza",             "east_street",  "ashgate_cistern"],
-    ["sluice_gate", "the_stray",   "south_alley",       "lame_horse",   "bonehouse"],
-    ["mudgate",     "shambles",    "charnel_cross",     "crosswarden",  "the_breach"]
+    [
+      "wormgarden",
+      "hollow_house",
+      "church_walk",
+      "church_of_the_hollow_saint",
+      "wardens_archive",
+      "little_lane",
+      "lethemoor_hall",
+      "suthen_well",
+      "raven_manor",
+      "north_wardens_post"
+    ],
+    [
+      "sextons_close",
+      "sextons_row",
+      "bell_court",
+      "aldermans_well",
+      "ashwarden_square",
+      "needle_lane",
+      "kazans_stall",
+      "brocade_house",
+      "cobweb_inn",
+      "suthen_estate"
+    ],
+    [
+      "coopers_lane",
+      "low_lane",
+      "bell_crossing",
+      "broad_alley",
+      "coin_street",
+      "cut_passage",
+      "tallow_lane",
+      "salt_crossing",
+      "east_street",
+      "long_row"
+    ],
+    [
+      "tallow_candle",
+      "tallow_close",
+      "cloister_alley",
+      "blind_warrens",
+      "east_warrens",
+      "marens_apothecary",
+      "nettlers_row",
+      "salt_lane",
+      "cord_lane_houses",
+      "pale_end"
+    ],
+    [
+      "cobbets_yard",
+      "upper_yard",
+      "vestry_lane",
+      "cordwainers_row",
+      "ashwarden_guild",
+      "black_hog",
+      "pig_alley_houses",
+      "salters_alley",
+      "wrens_yard",
+      "wrens_end"
+    ],
+    [
+      "cobbets_forge",
+      "tanners_workshop",
+      "monks_row",
+      "rookery_close",
+      "dung_lane_houses",
+      "forge_cut",
+      "guild_lane",
+      "drovers_way",
+      "salt_row",
+      "wrens_close"
+    ],
+    [
+      "forge_lane",
+      "tanners_row",
+      "mill_lane",
+      "back_street",
+      "middle_row",
+      "smiths_row",
+      "market_lane",
+      "wheel_lane",
+      "cobbler_street",
+      "far_lane"
+    ],
+    [
+      "ironhook",
+      "joiners_yard",
+      "slabber_row",
+      "hobbs_remedies",
+      "crooked_row",
+      "leaking_cup",
+      "buckled_boot",
+      "carriers_lane",
+      "rotten_board",
+      "splint_close"
+    ],
+    [
+      "rat_warrens",
+      "old_maltings",
+      "malt_close",
+      "packmans_stores",
+      "malt_cut",
+      "salt_lane_houses",
+      "spur_lodge",
+      "pack_row",
+      "deep_hold",
+      "cinder_watch"
+    ],
+    [
+      "mudlark_houses",
+      "spire_end",
+      "leaning_spire",
+      "well_lane",
+      "south_street",
+      "pilgrim_way",
+      "church_row",
+      "sextons_lane",
+      "grove_lane",
+      "ashwarden_grove"
+    ]
   ],
   "connections": [
-    ["ashwell",           "east",  "north_alley"],
-    ["ashwell",           "south", "west_street"],
-    ["north_alley",       "east",  "wormgarden"],
-    ["north_alley",       "south", "plaza"],
-    ["west_street",       "east",  "plaza"],
-    ["west_street",       "south", "the_stray"],
-    ["plaza",             "east",  "east_street"],
-    ["plaza",             "south", "south_alley"],
-    ["wormgarden",        "south", "east_street"],
-    ["east_street",       "south", "lame_horse"],
-    ["the_stray",         "east",  "south_alley"],
-    ["south_alley",       "east",  "lame_horse"],
-    ["lame_horse",        "enter", "lame_horse_interior"],
-    ["wardhouse",         "east",  "fellside"],
-    ["fellside",          "east",  "ashgate_tollbooth"],
-    ["ashgate_tollbooth", "east",  "the_narrows"],
-    ["the_narrows",       "east",  "ashworks"],
-    ["wardhouse",         "south", "bleachfield"],
-    ["bleachfield",       "south", "quietside"],
-    ["quietside",         "south", "sluice_gate"],
-    ["sluice_gate",       "south", "mudgate"],
-    ["ashworks",          "south", "saltbone"],
-    ["saltbone",          "south", "ashgate_cistern"],
-    ["ashgate_cistern",   "south", "bonehouse"],
-    ["bonehouse",         "south", "the_breach"],
-    ["mudgate",           "east",  "shambles"],
-    ["shambles",          "east",  "charnel_cross"],
-    ["charnel_cross",     "east",  "crosswarden"],
-    ["crosswarden",       "east",  "the_breach"],
-    ["fellside",          "south", "ashwell"],
-    ["ashgate_tollbooth", "south", "north_alley"],
-    ["the_narrows",       "south", "wormgarden"],
-    ["bleachfield",       "east",  "ashwell"],
-    ["quietside",         "east",  "west_street"],
-    ["sluice_gate",       "east",  "the_stray"],
-    ["wormgarden",        "east",  "saltbone"],
-    ["east_street",       "east",  "ashgate_cistern"],
-    ["lame_horse",        "east",  "bonehouse"],
-    ["shambles",          "north", "the_stray"],
-    ["charnel_cross",     "north", "south_alley"],
-    ["crosswarden",       "north", "lame_horse"],
-    ["saltbone",          "enter", "saltbone_interior"]
+    [
+      "wormgarden",
+      "east",
+      "hollow_house"
+    ],
+    [
+      "hollow_house",
+      "east",
+      "church_walk"
+    ],
+    [
+      "church_walk",
+      "east",
+      "church_of_the_hollow_saint"
+    ],
+    [
+      "church_of_the_hollow_saint",
+      "east",
+      "wardens_archive"
+    ],
+    [
+      "wardens_archive",
+      "east",
+      "little_lane"
+    ],
+    [
+      "little_lane",
+      "east",
+      "lethemoor_hall"
+    ],
+    [
+      "lethemoor_hall",
+      "east",
+      "suthen_well"
+    ],
+    [
+      "suthen_well",
+      "east",
+      "raven_manor"
+    ],
+    [
+      "raven_manor",
+      "east",
+      "north_wardens_post"
+    ],
+    [
+      "sextons_close",
+      "east",
+      "sextons_row"
+    ],
+    [
+      "sextons_row",
+      "east",
+      "bell_court"
+    ],
+    [
+      "bell_court",
+      "east",
+      "aldermans_well"
+    ],
+    [
+      "aldermans_well",
+      "east",
+      "ashwarden_square"
+    ],
+    [
+      "ashwarden_square",
+      "east",
+      "needle_lane"
+    ],
+    [
+      "needle_lane",
+      "east",
+      "kazans_stall"
+    ],
+    [
+      "kazans_stall",
+      "east",
+      "brocade_house"
+    ],
+    [
+      "brocade_house",
+      "east",
+      "cobweb_inn"
+    ],
+    [
+      "cobweb_inn",
+      "east",
+      "suthen_estate"
+    ],
+    [
+      "coopers_lane",
+      "east",
+      "low_lane"
+    ],
+    [
+      "low_lane",
+      "east",
+      "bell_crossing"
+    ],
+    [
+      "bell_crossing",
+      "east",
+      "broad_alley"
+    ],
+    [
+      "broad_alley",
+      "east",
+      "coin_street"
+    ],
+    [
+      "coin_street",
+      "east",
+      "cut_passage"
+    ],
+    [
+      "cut_passage",
+      "east",
+      "tallow_lane"
+    ],
+    [
+      "tallow_lane",
+      "east",
+      "salt_crossing"
+    ],
+    [
+      "salt_crossing",
+      "east",
+      "east_street"
+    ],
+    [
+      "east_street",
+      "east",
+      "long_row"
+    ],
+    [
+      "tallow_candle",
+      "east",
+      "tallow_close"
+    ],
+    [
+      "tallow_close",
+      "east",
+      "cloister_alley"
+    ],
+    [
+      "cloister_alley",
+      "east",
+      "blind_warrens"
+    ],
+    [
+      "blind_warrens",
+      "east",
+      "east_warrens"
+    ],
+    [
+      "east_warrens",
+      "east",
+      "marens_apothecary"
+    ],
+    [
+      "marens_apothecary",
+      "east",
+      "nettlers_row"
+    ],
+    [
+      "nettlers_row",
+      "east",
+      "salt_lane"
+    ],
+    [
+      "salt_lane",
+      "east",
+      "cord_lane_houses"
+    ],
+    [
+      "cord_lane_houses",
+      "east",
+      "pale_end"
+    ],
+    [
+      "cobbets_yard",
+      "east",
+      "upper_yard"
+    ],
+    [
+      "upper_yard",
+      "east",
+      "vestry_lane"
+    ],
+    [
+      "vestry_lane",
+      "east",
+      "cordwainers_row"
+    ],
+    [
+      "cordwainers_row",
+      "east",
+      "ashwarden_guild"
+    ],
+    [
+      "ashwarden_guild",
+      "east",
+      "black_hog"
+    ],
+    [
+      "black_hog",
+      "east",
+      "pig_alley_houses"
+    ],
+    [
+      "pig_alley_houses",
+      "east",
+      "salters_alley"
+    ],
+    [
+      "salters_alley",
+      "east",
+      "wrens_yard"
+    ],
+    [
+      "wrens_yard",
+      "east",
+      "wrens_end"
+    ],
+    [
+      "cobbets_forge",
+      "east",
+      "tanners_workshop"
+    ],
+    [
+      "tanners_workshop",
+      "east",
+      "monks_row"
+    ],
+    [
+      "monks_row",
+      "east",
+      "rookery_close"
+    ],
+    [
+      "rookery_close",
+      "east",
+      "dung_lane_houses"
+    ],
+    [
+      "dung_lane_houses",
+      "east",
+      "forge_cut"
+    ],
+    [
+      "forge_cut",
+      "east",
+      "guild_lane"
+    ],
+    [
+      "guild_lane",
+      "east",
+      "drovers_way"
+    ],
+    [
+      "drovers_way",
+      "east",
+      "salt_row"
+    ],
+    [
+      "salt_row",
+      "east",
+      "wrens_close"
+    ],
+    [
+      "forge_lane",
+      "east",
+      "tanners_row"
+    ],
+    [
+      "tanners_row",
+      "east",
+      "mill_lane"
+    ],
+    [
+      "mill_lane",
+      "east",
+      "back_street"
+    ],
+    [
+      "back_street",
+      "east",
+      "middle_row"
+    ],
+    [
+      "middle_row",
+      "east",
+      "smiths_row"
+    ],
+    [
+      "smiths_row",
+      "east",
+      "market_lane"
+    ],
+    [
+      "market_lane",
+      "east",
+      "wheel_lane"
+    ],
+    [
+      "wheel_lane",
+      "east",
+      "cobbler_street"
+    ],
+    [
+      "cobbler_street",
+      "east",
+      "far_lane"
+    ],
+    [
+      "ironhook",
+      "east",
+      "joiners_yard"
+    ],
+    [
+      "joiners_yard",
+      "east",
+      "slabber_row"
+    ],
+    [
+      "slabber_row",
+      "east",
+      "hobbs_remedies"
+    ],
+    [
+      "hobbs_remedies",
+      "east",
+      "crooked_row"
+    ],
+    [
+      "crooked_row",
+      "east",
+      "leaking_cup"
+    ],
+    [
+      "leaking_cup",
+      "east",
+      "buckled_boot"
+    ],
+    [
+      "buckled_boot",
+      "east",
+      "carriers_lane"
+    ],
+    [
+      "carriers_lane",
+      "east",
+      "rotten_board"
+    ],
+    [
+      "rotten_board",
+      "east",
+      "splint_close"
+    ],
+    [
+      "rat_warrens",
+      "east",
+      "old_maltings"
+    ],
+    [
+      "old_maltings",
+      "east",
+      "malt_close"
+    ],
+    [
+      "malt_close",
+      "east",
+      "packmans_stores"
+    ],
+    [
+      "packmans_stores",
+      "east",
+      "malt_cut"
+    ],
+    [
+      "malt_cut",
+      "east",
+      "salt_lane_houses"
+    ],
+    [
+      "salt_lane_houses",
+      "east",
+      "spur_lodge"
+    ],
+    [
+      "spur_lodge",
+      "east",
+      "pack_row"
+    ],
+    [
+      "pack_row",
+      "east",
+      "deep_hold"
+    ],
+    [
+      "deep_hold",
+      "east",
+      "cinder_watch"
+    ],
+    [
+      "mudlark_houses",
+      "east",
+      "spire_end"
+    ],
+    [
+      "spire_end",
+      "east",
+      "leaning_spire"
+    ],
+    [
+      "leaning_spire",
+      "east",
+      "well_lane"
+    ],
+    [
+      "well_lane",
+      "east",
+      "south_street"
+    ],
+    [
+      "south_street",
+      "east",
+      "pilgrim_way"
+    ],
+    [
+      "pilgrim_way",
+      "east",
+      "church_row"
+    ],
+    [
+      "church_row",
+      "east",
+      "sextons_lane"
+    ],
+    [
+      "sextons_lane",
+      "east",
+      "grove_lane"
+    ],
+    [
+      "grove_lane",
+      "east",
+      "ashwarden_grove"
+    ],
+    [
+      "wormgarden",
+      "south",
+      "sextons_close"
+    ],
+    [
+      "sextons_close",
+      "south",
+      "coopers_lane"
+    ],
+    [
+      "coopers_lane",
+      "south",
+      "tallow_candle"
+    ],
+    [
+      "tallow_candle",
+      "south",
+      "cobbets_yard"
+    ],
+    [
+      "cobbets_yard",
+      "south",
+      "cobbets_forge"
+    ],
+    [
+      "cobbets_forge",
+      "south",
+      "forge_lane"
+    ],
+    [
+      "forge_lane",
+      "south",
+      "ironhook"
+    ],
+    [
+      "ironhook",
+      "south",
+      "rat_warrens"
+    ],
+    [
+      "rat_warrens",
+      "south",
+      "mudlark_houses"
+    ],
+    [
+      "hollow_house",
+      "south",
+      "sextons_row"
+    ],
+    [
+      "sextons_row",
+      "south",
+      "low_lane"
+    ],
+    [
+      "low_lane",
+      "south",
+      "tallow_close"
+    ],
+    [
+      "tallow_close",
+      "south",
+      "upper_yard"
+    ],
+    [
+      "upper_yard",
+      "south",
+      "tanners_workshop"
+    ],
+    [
+      "tanners_workshop",
+      "south",
+      "tanners_row"
+    ],
+    [
+      "tanners_row",
+      "south",
+      "joiners_yard"
+    ],
+    [
+      "joiners_yard",
+      "south",
+      "old_maltings"
+    ],
+    [
+      "old_maltings",
+      "south",
+      "spire_end"
+    ],
+    [
+      "church_walk",
+      "south",
+      "bell_court"
+    ],
+    [
+      "bell_court",
+      "south",
+      "bell_crossing"
+    ],
+    [
+      "bell_crossing",
+      "south",
+      "cloister_alley"
+    ],
+    [
+      "cloister_alley",
+      "south",
+      "vestry_lane"
+    ],
+    [
+      "vestry_lane",
+      "south",
+      "monks_row"
+    ],
+    [
+      "monks_row",
+      "south",
+      "mill_lane"
+    ],
+    [
+      "mill_lane",
+      "south",
+      "slabber_row"
+    ],
+    [
+      "slabber_row",
+      "south",
+      "malt_close"
+    ],
+    [
+      "malt_close",
+      "south",
+      "leaning_spire"
+    ],
+    [
+      "church_of_the_hollow_saint",
+      "south",
+      "aldermans_well"
+    ],
+    [
+      "aldermans_well",
+      "south",
+      "broad_alley"
+    ],
+    [
+      "broad_alley",
+      "south",
+      "blind_warrens"
+    ],
+    [
+      "blind_warrens",
+      "south",
+      "cordwainers_row"
+    ],
+    [
+      "cordwainers_row",
+      "south",
+      "rookery_close"
+    ],
+    [
+      "rookery_close",
+      "south",
+      "back_street"
+    ],
+    [
+      "back_street",
+      "south",
+      "hobbs_remedies"
+    ],
+    [
+      "hobbs_remedies",
+      "south",
+      "packmans_stores"
+    ],
+    [
+      "packmans_stores",
+      "south",
+      "well_lane"
+    ],
+    [
+      "wardens_archive",
+      "south",
+      "ashwarden_square"
+    ],
+    [
+      "ashwarden_square",
+      "south",
+      "coin_street"
+    ],
+    [
+      "coin_street",
+      "south",
+      "east_warrens"
+    ],
+    [
+      "east_warrens",
+      "south",
+      "ashwarden_guild"
+    ],
+    [
+      "ashwarden_guild",
+      "south",
+      "dung_lane_houses"
+    ],
+    [
+      "dung_lane_houses",
+      "south",
+      "middle_row"
+    ],
+    [
+      "middle_row",
+      "south",
+      "crooked_row"
+    ],
+    [
+      "crooked_row",
+      "south",
+      "malt_cut"
+    ],
+    [
+      "malt_cut",
+      "south",
+      "south_street"
+    ],
+    [
+      "little_lane",
+      "south",
+      "needle_lane"
+    ],
+    [
+      "needle_lane",
+      "south",
+      "cut_passage"
+    ],
+    [
+      "cut_passage",
+      "south",
+      "marens_apothecary"
+    ],
+    [
+      "marens_apothecary",
+      "south",
+      "black_hog"
+    ],
+    [
+      "black_hog",
+      "south",
+      "forge_cut"
+    ],
+    [
+      "forge_cut",
+      "south",
+      "smiths_row"
+    ],
+    [
+      "smiths_row",
+      "south",
+      "leaking_cup"
+    ],
+    [
+      "leaking_cup",
+      "south",
+      "salt_lane_houses"
+    ],
+    [
+      "salt_lane_houses",
+      "south",
+      "pilgrim_way"
+    ],
+    [
+      "lethemoor_hall",
+      "south",
+      "kazans_stall"
+    ],
+    [
+      "kazans_stall",
+      "south",
+      "tallow_lane"
+    ],
+    [
+      "tallow_lane",
+      "south",
+      "nettlers_row"
+    ],
+    [
+      "nettlers_row",
+      "south",
+      "pig_alley_houses"
+    ],
+    [
+      "pig_alley_houses",
+      "south",
+      "guild_lane"
+    ],
+    [
+      "guild_lane",
+      "south",
+      "market_lane"
+    ],
+    [
+      "market_lane",
+      "south",
+      "buckled_boot"
+    ],
+    [
+      "buckled_boot",
+      "south",
+      "spur_lodge"
+    ],
+    [
+      "spur_lodge",
+      "south",
+      "church_row"
+    ],
+    [
+      "suthen_well",
+      "south",
+      "brocade_house"
+    ],
+    [
+      "brocade_house",
+      "south",
+      "salt_crossing"
+    ],
+    [
+      "salt_crossing",
+      "south",
+      "salt_lane"
+    ],
+    [
+      "salt_lane",
+      "south",
+      "salters_alley"
+    ],
+    [
+      "salters_alley",
+      "south",
+      "drovers_way"
+    ],
+    [
+      "drovers_way",
+      "south",
+      "wheel_lane"
+    ],
+    [
+      "wheel_lane",
+      "south",
+      "carriers_lane"
+    ],
+    [
+      "carriers_lane",
+      "south",
+      "pack_row"
+    ],
+    [
+      "pack_row",
+      "south",
+      "sextons_lane"
+    ],
+    [
+      "raven_manor",
+      "south",
+      "cobweb_inn"
+    ],
+    [
+      "cobweb_inn",
+      "south",
+      "east_street"
+    ],
+    [
+      "east_street",
+      "south",
+      "cord_lane_houses"
+    ],
+    [
+      "cord_lane_houses",
+      "south",
+      "wrens_yard"
+    ],
+    [
+      "wrens_yard",
+      "south",
+      "salt_row"
+    ],
+    [
+      "salt_row",
+      "south",
+      "cobbler_street"
+    ],
+    [
+      "cobbler_street",
+      "south",
+      "rotten_board"
+    ],
+    [
+      "rotten_board",
+      "south",
+      "deep_hold"
+    ],
+    [
+      "deep_hold",
+      "south",
+      "grove_lane"
+    ],
+    [
+      "north_wardens_post",
+      "south",
+      "suthen_estate"
+    ],
+    [
+      "suthen_estate",
+      "south",
+      "long_row"
+    ],
+    [
+      "long_row",
+      "south",
+      "pale_end"
+    ],
+    [
+      "pale_end",
+      "south",
+      "wrens_end"
+    ],
+    [
+      "wrens_end",
+      "south",
+      "wrens_close"
+    ],
+    [
+      "wrens_close",
+      "south",
+      "far_lane"
+    ],
+    [
+      "far_lane",
+      "south",
+      "splint_close"
+    ],
+    [
+      "splint_close",
+      "south",
+      "cinder_watch"
+    ],
+    [
+      "cinder_watch",
+      "south",
+      "ashwarden_grove"
+    ],
+    [
+      "hollow_house",
+      "enter",
+      "hollow_house_interior"
+    ],
+    [
+      "church_of_the_hollow_saint",
+      "enter",
+      "church_of_the_hollow_saint_interior"
+    ],
+    [
+      "wardens_archive",
+      "enter",
+      "wardens_archive_interior"
+    ],
+    [
+      "lethemoor_hall",
+      "enter",
+      "lethemoor_hall_interior"
+    ],
+    [
+      "raven_manor",
+      "enter",
+      "raven_manor_interior"
+    ],
+    [
+      "north_wardens_post",
+      "enter",
+      "north_wardens_post_interior"
+    ],
+    [
+      "sextons_close",
+      "enter",
+      "sextons_close_interior"
+    ],
+    [
+      "sextons_row",
+      "enter",
+      "sextons_row_interior"
+    ],
+    [
+      "kazans_stall",
+      "enter",
+      "kazans_stall_interior"
+    ],
+    [
+      "brocade_house",
+      "enter",
+      "brocade_house_interior"
+    ],
+    [
+      "cobweb_inn",
+      "enter",
+      "cobweb_inn_interior"
+    ],
+    [
+      "suthen_estate",
+      "enter",
+      "suthen_estate_interior"
+    ],
+    [
+      "tallow_candle",
+      "enter",
+      "tallow_candle_interior"
+    ],
+    [
+      "tallow_close",
+      "enter",
+      "tallow_close_interior"
+    ],
+    [
+      "blind_warrens",
+      "enter",
+      "blind_warrens_interior"
+    ],
+    [
+      "east_warrens",
+      "enter",
+      "east_warrens_interior"
+    ],
+    [
+      "marens_apothecary",
+      "enter",
+      "marens_apothecary_interior"
+    ],
+    [
+      "nettlers_row",
+      "enter",
+      "nettlers_row_interior"
+    ],
+    [
+      "cord_lane_houses",
+      "enter",
+      "cord_lane_houses_interior"
+    ],
+    [
+      "pale_end",
+      "enter",
+      "pale_end_interior"
+    ],
+    [
+      "cobbets_yard",
+      "enter",
+      "cobbets_yard_interior"
+    ],
+    [
+      "upper_yard",
+      "enter",
+      "upper_yard_interior"
+    ],
+    [
+      "cordwainers_row",
+      "enter",
+      "cordwainers_row_interior"
+    ],
+    [
+      "ashwarden_guild",
+      "enter",
+      "ashwarden_guild_interior"
+    ],
+    [
+      "black_hog",
+      "enter",
+      "black_hog_interior"
+    ],
+    [
+      "pig_alley_houses",
+      "enter",
+      "pig_alley_houses_interior"
+    ],
+    [
+      "wrens_yard",
+      "enter",
+      "wrens_yard_interior"
+    ],
+    [
+      "wrens_end",
+      "enter",
+      "wrens_end_interior"
+    ],
+    [
+      "cobbets_forge",
+      "enter",
+      "cobbets_forge_interior"
+    ],
+    [
+      "tanners_workshop",
+      "enter",
+      "tanners_workshop_interior"
+    ],
+    [
+      "rookery_close",
+      "enter",
+      "rookery_close_interior"
+    ],
+    [
+      "dung_lane_houses",
+      "enter",
+      "dung_lane_houses_interior"
+    ],
+    [
+      "guild_lane",
+      "enter",
+      "guild_lane_interior"
+    ],
+    [
+      "salt_row",
+      "enter",
+      "salt_row_interior"
+    ],
+    [
+      "wrens_close",
+      "enter",
+      "wrens_close_interior"
+    ],
+    [
+      "ironhook",
+      "enter",
+      "ironhook_interior"
+    ],
+    [
+      "joiners_yard",
+      "enter",
+      "joiners_yard_interior"
+    ],
+    [
+      "slabber_row",
+      "enter",
+      "slabber_row_interior"
+    ],
+    [
+      "hobbs_remedies",
+      "enter",
+      "hobbs_remedies_interior"
+    ],
+    [
+      "crooked_row",
+      "enter",
+      "crooked_row_interior"
+    ],
+    [
+      "leaking_cup",
+      "enter",
+      "leaking_cup_interior"
+    ],
+    [
+      "buckled_boot",
+      "enter",
+      "buckled_boot_interior"
+    ],
+    [
+      "rotten_board",
+      "enter",
+      "rotten_board_interior"
+    ],
+    [
+      "splint_close",
+      "enter",
+      "splint_close_interior"
+    ],
+    [
+      "rat_warrens",
+      "enter",
+      "rat_warrens_interior"
+    ],
+    [
+      "old_maltings",
+      "enter",
+      "old_maltings_interior"
+    ],
+    [
+      "malt_close",
+      "enter",
+      "malt_close_interior"
+    ],
+    [
+      "packmans_stores",
+      "enter",
+      "packmans_stores_interior"
+    ],
+    [
+      "salt_lane_houses",
+      "enter",
+      "salt_lane_houses_interior"
+    ],
+    [
+      "spur_lodge",
+      "enter",
+      "spur_lodge_interior"
+    ],
+    [
+      "deep_hold",
+      "enter",
+      "deep_hold_interior"
+    ],
+    [
+      "cinder_watch",
+      "enter",
+      "cinder_watch_interior"
+    ],
+    [
+      "mudlark_houses",
+      "enter",
+      "mudlark_houses_interior"
+    ],
+    [
+      "spire_end",
+      "enter",
+      "spire_end_interior"
+    ],
+    [
+      "leaning_spire",
+      "enter",
+      "leaning_spire_interior"
+    ]
   ]
 }

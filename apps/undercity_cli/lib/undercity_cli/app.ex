@@ -35,7 +35,7 @@ defmodule UndercityCli.App do
   @space Ratatouille.Constants.key(:space)
 
   @panel_padding 1
-  @max_log_size 35
+  @max_log_size 20
   # Ratatouille 12-column grid: 10 (main) + 2 (message log)
   @main_col_size 10
   @log_col_size 2

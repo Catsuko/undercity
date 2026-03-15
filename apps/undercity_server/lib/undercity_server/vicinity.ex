@@ -59,12 +59,7 @@ defmodule UndercityServer.Vicinity do
   Returns the name of a given block.
   """
   def name_for(block_id) do
-    base = WorldMap.block_name(block_id) || block_id
-
-    case WorldMap.building_type(block_id) do
-      nil -> base
-      bt -> "#{base} #{bt |> Atom.to_string() |> String.capitalize()}"
-    end
+    WorldMap.block_name(block_id) || block_id
   end
 
   @doc """

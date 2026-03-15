@@ -11,7 +11,7 @@ defmodule UndercityCore.WorldMap do
   @external_resource @world_file
   @world Jason.decode!(File.read!(@world_file))
 
-  @spawn_block "plaza"
+  @spawn_block "ashwarden_square"
 
   @block_defs Enum.map(@world["blocks"], fn %{"id" => id, "name" => name, "type" => type} ->
                 %{id: id, name: name, type: String.to_atom(type)}
