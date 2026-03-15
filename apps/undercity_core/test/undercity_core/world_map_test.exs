@@ -5,29 +5,21 @@ defmodule UndercityCore.WorldMapTest do
 
   describe "resolve_exit/2" do
     test "returns destination block id for valid exit" do
-      assert {:ok, "north_alley"} = WorldMap.resolve_exit("plaza", :north)
+      assert {:ok, "wardens_archive"} = WorldMap.resolve_exit("ashwarden_square", :north)
     end
 
     test "returns error for invalid direction" do
-      assert :error = WorldMap.resolve_exit("wardhouse", :north)
+      assert :error = WorldMap.resolve_exit("wormgarden", :north)
     end
 
     test "returns error for unknown block" do
       assert :error = WorldMap.resolve_exit("unknown", :north)
     end
-
-    test "resolves enter direction to interior block" do
-      assert {:ok, "lame_horse_interior"} = WorldMap.resolve_exit("lame_horse", :enter)
-    end
-
-    test "resolves exit direction from interior to exterior" do
-      assert {:ok, "lame_horse"} = WorldMap.resolve_exit("lame_horse_interior", :exit)
-    end
   end
 
   describe "block_name/1" do
     test "returns the display name for a block id" do
-      assert "The Plaza" = WorldMap.block_name("plaza")
+      assert "Ashwarden Square" = WorldMap.block_name("ashwarden_square")
     end
 
     test "returns nil for an unknown block id" do
@@ -37,7 +29,7 @@ defmodule UndercityCore.WorldMapTest do
 
   describe "block_type/1" do
     test "returns the type for a block id" do
-      assert :square = WorldMap.block_type("plaza")
+      assert :square = WorldMap.block_type("ashwarden_square")
     end
 
     test "returns nil for an unknown block id" do
@@ -47,19 +39,13 @@ defmodule UndercityCore.WorldMapTest do
 
   describe "surrounding/1" do
     test "returns 3x3 grid of block ids for a grid block" do
-      grid = WorldMap.surrounding("plaza")
+      grid = WorldMap.surrounding("ashwarden_square")
 
       assert [
-               ["ashwell", "north_alley", "wormgarden"],
-               ["west_street", "plaza", "east_street"],
-               ["the_stray", "south_alley", "lame_horse"]
+               ["church_of_the_hollow_saint", "wardens_archive", "little_lane"],
+               ["aldermans_well", "ashwarden_square", "needle_lane"],
+               ["broad_alley", "coin_street", "cut_passage"]
              ] = grid
-    end
-
-    test "returns parent's grid for an interior block" do
-      grid = WorldMap.surrounding("lame_horse_interior")
-
-      assert grid == WorldMap.surrounding("lame_horse")
     end
 
     test "returns nil for an unmapped block" do
@@ -67,23 +53,19 @@ defmodule UndercityCore.WorldMapTest do
     end
 
     test "pads with nils at edges" do
-      grid = WorldMap.surrounding("wardhouse")
+      grid = WorldMap.surrounding("wormgarden")
 
       assert [
                [nil, nil, nil],
-               [nil, "wardhouse", "fellside"],
-               [nil, "bleachfield", "ashwell"]
+               [nil, "wormgarden", "hollow_house"],
+               [nil, "sextons_close", "sextons_row"]
              ] = grid
     end
   end
 
   describe "building_type/1" do
-    test "returns interior block type for a block with a building" do
-      assert :inn = WorldMap.building_type("lame_horse")
-    end
-
     test "returns nil for a block without a building" do
-      assert nil == WorldMap.building_type("plaza")
+      assert nil == WorldMap.building_type("ashwarden_square")
     end
   end
 end

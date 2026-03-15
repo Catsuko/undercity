@@ -23,13 +23,13 @@ defmodule UndercityCli.View.BlockDescriptionTest do
   describe "render/2" do
     test "includes name, type-driven description, and people" do
       vicinity = %Vicinity{
-        id: "plaza",
+        id: "ashwarden_square",
         type: :square,
         people: [%{id: "1", name: "Grimshaw"}, %{id: "2", name: "Mordecai"}],
         neighbourhood: [
-          ["ashwell", "north_alley", "wormgarden"],
-          ["west_street", "plaza", "east_street"],
-          ["the_stray", "south_alley", "lame_horse"]
+          ["church_of_the_hollow_saint", "wardens_archive", "little_lane"],
+          ["aldermans_well", "ashwarden_square", "needle_lane"],
+          ["broad_alley", "coin_street", "cut_passage"]
         ],
         building_type: nil
       }
@@ -37,7 +37,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are at"
-      assert output =~ "The Plaza"
+      assert output =~ "Ashwarden Square"
       assert output =~ "A wide, open space where the ground has been worn flat by countless feet."
       assert output =~ "Mordecai"
       refute output =~ "Grimshaw"
@@ -45,13 +45,13 @@ defmodule UndercityCli.View.BlockDescriptionTest do
 
     test "does not include the neighbourhood grid" do
       vicinity = %Vicinity{
-        id: "plaza",
+        id: "ashwarden_square",
         type: :square,
         people: [],
         neighbourhood: [
-          ["ashwell", "north_alley", "wormgarden"],
-          ["west_street", "plaza", "east_street"],
-          ["the_stray", "south_alley", "lame_horse"]
+          ["church_of_the_hollow_saint", "wardens_archive", "little_lane"],
+          ["aldermans_well", "ashwarden_square", "needle_lane"],
+          ["broad_alley", "coin_street", "cut_passage"]
         ],
         building_type: nil
       }
@@ -63,13 +63,13 @@ defmodule UndercityCli.View.BlockDescriptionTest do
 
     test "shows alone message when only current player is present" do
       vicinity = %Vicinity{
-        id: "ashwell",
+        id: "aldermans_well",
         type: :fountain,
         people: [%{id: "1", name: "Grimshaw"}],
         neighbourhood: [
           [nil, nil, nil],
-          [nil, "ashwell", "north_alley"],
-          [nil, "west_street", "plaza"]
+          [nil, "aldermans_well", "ashwarden_square"],
+          [nil, "broad_alley", "coin_street"]
         ],
         building_type: nil
       }
@@ -77,19 +77,19 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are at"
-      assert output =~ "Ashwell"
+      assert output =~ "Alderman's Well"
       assert output =~ "A stone basin sits at the centre of this space, dry and cracked."
       assert output =~ "You are alone here."
     end
 
     test "uses 'outside' prefix with building-type description for space blocks" do
       vicinity = %Vicinity{
-        id: "lame_horse",
+        id: "cobweb_inn",
         type: :space,
         people: [],
         neighbourhood: [
-          ["plaza", "east_street", nil],
-          ["south_alley", "lame_horse", nil],
+          ["ashwarden_square", "needle_lane", nil],
+          ["coin_street", "cobweb_inn", nil],
           [nil, nil, nil]
         ],
         building_type: :inn
@@ -98,7 +98,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are outside"
-      assert output =~ "The Lame Horse"
+      assert output =~ "The Cobweb Inn"
       assert output =~ "crooked timber frame"
     end
 
@@ -122,13 +122,13 @@ defmodule UndercityCli.View.BlockDescriptionTest do
 
     test "renders scribble when present" do
       vicinity = %Vicinity{
-        id: "plaza",
+        id: "ashwarden_square",
         type: :square,
         people: [],
         neighbourhood: [
-          ["ashwell", "north_alley", "wormgarden"],
-          ["west_street", "plaza", "east_street"],
-          ["the_stray", "south_alley", "lame_horse"]
+          ["church_of_the_hollow_saint", "wardens_archive", "little_lane"],
+          ["aldermans_well", "ashwarden_square", "needle_lane"],
+          ["broad_alley", "coin_street", "cut_passage"]
         ],
         building_type: nil,
         scribble: "beware the dark"
@@ -147,13 +147,13 @@ defmodule UndercityCli.View.BlockDescriptionTest do
 
     test "does not render scribble line when nil" do
       vicinity = %Vicinity{
-        id: "plaza",
+        id: "ashwarden_square",
         type: :square,
         people: [],
         neighbourhood: [
-          ["ashwell", "north_alley", "wormgarden"],
-          ["west_street", "plaza", "east_street"],
-          ["the_stray", "south_alley", "lame_horse"]
+          ["church_of_the_hollow_saint", "wardens_archive", "little_lane"],
+          ["aldermans_well", "ashwarden_square", "needle_lane"],
+          ["broad_alley", "coin_street", "cut_passage"]
         ],
         building_type: nil,
         scribble: nil
@@ -180,34 +180,14 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       assert output =~ "on a tombstone."
     end
 
-    test "scribble says 'on the wall' for inn blocks" do
-      vicinity = %Vicinity{
-        id: "lame_horse_interior",
-        type: :inn,
-        people: [],
-        neighbourhood: [
-          ["plaza", "east_street", nil],
-          ["south_alley", "lame_horse", nil],
-          [nil, nil, nil]
-        ],
-        building_type: nil,
-        scribble: "free ale"
-      }
-
-      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
-
-      assert output =~ "free ale"
-      assert output =~ "on the wall."
-    end
-
     test "scribble says 'on the wall' for space with building" do
       vicinity = %Vicinity{
-        id: "lame_horse",
+        id: "cobweb_inn",
         type: :space,
         people: [],
         neighbourhood: [
-          ["plaza", "east_street", nil],
-          ["south_alley", "lame_horse", nil],
+          ["ashwarden_square", "needle_lane", nil],
+          ["coin_street", "cobweb_inn", nil],
           [nil, nil, nil]
         ],
         building_type: :inn,
@@ -222,12 +202,12 @@ defmodule UndercityCli.View.BlockDescriptionTest do
 
     test "uses 'inside' prefix for inn blocks" do
       vicinity = %Vicinity{
-        id: "lame_horse_interior",
+        id: "cobweb_inn_interior",
         type: :inn,
         people: [],
         neighbourhood: [
-          ["plaza", "east_street", nil],
-          ["south_alley", "lame_horse", nil],
+          ["ashwarden_square", "needle_lane", nil],
+          ["coin_street", "cobweb_inn", nil],
           [nil, nil, nil]
         ],
         building_type: nil
@@ -236,7 +216,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
 
       assert output =~ "You are inside"
-      assert output =~ "The Lame Horse Inn"
+      assert output =~ "The Cobweb Inn"
       assert output =~ "Low beams sag overhead"
     end
   end

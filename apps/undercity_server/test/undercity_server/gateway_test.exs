@@ -9,12 +9,12 @@ defmodule UndercityServer.GatewayTest do
   alias UndercityServer.Vicinity
 
   describe "enter/1" do
-    test "creates a player and spawns them in the plaza" do
+    test "creates a player and spawns them at ashwarden square" do
       name = Helpers.player_name()
       {player_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
       assert is_binary(player_id)
-      assert vicinity.id == "plaza"
+      assert vicinity.id == "ashwarden_square"
       assert vicinity.type == :square
       assert Enum.any?(vicinity.people, fn p -> p.name == name end)
     end
@@ -42,35 +42,35 @@ defmodule UndercityServer.GatewayTest do
     test "reconnects to the block the player is already in" do
       name = Helpers.player_name()
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
-      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
+      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :north)
 
       {_player_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
-      assert vicinity.id == "north_alley"
+      assert vicinity.id == "wardens_archive"
     end
 
     test "reconnects via full scan when block_id is stale" do
       name = Helpers.player_name()
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
-      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
-      # player is in north_alley; corrupt block_id to old value
-      Player.move_to(player_id, "plaza")
+      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :north)
+      # player is in wardens_archive; corrupt block_id to old value
+      Player.move_to(player_id, "ashwarden_square")
 
       {_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
-      assert vicinity.id == "north_alley"
+      assert vicinity.id == "wardens_archive"
     end
 
     test "restores player to DETS block when found in no block (crash recovery)" do
       name = Helpers.player_name()
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
       # simulate crash: remove from block but leave DETS intact
-      Block.leave("plaza", player_id)
+      Block.leave("ashwarden_square", player_id)
 
       {_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
-      assert vicinity.id == "plaza"
-      assert Block.has_person?("plaza", player_id)
+      assert vicinity.id == "ashwarden_square"
+      assert Block.has_person?("ashwarden_square", player_id)
     end
 
     test "reconnects to spawn and joins block when block_id is nil" do
@@ -78,13 +78,13 @@ defmodule UndercityServer.GatewayTest do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
       # simulate old DETS record with no block_id
       :sys.replace_state(:"player_#{player_id}", fn state -> %{state | block_id: nil} end)
-      Block.leave("plaza", player_id)
+      Block.leave("ashwarden_square", player_id)
 
       {_id, %Vicinity{} = vicinity, _constitution} = Helpers.enter_player!(name)
 
-      assert vicinity.id == "plaza"
-      assert Block.has_person?("plaza", player_id)
-      assert Player.location(player_id) == "plaza"
+      assert vicinity.id == "ashwarden_square"
+      assert Block.has_person?("ashwarden_square", player_id)
+      assert Player.location(player_id) == "ashwarden_square"
     end
   end
 
@@ -93,9 +93,9 @@ defmodule UndercityServer.GatewayTest do
       name = Helpers.player_name()
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
 
-      {:ok, {:ok, %Vicinity{} = vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
+      {:ok, {:ok, %Vicinity{} = vicinity}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :north)
 
-      assert vicinity.id == "north_alley"
+      assert vicinity.id == "wardens_archive"
       assert Enum.any?(vicinity.people, fn p -> p.name == name end)
     end
 
@@ -103,16 +103,16 @@ defmodule UndercityServer.GatewayTest do
       name = Helpers.player_name()
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(name)
 
-      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "plaza", :move, :north)
+      {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :north)
 
-      {"plaza", people} = Block.info("plaza")
+      {"ashwarden_square", people} = Block.info("ashwarden_square")
       refute player_id in people
     end
 
     test "returns error for invalid direction" do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
 
-      assert {:ok, {:error, :no_exit}, _constitution} = Gateway.perform(player_id, "plaza", :move, :up)
+      assert {:ok, {:error, :no_exit}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :up)
     end
   end
 
@@ -128,7 +128,7 @@ defmodule UndercityServer.GatewayTest do
     test "returns :not_in_block when player is not in the supplied block" do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
 
-      assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :search, nil)
+      assert {:error, :not_in_block} = Gateway.perform(player_id, "wardens_archive", :search, nil)
     end
   end
 
@@ -187,11 +187,11 @@ defmodule UndercityServer.GatewayTest do
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(attacker_id, UndercityCore.Item.new("Iron Pipe"))
 
-      # target is in plaza; attacker tries to attack from a different block
+      # target is in ashwarden_square; attacker tries to attack from a different block
       {:ok, {:ok, _}, _} = Gateway.perform(attacker_id, vicinity.id, :move, :north)
 
       assert {:error, :invalid_target} =
-               Gateway.perform(attacker_id, "north_alley", :attack, {target_id, 0, attacker_name})
+               Gateway.perform(attacker_id, "wardens_archive", :attack, {target_id, 0, attacker_name})
     end
 
     test "returns miss when target is already collapsed" do
@@ -267,7 +267,7 @@ defmodule UndercityServer.GatewayTest do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
-      Gateway.perform(player_id, "plaza", :scribble, "first")
+      Gateway.perform(player_id, "ashwarden_square", :scribble, "first")
 
       items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 1}] = items
@@ -277,7 +277,7 @@ defmodule UndercityServer.GatewayTest do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
 
-      assert {:error, :not_in_block} = Gateway.perform(player_id, "north_alley", :scribble, "hello")
+      assert {:error, :not_in_block} = Gateway.perform(player_id, "wardens_archive", :scribble, "hello")
     end
   end
 
