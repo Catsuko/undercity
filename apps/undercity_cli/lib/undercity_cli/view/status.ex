@@ -9,7 +9,7 @@ defmodule UndercityCli.View.Status do
 
   def format_message(message, category) do
     color = message_color(category)
-    label(content: "▸ #{message}", color: color, wrap: true)
+    label(content: "▸ #{message}", color: color, wrap: false)
   end
 
   defp message_color(:success), do: Ratatouille.Constants.color(:green)

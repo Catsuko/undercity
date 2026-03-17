@@ -23,7 +23,8 @@ defmodule UndercityCli.State do
     :message_log,
     :gateway,
     :window_width,
-    selection: nil
+    selection: nil,
+    log_scroll: 0
   ]
 
   @type t :: %__MODULE__{
@@ -36,7 +37,8 @@ defmodule UndercityCli.State do
           message_log: list(),
           gateway: module(),
           window_width: non_neg_integer(),
-          selection: term() | nil
+          selection: term() | nil,
+          log_scroll: non_neg_integer()
         }
 
   @doc "Clears the active selection overlay."
