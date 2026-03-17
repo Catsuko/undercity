@@ -35,10 +35,10 @@ defmodule UndercityCli.App do
   @space Ratatouille.Constants.key(:space)
 
   @panel_padding 1
-  @max_log_size 20
-  # Ratatouille 12-column grid: 10 (main) + 2 (message log)
-  @main_col_size 10
-  @log_col_size 2
+  @max_log_size 50
+  @log_visible_lines 5
+  # panel border (top + bottom) adds 2 rows to the visible line count
+  @log_panel_height @log_visible_lines + 2
 
   @impl true
   def init(context) do
@@ -100,6 +100,12 @@ defmodule UndercityCli.App do
         # Enter key — dispatch the buffered input line
         dispatch_command(state)
 
+      {:event, %{key: @arrow_up}} ->
+        scroll_up(state)
+
+      {:event, %{key: @arrow_down}} ->
+        scroll_down(state)
+
       {:event, %{key: key}} when key == @backspace or key == @backspace2 ->
         # Backspace / ctrl-h
         new_input = String.slice(state.input, 0, max(0, String.length(state.input) - 1))
@@ -126,8 +132,6 @@ defmodule UndercityCli.App do
 
   @impl true
   def render(state) do
-    left_col_width = div(state.window_width * @main_col_size, 12)
-
     bottom_bar =
       if state.selection do
         bar(do: label(content: "↑↓ navigate  ·  Enter confirm  ·  Esc cancel"))
@@ -135,30 +139,31 @@ defmodule UndercityCli.App do
         bar(do: label(content: "> #{state.input}"))
       end
 
+    log_lines =
+      state.message_log
+      |> Enum.reverse()
+      |> Enum.drop(state.log_scroll)
+      |> Enum.take(@log_visible_lines)
+      |> Enum.reverse()
+
     view bottom_bar: bottom_bar do
       panel title: "Undercity", height: :fill, padding: 0 do
-        row do
-          column size: @main_col_size do
-            panel title: "Surroundings", padding: @panel_padding do
-              Surroundings.render(state.vicinity, left_col_width)
-            end
+        panel title: "Surroundings", padding: @panel_padding do
+          Surroundings.render(state.vicinity, state.window_width)
+        end
 
-            panel title: "Location", padding: @panel_padding do
-              BlockDescription.render(state.vicinity, state.player_name)
-            end
+        panel title: "Location", padding: @panel_padding do
+          BlockDescription.render(state.vicinity, state.player_name)
+        end
 
-            if state.selection do
-              Selection.render(state.selection)
-            end
+        panel title: "Log", height: @log_panel_height, padding: 0 do
+          for {text, category} <- log_lines do
+            Status.format_message(text, category)
           end
+        end
 
-          column size: @log_col_size do
-            panel title: "Log", height: :fill, padding: @panel_padding do
-              Enum.map(state.message_log, fn {text, category} ->
-                Status.format_message(text, category)
-              end)
-            end
-          end
+        if state.selection do
+          Selection.render(state.selection)
         end
       end
     end
@@ -183,6 +188,15 @@ defmodule UndercityCli.App do
     flushed = MessageBuffer.flush()
 
     %{new_state | message_log: trim_log(new_state.message_log ++ flushed)}
+  end
+
+  defp scroll_up(state) do
+    max_scroll = max(0, length(state.message_log) - @log_visible_lines)
+    if state.log_scroll < max_scroll, do: %{state | log_scroll: state.log_scroll + 1}, else: state
+  end
+
+  defp scroll_down(state) do
+    if state.log_scroll > 0, do: %{state | log_scroll: state.log_scroll - 1}, else: state
   end
 
   defp trim_log(log) do
