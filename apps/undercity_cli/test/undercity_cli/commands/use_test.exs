@@ -50,7 +50,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:ok, {:healed, @player_id, 9, 15}}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed player1 for 15." -> :ok end)
+      expect(MessageBuffer, :success, fn "You healed yourself for 15." -> :ok end)
       result = Use.dispatch({"use", 0, 0}, @state_with_people)
       assert result.ap == 9
       assert result.hp == @state_with_people.hp + 15
@@ -61,7 +61,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:ok, {:healed, @player_id, 9, 0}}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed player1 for 0." -> :ok end)
+      expect(MessageBuffer, :success, fn "You healed yourself for 0." -> :ok end)
       result = Use.dispatch({"use", 0, 0}, @state_with_people)
       assert result.ap == 9
       assert result.hp == @state_with_people.hp
@@ -163,7 +163,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:ok, {:healed, @player_id, 9, 15}}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed player1 for 15." -> :ok end)
+      expect(MessageBuffer, :success, fn "You healed yourself for 15." -> :ok end)
       result = Use.dispatch({"use", "1 player1"}, @state_with_people)
       assert result.ap == 9
       assert result.hp == @state_with_people.hp + 15

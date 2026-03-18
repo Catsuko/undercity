@@ -82,8 +82,8 @@ defmodule UndercityCli.Commands.Use do
     Commands.handle_action(result, state, &handle_outcome(&1, &2, target_name, is_self))
   end
 
-  defp handle_outcome({:ok, {:healed, _target_id, new_ap, healed}}, state, target_name, true) do
-    MessageBuffer.success("You healed #{target_name} for #{healed}.")
+  defp handle_outcome({:ok, {:healed, _target_id, new_ap, healed}}, state, _target_name, true) do
+    MessageBuffer.success("You healed yourself for #{healed}.")
     %{state | ap: new_ap, hp: state.hp + healed}
   end
 

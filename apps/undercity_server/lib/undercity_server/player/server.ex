@@ -149,11 +149,16 @@ defmodule UndercityServer.Player.Server do
   end
 
   @impl true
-  def handle_call({:heal, amount}, _from, state) do
+  def handle_call({:heal, amount, healer_id, healer_name}, _from, state) do
     case Health.heal(state.player.health, amount) do
       {:ok, healed, health} ->
         state = %{state | player: %{state.player | health: health}}
         save!(state)
+
+        if healer_id != state.player.id and healed > 0 do
+          PlayerInbox.send_message(state.player.id, "#{healer_name} healed you for #{healed}.")
+        end
+
         {:reply, {:ok, healed}, state, @idle_timeout_ms}
 
       {:error, :collapsed} ->

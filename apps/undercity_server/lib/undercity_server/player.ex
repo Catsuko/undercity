@@ -98,9 +98,9 @@ defmodule UndercityServer.Player do
     PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, {attacker_name, weapon_name, damage}})
   end
 
-  @spec heal(String.t(), pos_integer()) :: {:ok, non_neg_integer()} | {:error, :invalid_target}
-  def heal(player_id, amount) do
-    PlayerServer.call(player_id, PlayerSupervisor, {:heal, amount})
+  @spec heal(String.t(), pos_integer(), String.t(), String.t()) :: {:ok, non_neg_integer()} | {:error, :invalid_target}
+  def heal(player_id, amount, healer_id, healer_name) do
+    PlayerServer.call(player_id, PlayerSupervisor, {:heal, amount, healer_id, healer_name})
   end
 
   @spec fetch_inbox(String.t()) :: [{String.t()}]

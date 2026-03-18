@@ -286,27 +286,27 @@ defmodule UndercityServer.PlayerTest do
     end
   end
 
-  describe "heal/2" do
+  describe "heal/4" do
     test "restores HP by the given amount", %{id: id} do
       Player.take_damage(id, {"Rat", "Claws", 20})
-      assert {:ok, 5} = Player.heal(id, 5)
+      assert {:ok, 5} = Player.heal(id, 5, "healer_id", "Healer")
       assert 35 = Player.constitution(id).hp
     end
 
     test "clamps HP at max when heal exceeds deficit", %{id: id} do
       Player.take_damage(id, {"Rat", "Claws", 5})
-      assert {:ok, 5} = Player.heal(id, 100)
+      assert {:ok, 5} = Player.heal(id, 100, "healer_id", "Healer")
       assert 50 = Player.constitution(id).hp
     end
 
     test "returns healed 0 when HP is at max", %{id: id} do
-      assert {:ok, 0} = Player.heal(id, 10)
+      assert {:ok, 0} = Player.heal(id, 10, "healer_id", "Healer")
       assert 50 = Player.constitution(id).hp
     end
 
     test "returns :invalid_target when HP is 0", %{id: id} do
       collapse(id)
-      assert {:error, :invalid_target} = Player.heal(id, 10)
+      assert {:error, :invalid_target} = Player.heal(id, 10, "healer_id", "Healer")
       assert 0 = Player.constitution(id).hp
     end
   end

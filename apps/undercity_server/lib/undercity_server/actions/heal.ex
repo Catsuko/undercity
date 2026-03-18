@@ -10,7 +10,6 @@ defmodule UndercityServer.Actions.Heal do
   alias UndercityCore.Item.Remedy
   alias UndercityServer.Block
   alias UndercityServer.Player
-  alias UndercityServer.Player.Inbox, as: PlayerInbox
 
   @ap_cost 1
 
@@ -20,21 +19,14 @@ defmodule UndercityServer.Actions.Heal do
          {:ok, new_ap} <- Player.use_item(player_id, item_idx, @ap_cost) do
       {:heal, amount} = Remedy.effect(item_name)
 
-      case Player.heal(target_id, amount) do
+      case Player.heal(target_id, amount, player_id, healer_name) do
         {:ok, healed} ->
-          notify_healed(player_id, target_id, healer_name, healed)
           {:ok, {:healed, target_id, new_ap, healed}}
 
         {:error, :invalid_target} ->
           {:error, :invalid_target}
       end
     end
-  end
-
-  defp notify_healed(same_id, same_id, _healer_name, _healed), do: :ok
-
-  defp notify_healed(_player_id, target_id, healer_name, healed) do
-    PlayerInbox.send_message(target_id, "#{healer_name} healed you for #{healed}.")
   end
 
   defp validate_target(block_id, target_id) do
