@@ -10,10 +10,10 @@ defmodule UndercityCore.Player do
   """
 
   alias UndercityCore.ActionPoints
-  alias UndercityCore.Food
   alias UndercityCore.Health
   alias UndercityCore.Inventory
   alias UndercityCore.Item
+  alias UndercityCore.Item.Food
 
   defstruct [:id, :name, :inventory, :action_points, :health]
 

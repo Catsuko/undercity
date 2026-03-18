@@ -1,7 +1,7 @@
-defmodule UndercityCore.FoodTest do
+defmodule UndercityCore.Item.FoodTest do
   use ExUnit.Case, async: true
 
-  alias UndercityCore.Food
+  alias UndercityCore.Item.Food
 
   describe "effect/1" do
     test "mushroom returns heal or damage" do

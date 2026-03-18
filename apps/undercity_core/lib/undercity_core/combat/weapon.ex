@@ -9,6 +9,7 @@ defmodule UndercityCore.Combat.Weapon do
 
   alias UndercityCore.Inventory
   alias UndercityCore.Item
+  alias UndercityCore.Item.Catalogue
 
   @type stats :: %{
           damage_min: pos_integer(),
@@ -17,8 +18,10 @@ defmodule UndercityCore.Combat.Weapon do
         }
 
   @registry %{
-    "Iron Pipe" => %{damage_min: 2, damage_max: 6, hit_modifier: 0.0}
+    iron_pipe: %{damage_min: 2, damage_max: 6, hit_modifier: 0.0}
   }
+
+  @registry_by_name Map.new(@registry, fn {id, s} -> {Catalogue.name!(id), s} end)
 
   @doc """
   Returns combat stats for the named weapon, or `:not_a_weapon` if the name
@@ -26,9 +29,9 @@ defmodule UndercityCore.Combat.Weapon do
   """
   @spec stats(String.t()) :: {:ok, stats()} | :not_a_weapon
   def stats(name) when is_binary(name) do
-    case Map.get(@registry, name) do
-      nil -> :not_a_weapon
-      stats -> {:ok, stats}
+    case Map.fetch(@registry_by_name, name) do
+      {:ok, s} -> {:ok, s}
+      :error -> :not_a_weapon
     end
   end
 
@@ -36,7 +39,13 @@ defmodule UndercityCore.Combat.Weapon do
   Returns `true` if the given item name is a registered weapon.
   """
   @spec weapon?(String.t()) :: boolean()
-  def weapon?(name) when is_binary(name), do: Map.has_key?(@registry, name)
+  def weapon?(name) when is_binary(name), do: Map.has_key?(@registry_by_name, name)
+
+  @doc """
+  Returns the catalogue atom ids of all registered weapons.
+  """
+  @spec all_ids() :: [atom()]
+  def all_ids, do: Map.keys(@registry)
 
   @doc """
   Finds the first weapon in the given inventory.
