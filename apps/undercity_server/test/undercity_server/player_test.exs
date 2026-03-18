@@ -53,7 +53,7 @@ defmodule UndercityServer.PlayerTest do
     test "spends AP and consumes item atomically", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
 
-      assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
+      assert {:ok, 49} = Player.use_item(id, 0, 1)
 
       assert [%Item{name: "Chalk", uses: 2}] = Player.check_inventory(id)
       assert 49 = Player.constitution(id).ap
@@ -62,7 +62,7 @@ defmodule UndercityServer.PlayerTest do
     test "removes item on last use", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 1))
 
-      assert {:ok, 49} = Player.use_item(id, "Chalk", 1)
+      assert {:ok, 49} = Player.use_item(id, 0, 1)
 
       assert [] = Player.check_inventory(id)
     end
@@ -73,13 +73,13 @@ defmodule UndercityServer.PlayerTest do
       # Drain all AP
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
-      assert {:error, :exhausted} = Player.use_item(id, "Chalk", 1)
+      assert {:error, :exhausted} = Player.use_item(id, 0, 1)
 
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
     test "returns :item_missing when item not in inventory, AP untouched", %{id: id} do
-      assert {:error, :item_missing} = Player.use_item(id, "Chalk", 1)
+      assert {:error, :item_missing} = Player.use_item(id, 0, 1)
 
       assert 50 = Player.constitution(id).ap
     end
@@ -87,7 +87,7 @@ defmodule UndercityServer.PlayerTest do
     test "spends custom AP cost", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 5))
 
-      assert {:ok, 47} = Player.use_item(id, "Chalk", 3)
+      assert {:ok, 47} = Player.use_item(id, 0, 3)
 
       assert 47 = Player.constitution(id).ap
     end
@@ -230,7 +230,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Chalk", 3))
       collapse(id)
 
-      assert {:error, :collapsed} = Player.use_item(id, "Chalk", 1)
+      assert {:error, :collapsed} = Player.use_item(id, 0, 1)
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
@@ -283,6 +283,31 @@ defmodule UndercityServer.PlayerTest do
       :timer.sleep(10)
 
       assert [] = Player.fetch_inbox(id)
+    end
+  end
+
+  describe "heal/2" do
+    test "restores HP by the given amount", %{id: id} do
+      Player.take_damage(id, {"Rat", "Claws", 20})
+      assert {:ok, 5} = Player.heal(id, 5)
+      assert 35 = Player.constitution(id).hp
+    end
+
+    test "clamps HP at max when heal exceeds deficit", %{id: id} do
+      Player.take_damage(id, {"Rat", "Claws", 5})
+      assert {:ok, 5} = Player.heal(id, 100)
+      assert 50 = Player.constitution(id).hp
+    end
+
+    test "returns healed 0 when HP is at max", %{id: id} do
+      assert {:ok, 0} = Player.heal(id, 10)
+      assert 50 = Player.constitution(id).hp
+    end
+
+    test "returns :invalid_target when HP is 0", %{id: id} do
+      collapse(id)
+      assert {:error, :invalid_target} = Player.heal(id, 10)
+      assert 0 = Player.constitution(id).hp
     end
   end
 

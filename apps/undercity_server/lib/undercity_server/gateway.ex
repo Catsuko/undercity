@@ -45,4 +45,7 @@ defmodule UndercityServer.Gateway do
 
   defp dispatch(player_id, block_id, :attack, {target_id, weapon_index, attacker_name}),
     do: Actions.Attack.attack(player_id, attacker_name, block_id, target_id, weapon_index)
+
+  defp dispatch(player_id, block_id, :heal, {target_id, item_idx, healer_name}),
+    do: Actions.Heal.heal(player_id, healer_name, block_id, target_id, item_idx)
 end
