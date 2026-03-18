@@ -54,14 +54,15 @@ defmodule UndercityCli.View.BlockDescription do
       "A narrow building of dark brick, its shutters close to the street and a step worn hollow at the door.",
     townhouse: "A bare entrance hall giving onto a run of warped doors, the smell of close-lived-in air still present.",
     space_workshop: "A wide doorway of bare timber, the smell of sawdust and metal oil still faint in the air.",
-    workshop: "Overturned benches and scattered shavings cover the floor, the tool hooks along the walls mostly bare."
+    workshop: "Overturned benches and scattered shavings cover the floor, the tool hooks along the walls mostly bare.",
+    unknown: "A place unlike anything easily described."
   }
 
   @grid_color Ratatouille.Constants.color(:white)
   @highlight Ratatouille.Constants.color(:cyan)
 
   def render(%Vicinity{} = vicinity, current_player) do
-    description = Map.fetch!(@descriptions, description_key(vicinity))
+    description = Map.get(@descriptions, description_key(vicinity), @descriptions[:unknown])
     prefix = block_prefix(vicinity)
     name = Vicinity.name(vicinity)
 
@@ -111,6 +112,8 @@ defmodule UndercityCli.View.BlockDescription do
 
   def scribble_surface(%Vicinity{type: :graveyard}), do: "on a tombstone"
 
+  # Intentionally permissive fallback: space and interior blocks use "on the wall";
+  # all others, including any unrecognised types, use "on the ground".
   def scribble_surface(%Vicinity{} = v) do
     if v.type == :space or Vicinity.inside?(v), do: "on the wall", else: "on the ground"
   end
