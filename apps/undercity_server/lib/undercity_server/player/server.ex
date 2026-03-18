@@ -112,8 +112,20 @@ defmodule UndercityServer.Player.Server do
   end
 
   @impl true
-  def handle_call({:use_item, item_name, cost}, _from, state) do
+  def handle_call({:use_item, item_name, cost}, _from, state) when is_binary(item_name) do
     with {:ok, inventory} <- consume_item(state.player.inventory, item_name),
+         {:ok, player} <- Player.exert(state.player, cost, now()) do
+      state = %{state | player: %{player | inventory: inventory}}
+      save!(state)
+      {:reply, {:ok, ActionPoints.current(state.player.action_points)}, state, @idle_timeout_ms}
+    else
+      {:error, _} = error -> {:reply, error, state, @idle_timeout_ms}
+    end
+  end
+
+  @impl true
+  def handle_call({:use_item, item_idx, cost}, _from, state) when is_integer(item_idx) do
+    with {:ok, inventory} <- consume_at(state.player.inventory, item_idx),
          {:ok, player} <- Player.exert(state.player, cost, now()) do
       state = %{state | player: %{player | inventory: inventory}}
       save!(state)
@@ -133,6 +145,24 @@ defmodule UndercityServer.Player.Server do
 
       {:error, _} = error ->
         {:reply, error, state, @idle_timeout_ms}
+    end
+  end
+
+  @impl true
+  def handle_call({:heal, amount, healer_id, healer_name}, _from, state) do
+    case Health.heal(state.player.health, amount) do
+      {:ok, healed, health} ->
+        state = %{state | player: %{state.player | health: health}}
+        save!(state)
+
+        if healer_id != state.player.id and healed > 0 do
+          PlayerInbox.send_message(state.player.id, "#{healer_name} healed you for #{healed}.")
+        end
+
+        {:reply, {:ok, healed}, state, @idle_timeout_ms}
+
+      {:error, :collapsed} ->
+        {:reply, {:error, :invalid_target}, state, @idle_timeout_ms}
     end
   end
 
@@ -184,6 +214,19 @@ defmodule UndercityServer.Player.Server do
   defp save!(state) do
     data = state.player |> Map.from_struct() |> Map.put(:block_id, state.block_id)
     :ok = PlayerStore.save(state.player.id, data)
+  end
+
+  defp consume_at(inventory, index) do
+    case Enum.at(Inventory.list_items(inventory), index) do
+      nil ->
+        {:error, :item_missing}
+
+      item ->
+        case Item.use(item) do
+          {:ok, updated} -> {:ok, Inventory.replace_at(inventory, index, updated)}
+          :spent -> {:ok, Inventory.remove_at(inventory, index)}
+        end
+    end
   end
 
   defp consume_item(inventory, item_name) do

@@ -16,7 +16,8 @@ defmodule UndercityCore.Item.Catalogue do
     %Entry{id: :iron_pipe, name: "Iron Pipe", weapon: true},
     %Entry{id: :chalk, name: "Chalk", default_uses: 5},
     %Entry{id: :mushroom, name: "Mushroom", edible: true},
-    %Entry{id: :junk, name: "Junk"}
+    %Entry{id: :junk, name: "Junk"},
+    %Entry{id: :salve, name: "Salve", default_uses: 1}
   ]
 
   @by_id Map.new(@entries, fn e -> {e.id, e} end)

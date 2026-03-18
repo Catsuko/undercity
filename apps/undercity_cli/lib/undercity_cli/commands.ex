@@ -31,6 +31,7 @@ defmodule UndercityCli.Commands do
     {UndercityCli.Commands.Eat, ["eat"]},
     {UndercityCli.Commands.Scribble, ["scribble"]},
     {UndercityCli.Commands.Attack, ["attack"]},
+    {UndercityCli.Commands.Use, ["use"]},
     {UndercityCli.Commands.Help, ["help"]}
   ]
 

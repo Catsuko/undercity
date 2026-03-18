@@ -19,7 +19,10 @@ defmodule UndercityCore.LootTable do
     square: [{0.20, :chalk}, {0.05, :junk}, {0.05, :iron_pipe}],
     street: [{0.08, :iron_pipe}, {0.10, :junk}],
     graveyard: [{0.20, :mushroom}],
-    inn: [{0.40, :iron_pipe}]
+    inn: [{0.40, :iron_pipe}],
+    apothecary: [{0.25, :salve}],
+    church: [{0.10, :salve}],
+    bazaar: [{0.10, :salve}, {0.10, :junk}]
   }
 
   @default_table [{0.10, :junk}]
