@@ -81,7 +81,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:error, :item_missing}
       end)
 
-      expect(MessageBuffer, :warn, fn "You reach for the salve. Theres nothing there." -> :ok end)
+      expect(MessageBuffer, :warn, fn "You don't have that anymore." -> :ok end)
       assert Use.dispatch({"use", 0, 0}, @state_with_people) == @state_with_people
     end
 
@@ -122,7 +122,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:error, :invalid_target}
       end)
 
-      expect(MessageBuffer, :warn, fn "Zara is not here." -> :ok end)
+      expect(MessageBuffer, :warn, fn "Zara can't be healed." -> :ok end)
       assert Use.dispatch({"use", 0, 1}, @state_with_people) == @state_with_people
     end
 
@@ -131,7 +131,7 @@ defmodule UndercityCli.Commands.UseTest do
         {:error, :item_missing}
       end)
 
-      expect(MessageBuffer, :warn, fn "You reach for the salve. Theres nothing there." -> :ok end)
+      expect(MessageBuffer, :warn, fn "You don't have that anymore." -> :ok end)
       assert Use.dispatch({"use", 0, 1}, @state_with_people) == @state_with_people
     end
   end
@@ -183,7 +183,7 @@ defmodule UndercityCli.Commands.UseTest do
 
     test "target not in vicinity warns" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
-      expect(MessageBuffer, :warn, fn "Unknown is not here." -> :ok end)
+      expect(MessageBuffer, :warn, fn "Unknown can't be healed." -> :ok end)
       assert Use.dispatch({"use", "1 Unknown"}, @state_with_people) == @state_with_people
     end
   end

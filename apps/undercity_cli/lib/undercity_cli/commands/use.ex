@@ -93,7 +93,7 @@ defmodule UndercityCli.Commands.Use do
   end
 
   defp handle_outcome({:error, :item_missing}, state, _target_name, _is_self) do
-    MessageBuffer.warn("You reach for the salve. Theres nothing there.")
+    MessageBuffer.warn("You don't have that anymore.")
     state
   end
 
@@ -112,7 +112,7 @@ defmodule UndercityCli.Commands.Use do
   end
 
   defp not_here(name, state) do
-    MessageBuffer.warn("#{name} is not here.")
+    MessageBuffer.warn("#{name} can't be healed.")
     state
   end
 
