@@ -132,5 +132,30 @@ defmodule UndercityServer.Actions.HealTest do
 
       assert [%Item{name: "Salve"}] = Player.check_inventory(actor_id)
     end
+
+    test "sends inbox message to target on success", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
+      damage(target_id, 20)
+      Player.add_item(actor_id, Item.new("Salve", 1))
+      :timer.sleep(10)
+      Player.fetch_inbox(target_id)
+
+      Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      :timer.sleep(10)
+
+      assert [{"Healer healed you for 15."}] = Player.fetch_inbox(target_id)
+    end
+
+    test "does not send inbox message to actor when healing self",
+         %{actor_id: actor_id, block_id: block_id} do
+      damage(actor_id, 20)
+      Player.add_item(actor_id, Item.new("Salve", 1))
+      :timer.sleep(10)
+      Player.fetch_inbox(actor_id)
+
+      Heal.heal(actor_id, "Healer", block_id, actor_id, 0)
+      :timer.sleep(10)
+
+      assert [] = Player.fetch_inbox(actor_id)
+    end
   end
 end
