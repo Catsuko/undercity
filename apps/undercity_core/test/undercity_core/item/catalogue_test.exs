@@ -32,6 +32,10 @@ defmodule UndercityCore.Item.CatalogueTest do
       assert {:ok, %Entry{weapon: false, edible: false, default_uses: nil}} =
                Catalogue.fetch(:junk)
     end
+
+    test "salve entry has default_uses set" do
+      assert {:ok, %Entry{default_uses: 1}} = Catalogue.fetch(:salve)
+    end
   end
 
   describe "fetch_by_name/1" do
@@ -74,6 +78,7 @@ defmodule UndercityCore.Item.CatalogueTest do
       assert :chalk in ids
       assert :mushroom in ids
       assert :junk in ids
+      assert :salve in ids
     end
 
     test "every entry has a non-empty name" do

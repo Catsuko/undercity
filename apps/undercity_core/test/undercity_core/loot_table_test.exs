@@ -25,6 +25,21 @@ defmodule UndercityCore.LootTableTest do
                :inn |> LootTable.for_block_type() |> LootTable.roll(0.20)
     end
 
+    test "apothecary table can yield Salve" do
+      assert {:found, %Item{name: "Salve", uses: 1}} =
+               :apothecary |> LootTable.for_block_type() |> LootTable.roll(0.10)
+    end
+
+    test "church table can yield Salve" do
+      assert {:found, %Item{name: "Salve", uses: 1}} =
+               :church |> LootTable.for_block_type() |> LootTable.roll(0.05)
+    end
+
+    test "bazaar table can yield Salve" do
+      assert {:found, %Item{name: "Salve", uses: 1}} =
+               :bazaar |> LootTable.for_block_type() |> LootTable.roll(0.05)
+    end
+
     test "unknown block type falls back to default table and can yield Junk" do
       assert {:found, %Item{name: "Junk", uses: nil}} =
                :fountain |> LootTable.for_block_type() |> LootTable.roll(0.05)

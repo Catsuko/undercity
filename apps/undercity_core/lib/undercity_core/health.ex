@@ -33,6 +33,21 @@ defmodule UndercityCore.Health do
   def current(%__MODULE__{hp: hp}), do: hp
 
   @doc """
+  Applies a validated heal, returning the amount actually healed.
+
+  Returns `{:ok, healed, new_health}` where `healed` is clamped to the
+  remaining HP deficit (may be 0 if already at max). Returns
+  `{:error, :collapsed}` if the player is at 0 HP.
+  """
+  @spec heal(t(), pos_integer()) :: {:ok, non_neg_integer(), t()} | {:error, :collapsed}
+  def heal(%__MODULE__{hp: 0}, _amount), do: {:error, :collapsed}
+
+  def heal(%__MODULE__{hp: hp} = health, amount) do
+    healed = min(amount, @max - hp)
+    {:ok, healed, %{health | hp: hp + healed}}
+  end
+
+  @doc """
   Applies a health effect. Heals or damages, clamped to 0..max.
   """
   @spec apply_effect(t(), {:heal, pos_integer()} | {:damage, pos_integer()}) :: t()

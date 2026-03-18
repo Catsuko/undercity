@@ -21,6 +21,24 @@ defmodule UndercityCore.HealthTest do
     end
   end
 
+  describe "heal/2" do
+    test "returns healed amount and new health" do
+      assert {:ok, 5, %Health{hp: 30}} = Health.heal(%Health{hp: 25}, 5)
+    end
+
+    test "clamps healed amount to remaining deficit" do
+      assert {:ok, 2, %Health{hp: 50}} = Health.heal(%Health{hp: 48}, 15)
+    end
+
+    test "returns healed 0 when already at max" do
+      assert {:ok, 0, %Health{hp: 50}} = Health.heal(%Health{hp: 50}, 15)
+    end
+
+    test "returns :collapsed when hp is 0" do
+      assert {:error, :collapsed} = Health.heal(%Health{hp: 0}, 15)
+    end
+  end
+
   describe "apply_effect/2" do
     test "heals up to max" do
       assert %Health{hp: 50} = Health.apply_effect(%Health{hp: 48}, {:heal, 5})
