@@ -200,6 +200,36 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       assert output =~ "on the wall."
     end
 
+    test "falls back to generic description for unrecognised block type" do
+      vicinity = %Vicinity{
+        id: "some_future_block",
+        type: :new_block_type,
+        people: [],
+        neighbourhood: [[nil, nil, nil], [nil, "some_future_block", nil], [nil, nil, nil]],
+        building_type: nil
+      }
+
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
+
+      assert output =~ "A place unlike anything easily described."
+    end
+
+    test "scribble surface falls back to 'on the ground' for unrecognised block type" do
+      vicinity = %Vicinity{
+        id: "some_future_block",
+        type: :new_block_type,
+        people: [],
+        neighbourhood: [[nil, nil, nil], [nil, "some_future_block", nil], [nil, nil, nil]],
+        building_type: nil,
+        scribble: "test message"
+      }
+
+      output = vicinity |> BlockDescription.render("Grimshaw") |> all_text()
+
+      assert output =~ "test message"
+      assert output =~ "on the ground."
+    end
+
     test "uses 'inside' prefix for inn blocks" do
       vicinity = %Vicinity{
         id: "cobweb_inn_interior",
