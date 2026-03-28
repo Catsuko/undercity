@@ -36,7 +36,7 @@ One-sentence summary of the module's role.
 - Bullet list: specific responsibilities. Aim for 2–5 bullets.
 - Omit anything obvious from the module name.
 - Do not describe implementation details — describe behaviour and contracts.
-- Use `@moduledoc false` only for modules that are intentionally private and should not appear in generated docs (e.g. internal helpers with no public API). This still satisfies the doc requirement.
+- Do NOT use `@moduledoc false`. Every module — including plain structs and data containers — must have a real `@moduledoc` explaining its purpose and fields. `@moduledoc false` suppresses documentation silently and makes the module opaque to LLM agents reading the codebase.
 
 **Example:**
 
