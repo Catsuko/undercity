@@ -13,14 +13,15 @@ defmodule Undercity.MixProject do
 
   defp aliases do
     [
-      lint: ["format --check-formatted", "credo --strict"]
+      lint: ["format --check-formatted", "credo --strict", "doctor --short"]
     ]
   end
 
   defp deps do
     [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:styler, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:styler, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:doctor, "~> 0.21.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
