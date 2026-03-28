@@ -1,7 +1,14 @@
 defmodule Mix.Tasks.Undercity.Join do
   @shortdoc "Join an Undercity game server"
 
-  @moduledoc false
+  @moduledoc """
+  Mix task that connects to a running Undercity server and launches the CLI.
+
+  - Accepts `--player <name>` to set the player name (defaults to `"anonymous"`)
+  - Displays an animated spinner while connecting via `UndercityServer.Gateway.connect/1`
+  - On success, configures application env and starts the Ratatouille runtime with `UndercityCli.App`
+  - On failure, prints an error via the spinner and exits
+  """
   use Mix.Task
 
   alias UndercityCli.App
@@ -9,6 +16,7 @@ defmodule Mix.Tasks.Undercity.Join do
   alias UndercityCli.State
   alias UndercityServer.Vicinity
 
+  @doc false
   def run(args) do
     {opts, _, _} = OptionParser.parse(args, strict: [player: :string])
     player = opts[:player] || "anonymous"

@@ -1,12 +1,26 @@
 defmodule UndercityCli.Commands.Drop do
-  @moduledoc "Handles drop commands (bare and indexed)."
+  @moduledoc """
+  Handles the `drop` command, removing an item from the player's inventory.
+
+  - `drop` — opens an inventory selector overlay
+  - `drop <n>` — drops the 1-based item at index `n` directly via Gateway
+  - Re-dispatch stage `{"drop", item_idx}` (integer) — executes the drop
+  """
 
   alias UndercityCli.Commands
   alias UndercityCli.Commands.Selection
   alias UndercityCli.MessageBuffer
 
+  @doc "Returns the usage hint string for the drop command."
   def usage, do: "drop [n]"
 
+  @doc """
+  Dispatches a drop command, routing through the selection pipeline as needed.
+
+  - Opens an inventory overlay when called with a bare verb string.
+  - Parses and delegates to the canonical integer-index form when called with a string index.
+  - Executes via Gateway when called with an integer index.
+  """
   # Bare "drop" — fetch inventory and set up selection overlay
   def dispatch(verb, state) when is_binary(verb) do
     Selection.from_inventory(state, verb, "Your inventory is empty.", "Drop which item?")

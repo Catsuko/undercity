@@ -1,5 +1,11 @@
 defmodule UndercityCli.Commands.Move do
-  @moduledoc "Handles movement commands."
+  @moduledoc """
+  Handles movement commands, updating the player's vicinity after a successful move.
+
+  - Accepts directional verbs: `north`, `south`, `east`, `west` (and aliases `n`, `s`, `e`, `w`), `enter`, `exit`
+  - Calls the Gateway `:move` action and updates `state.vicinity` and `state.ap` on success
+  - Emits a warning if the chosen direction has no exit
+  """
 
   alias UndercityCli.Commands
   alias UndercityCli.MessageBuffer
@@ -18,8 +24,15 @@ defmodule UndercityCli.Commands.Move do
     "exit" => :exit
   }
 
+  @doc "Returns the usage hint string for movement commands."
   def usage, do: "north, south, east, west (or n, s, e, w), enter, exit"
 
+  @doc """
+  Dispatches a movement command for the given directional verb.
+
+  - Updates `state.vicinity` and `state.ap` on a successful move.
+  - Emits a warning and updates only `state.ap` when there is no exit in that direction.
+  """
   def dispatch(verb, state) do
     direction = Map.fetch!(@directions, verb)
 

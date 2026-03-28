@@ -1,21 +1,23 @@
 defmodule UndercityCli.MessageBuffer do
   @moduledoc """
-  Agent-backed buffer for accumulating flash messages within a game session.
+  Agent-backed buffer for accumulating flash messages during a game session.
 
-  Messages are pushed by commands and the game loop, then flushed once per
-  input cycle before the next prompt is shown. The named Agent allows other
-  processes (e.g. future pub/sub notifications) to push messages asynchronously.
+  - Stores `{text, category}` tuples pushed by command modules and the game loop
+  - Flushed once per input cycle by `App` before the next render, appending to the message log
+  - Registered under its own module name so any process can push messages without a PID reference
+  - Categories are `:info`, `:success`, or `:warning`, which drive log colour in `View.Status`
   """
 
   @name __MODULE__
 
   @doc """
-  Starts the MessageBuffer Agent under a supervisor.
+  Starts the MessageBuffer Agent, registering it under its module name.
   """
   def start_link(_opts \\ []) do
     Agent.start_link(fn -> [] end, name: @name)
   end
 
+  @doc false
   def child_spec(opts) do
     %{
       id: __MODULE__,
@@ -26,7 +28,7 @@ defmodule UndercityCli.MessageBuffer do
   end
 
   @doc """
-  Pushes a single message onto the buffer.
+  Pushes a single `{text, category}` message onto the buffer.
   """
   def push(text, category) when is_binary(text) do
     Agent.update(@name, &(&1 ++ [{text, category}]))
@@ -39,17 +41,23 @@ defmodule UndercityCli.MessageBuffer do
     Agent.update(@name, &(&1 ++ messages))
   end
 
-  @doc "Pushes an info message onto the buffer."
+  @doc """
+  Pushes an `:info` message onto the buffer.
+  """
   def info(text), do: push(text, :info)
 
-  @doc "Pushes a success message onto the buffer."
+  @doc """
+  Pushes a `:success` message onto the buffer.
+  """
   def success(text), do: push(text, :success)
 
-  @doc "Pushes a warning message onto the buffer."
+  @doc """
+  Pushes a `:warning` message onto the buffer.
+  """
   def warn(text), do: push(text, :warning)
 
   @doc """
-  Returns all accumulated messages and clears the buffer.
+  Returns all accumulated messages as a list and clears the buffer atomically.
   """
   def flush do
     Agent.get_and_update(@name, &{&1, []})

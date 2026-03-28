@@ -17,8 +17,17 @@ defmodule UndercityCli.Commands.Use do
   alias UndercityCli.Commands.Selection
   alias UndercityCli.MessageBuffer
 
+  @doc "Returns the usage hint string for the use command."
   def usage, do: "use [n] [target]"
 
+  @doc """
+  Dispatches the use command, routing through the two-stage selection pipeline as needed.
+
+  - Opens an inventory overlay when called with a bare verb string.
+  - Parses `n` and optional target from a string, then delegates to the typed forms.
+  - After item selection, resolves the item and opens a target overlay.
+  - Executes the Gateway `:heal` action once both item and target are resolved.
+  """
   # Bare "use" — set up inventory selection
   def dispatch(verb, state) when is_binary(verb) do
     Selection.from_inventory(state, verb, "Your inventory is empty.", "Use which item?")

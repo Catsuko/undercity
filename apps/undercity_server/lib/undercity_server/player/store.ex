@@ -12,10 +12,22 @@ defmodule UndercityServer.Player.Store do
 
   # Client API
 
+  @doc """
+  Starts the Player.Store GenServer and opens the shared DETS table.
+
+  - Opens or creates `data/players/players.dets`.
+  - Registers the process as `UndercityServer.Player.Store`.
+  """
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  @doc """
+  Validates `player_data.name` and persists the player record if valid.
+
+  - Returns `:ok` on success.
+  - Returns `{:error, :invalid_name}` if the name contains characters outside `[a-zA-Z0-9]`.
+  """
   @spec register(String.t(), map()) :: :ok | {:error, :invalid_name}
   def register(player_id, player_data) do
     if player_data.name =~ ~r/^[a-zA-Z0-9]+$/ do
@@ -25,21 +37,44 @@ defmodule UndercityServer.Player.Store do
     end
   end
 
+  @doc """
+  Persists `player_data` for `player_id` to DETS, overwriting any existing record.
+
+  Returns `:ok`. Writes are synchronous and serialised through the GenServer.
+  """
   @spec save(String.t(), map()) :: :ok
   def save(player_id, player_data) do
     GenServer.call(via(), {:save, player_id, player_data})
   end
 
+  @doc """
+  Loads the persisted data map for `player_id` from DETS.
+
+  - Returns `{:ok, data}` if a record exists.
+  - Returns `:error` if the player has never been saved.
+  """
   @spec load(String.t()) :: {:ok, map()} | :error
   def load(player_id) do
     GenServer.call(via(), {:load, player_id})
   end
 
+  @doc """
+  Returns a map of player ID to display name for each ID in `player_ids`.
+
+  IDs with no persisted record are omitted from the result.
+  """
   @spec get_names([String.t()]) :: %{String.t() => String.t()}
   def get_names(player_ids) do
     GenServer.call(via(), {:get_names, player_ids})
   end
 
+  @doc """
+  Scans the DETS table to find the player ID associated with `name`.
+
+  - Returns `{:ok, player_id}` if found.
+  - Returns `:error` if no player with that name exists.
+  - Performs a full table scan; prefer caching results when called frequently.
+  """
   @spec find_id_by_name(String.t()) :: {:ok, String.t()} | :error
   def find_id_by_name(name) do
     GenServer.call(via(), {:find_id_by_name, name})
@@ -49,6 +84,7 @@ defmodule UndercityServer.Player.Store do
 
   # Server callbacks
 
+  @doc false
   @impl true
   def init(:ok) do
     path = String.to_charlist(data_path())
@@ -57,12 +93,14 @@ defmodule UndercityServer.Player.Store do
     {:ok, %{table: :player_store}}
   end
 
+  @doc false
   @impl true
   def handle_call({:save, player_id, player_data}, _from, state) do
     :ok = :dets.insert(state.table, {player_id, player_data})
     {:reply, :ok, state}
   end
 
+  @doc false
   @impl true
   def handle_call({:load, player_id}, _from, state) do
     result =
@@ -74,6 +112,7 @@ defmodule UndercityServer.Player.Store do
     {:reply, result, state}
   end
 
+  @doc false
   @impl true
   def handle_call({:get_names, player_ids}, _from, state) do
     names =
@@ -87,6 +126,7 @@ defmodule UndercityServer.Player.Store do
     {:reply, names, state}
   end
 
+  @doc false
   @impl true
   def handle_call({:find_id_by_name, name}, _from, state) do
     result =
@@ -101,6 +141,7 @@ defmodule UndercityServer.Player.Store do
     {:reply, result, state}
   end
 
+  @doc false
   @impl true
   def terminate(_reason, state) do
     :dets.close(state.table)

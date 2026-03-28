@@ -1,7 +1,11 @@
 defmodule UndercityCli.View.BlockDescription do
   @moduledoc """
-  Renders the description of the current block including name, flavour text,
-  scribbles, and people present.
+  Renders the Location panel for the player's current block in the Ratatouille view.
+
+  - Composes a location line with block name, flavour description, and a prefix ("inside", "outside", or "at")
+  - Renders the current scribble text with the appropriate surface label when present
+  - Lists other players present, or "You are alone here." when the vicinity is empty
+  - Maintains a compile-time map of block type keys to flavour description strings
   """
 
   import Ratatouille.View
@@ -61,6 +65,11 @@ defmodule UndercityCli.View.BlockDescription do
   @grid_color Ratatouille.Constants.color(:white)
   @highlight Ratatouille.Constants.color(:cyan)
 
+  @doc """
+  Renders the Location panel content for the given vicinity and current player name.
+
+  - Returns a list of Ratatouille view elements: location line, optional scribble line, blank spacer, and people line.
+  """
   def render(%Vicinity{} = vicinity, current_player) do
     description = Map.get(@descriptions, description_key(vicinity), @descriptions[:unknown])
     prefix = block_prefix(vicinity)
@@ -101,6 +110,11 @@ defmodule UndercityCli.View.BlockDescription do
     [location_line] ++ scribble_elements ++ [label(content: ""), people_line]
   end
 
+  @doc """
+  Returns a plain string listing people present, excluding the current player.
+
+  - Returns `"You are alone here."` when no other players are in the vicinity.
+  """
   def describe_people(people, current_player) do
     others = Enum.reject(people, fn p -> p.name == current_player end)
 
@@ -110,6 +124,13 @@ defmodule UndercityCli.View.BlockDescription do
     end
   end
 
+  @doc """
+  Returns the surface label string for a scribble at the given vicinity (e.g. `"on the wall"`).
+
+  - Graveyards use `"on a tombstone"`.
+  - Space and interior blocks use `"on the wall"`.
+  - All other block types use `"on the ground"`.
+  """
   def scribble_surface(%Vicinity{type: :graveyard}), do: "on a tombstone"
 
   # Intentionally permissive fallback: space and interior blocks use "on the wall";

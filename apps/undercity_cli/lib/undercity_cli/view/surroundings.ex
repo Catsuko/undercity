@@ -1,6 +1,11 @@
 defmodule UndercityCli.View.Surroundings do
   @moduledoc """
-  Renders the neighbourhood grid around the player's current block.
+  Renders the Surroundings panel showing a 3×3 neighbourhood grid around the player's current block.
+
+  - Draws box-drawing character borders with per-cell colour based on whether a block is the current position
+  - Highlights the centre cell (and its borders) in cyan; adjacent cells render in white
+  - Buildings are rendered with a double-line inner box; open spaces show only the name centred in the cell
+  - Accepts `window_width` to horizontally centre the grid in the terminal
   """
 
   import Ratatouille.View
@@ -16,6 +21,12 @@ defmodule UndercityCli.View.Surroundings do
   @grid_color Ratatouille.Constants.color(:white)
   @highlight Ratatouille.Constants.color(:cyan)
 
+  @doc """
+  Renders the Surroundings panel content for the given vicinity.
+
+  - Returns an empty label when `vicinity.neighbourhood` is `nil`.
+  - Centres the grid using `window_width`; defaults to `0` (no padding).
+  """
   def render(vicinity, window_width \\ 0)
 
   def render(%Vicinity{neighbourhood: nil}, _window_width), do: label(content: "")

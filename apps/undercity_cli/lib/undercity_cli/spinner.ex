@@ -1,8 +1,11 @@
 defmodule UndercityCli.Spinner do
   @moduledoc """
-  An animated spinner for CLI feedback during connection.
+  GenServer-backed animated spinner displayed in the terminal during server connection.
 
-  Uses a rotating cross symbol with muted colors and gothic-themed messages.
+  - Renders a rotating cross glyph with a 256-colour palette and a true-colour pulsing message
+  - Cycles through gothic-flavoured loading messages every 4 seconds
+  - Stopped via `success/1` or `failure/1`, which print a final coloured result line, or `stop/0` for silent exit
+  - Used exclusively by the `mix undercity.join` task before the Ratatouille runtime starts
   """
 
   use GenServer
@@ -63,39 +66,40 @@ defmodule UndercityCli.Spinner do
   # Client API
 
   @doc """
-  Starts the spinner with the given options.
+  Starts the spinner GenServer and begins animating immediately.
 
-  ## Options
-    * `:message` - Initial message to display (default: first from rotation)
+  - Accepts an optional `message:` keyword to override the initial rotating message.
   """
   def start(opts \\ []) do
     GenServer.start(__MODULE__, opts, name: __MODULE__)
   end
 
   @doc """
-  Updates the spinner message.
+  Replaces the currently displayed spinner message without stopping animation.
   """
   def update(message) do
     GenServer.cast(__MODULE__, {:update, message})
   end
 
   @doc """
-  Stops the spinner with a success message.
+  Stops the spinner and prints a green success line with `message`.
   """
   def success(message) do
     GenServer.call(__MODULE__, {:stop, :success, message})
   end
 
   @doc """
-  Stops the spinner with a failure message.
+  Stops the spinner and prints a red failure line with `message`.
   """
   def failure(message) do
     GenServer.call(__MODULE__, {:stop, :failure, message})
   end
 
   @doc """
-  Lingers for the given duration then clears the last message.
-  Call after success/1 to create a transient message that disappears.
+  Sleeps for `linger_ms` then erases the last printed line from the terminal.
+
+  - Call after `success/1` to create a message that briefly appears then disappears.
+  - Defaults to 1000 ms.
   """
   def dismiss(linger_ms \\ 1000) do
     Process.sleep(linger_ms)
@@ -103,7 +107,7 @@ defmodule UndercityCli.Spinner do
   end
 
   @doc """
-  Stops the spinner without a final message.
+  Stops the spinner silently without printing a final message.
   """
   def stop do
     GenServer.call(__MODULE__, :stop)
@@ -113,6 +117,7 @@ defmodule UndercityCli.Spinner do
 
   # Server Callbacks
 
+  @doc false
   @impl true
   def init(opts) do
     state = %{
@@ -130,11 +135,13 @@ defmodule UndercityCli.Spinner do
     {:ok, state}
   end
 
+  @doc false
   @impl true
   def handle_cast({:update, message}, state) do
     {:noreply, %{state | message: message}}
   end
 
+  @doc false
   @impl true
   def handle_call({:stop, status, message}, _from, state) do
     clear_line()
@@ -142,12 +149,14 @@ defmodule UndercityCli.Spinner do
     {:stop, :normal, :ok, state}
   end
 
+  @doc false
   @impl true
   def handle_call(:stop, _from, state) do
     clear_line()
     {:stop, :normal, :ok, state}
   end
 
+  @doc false
   @impl true
   def handle_info(:tick, state) do
     new_state = advance_frame(state)
@@ -156,6 +165,7 @@ defmodule UndercityCli.Spinner do
     {:noreply, new_state}
   end
 
+  @doc false
   @impl true
   def handle_info(:cycle_message, state) do
     new_index = rem(state.message_index + 1, length(@messages))

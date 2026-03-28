@@ -1,20 +1,47 @@
 defmodule UndercityServer.Gateway do
   @moduledoc """
-  Public API for interacting with the game server.
+  Single entry point for all CLI interactions with the game server.
 
-  Gateway is a thin facade that delegates to domain modules. Player actions
-  route through `perform/4`, which dispatches to the appropriate Actions
-  module. To add a new action: implement it in an Actions module, then add
-  a `perform` clause here.
+  - Routes `perform/4` calls to the appropriate `Actions.*` module
+  - Delegates session, inventory, and inbox calls to `Session`, `Player`, and `Player.Inbox`
+  - Enforces block-presence validation before dispatching most actions
+  - To add a new action: implement it in an `Actions.*` module, then add a `perform` clause here
   """
 
   alias UndercityServer.Actions
   alias UndercityServer.Block
   alias UndercityServer.Player
 
+  @doc """
+  Connects to the server node and enters `player_name` into the world.
+
+  - Returns `{:ok, {player_id, vicinity, constitution}}` on success.
+  - Returns `{:error, :server_not_found}` if the server node cannot be reached after retries.
+  - Returns `{:error, :server_down}` if the node is unreachable.
+  - Returns `{:error, :invalid_name}` if the name contains disallowed characters.
+  """
   defdelegate connect(player_name), to: UndercityServer.Session
+
+  @doc """
+  Enters `name` into the world directly, without attempting a node connection.
+
+  - Returns `{player_id, vicinity, constitution}` for both new and returning players.
+  - Returns `{:error, :invalid_name}` if the name contains disallowed characters.
+  """
   defdelegate enter(name), to: UndercityServer.Session
+
+  @doc """
+  Returns the list of items currently in the player's inventory.
+  """
   defdelegate check_inventory(player_id), to: Player
+
+  @doc """
+  Drops the item at `index` from the player's inventory, spending 1 AP.
+
+  - Returns `{:ok, item_name, ap}` on success.
+  - Returns `{:error, :invalid_index}` if no item exists at that position.
+  - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
+  """
   defdelegate drop_item(player_id, index), to: Player
 
   @doc """
@@ -29,6 +56,13 @@ defmodule UndercityServer.Gateway do
     Player.fetch_inbox(player_id)
   end
 
+  @doc """
+  Dispatches a player action to the appropriate `Actions.*` module.
+
+  - The `:eat` action does not require block-presence validation and is dispatched directly.
+  - All other actions require `player_id` to be present in `block_id`; returns `{:error, :not_in_block}` if not.
+  - Supported actions: `:eat`, `:move`, `:search`, `:scribble`, `:attack`, `:heal`.
+  """
   def perform(player_id, _block_id, :eat, index), do: Actions.Eat.eat(player_id, index)
 
   def perform(player_id, block_id, action, args) do

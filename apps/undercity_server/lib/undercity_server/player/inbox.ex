@@ -1,15 +1,11 @@
 defmodule UndercityServer.Player.Inbox do
   @moduledoc """
-  ETS-backed inbox for per-player server-to-player notifications.
+  ETS-backed inbox for delivering server-to-player notifications.
 
-  A single GenServer owns the ETS table and serialises all writes through
-  itself to avoid concurrent append races. Reads bypass the GenServer
-  entirely — `fetch/2` calls `:ets.take/2` directly for an atomic
-  fetch-and-clear with no extra message hop.
-
-  Messages are stored newest-first (prepended on insert) as `{text}` tuples
-  under the key `player_id`. There is no persistence: the table lives only
-  in memory and is cleared automatically when the GenServer stops.
+  - Owns a named ETS table and serialises all writes through a single GenServer to prevent concurrent prepend races
+  - Reads bypass the GenServer — `fetch/2` calls `:ets.take/2` directly for an atomic fetch-and-clear
+  - Messages are stored newest-first as `{text}` tuples keyed by `player_id`
+  - No persistence: the table is in-memory only and cleared when the GenServer stops
   """
 
   use GenServer
@@ -18,6 +14,11 @@ defmodule UndercityServer.Player.Inbox do
 
   # Client API
 
+  @doc """
+  Starts the Inbox GenServer and creates the shared ETS table.
+
+  Registers the process globally as `UndercityServer.Player.Inbox`.
+  """
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
@@ -49,12 +50,14 @@ defmodule UndercityServer.Player.Inbox do
 
   # Server callbacks
 
+  @doc false
   @impl true
   def init(:ok) do
     table = :ets.new(@table, [:named_table, :set, :public])
     {:ok, %{table: table}}
   end
 
+  @doc false
   @impl true
   def handle_cast({:send_message, player_id, text}, state) do
     messages =

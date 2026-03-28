@@ -1,23 +1,28 @@
 defmodule UndercityCli.Commands.Attack do
   @moduledoc """
-  Handles the attack command.
+  Handles the `attack` command with a two-stage target-then-weapon selection pipeline.
 
-  Supports a full selection pipeline:
-  - `attack` → target overlay → weapon overlay → execute
-  - `attack <target>` → weapon overlay → execute
-  - `attack <target> <n>` → execute directly (n is the 1-based weapon index)
-
-  Selection confirm stages (routed via Commands.dispatch/3):
-  - `{"attack", target_idx}` when integer → resolve target, show weapon overlay
-  - `{"attack", target_name, weapon_idx}` → execute
+  - `attack` — opens a target selector from people in the current vicinity
+  - `attack <target>` — skips target selection, opens weapon selector from inventory
+  - `attack <target> <n>` — executes immediately using the 1-based weapon index `n`
+  - Re-dispatch stage `{"attack", target_idx}` (integer) — resolves target by index, opens weapon selector
+  - Re-dispatch stage `{"attack", target_name, weapon_idx}` — executes the attack via Gateway
   """
 
   alias UndercityCli.Commands
   alias UndercityCli.Commands.Selection
   alias UndercityCli.MessageBuffer
 
+  @doc "Returns the usage hint string for the attack command."
   def usage, do: "attack [target] [n]"
 
+  @doc """
+  Dispatches an attack command, routing through the selection pipeline as needed.
+
+  - Opens a target overlay when called with a bare verb string.
+  - Opens a weapon overlay when called with a target name string.
+  - Executes via Gateway when both target and weapon index are resolved.
+  """
   # Bare "attack" — set up target selection from vicinity
   def dispatch(verb, state) when is_binary(verb) do
     Selection.from_people(state, verb, "There is no one else here.", "Attack who?")
