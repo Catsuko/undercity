@@ -12,11 +12,10 @@ defmodule UndercityCore.Combat.Resolution do
   @base_hit_chance 0.65
 
   @doc """
-  Returns `true` if an attack with the given weapon stats lands.
+  Returns true if an attack with the given weapon stats lands.
 
-  Rolls against the base hit chance adjusted by the weapon's `hit_modifier`.
-  An optional `roll` (0.0–1.0) can be supplied for deterministic testing;
-  defaults to `:rand.uniform/0`.
+  - Roll is checked against base hit chance (0.65) plus `hit_modifier`
+  - `roll` is optional (0.0–1.0); defaults to `:rand.uniform/0` for testability
   """
   @spec hit?(Weapon.stats(), float()) :: boolean()
   def hit?(weapon_stats, roll \\ :rand.uniform()) do
@@ -26,8 +25,7 @@ defmodule UndercityCore.Combat.Resolution do
   @doc """
   Returns a damage value within the weapon's `damage_min`–`damage_max` range.
 
-  An optional `roll` (0.0–1.0) can be supplied for deterministic testing;
-  defaults to `:rand.uniform/0`.
+  - `roll` is optional (0.0–1.0); defaults to `:rand.uniform/0` for testability
   """
   @spec roll_damage(Weapon.stats(), float()) :: pos_integer()
   def roll_damage(%{damage_min: damage_min, damage_max: damage_max}, roll \\ :rand.uniform()) do
@@ -37,8 +35,8 @@ defmodule UndercityCore.Combat.Resolution do
   @doc """
   Rolls a full attack with the given weapon stats.
 
-  Returns `{:hit, damage}` or `:miss`. Optional `hit_roll` and `damage_roll`
-  floats (0.0–1.0) can be supplied for deterministic testing.
+  - Returns `{:hit, damage}` or `:miss`
+  - `hit_roll` and `damage_roll` are optional (0.0–1.0) for deterministic testing
   """
   @spec roll(Weapon.stats(), float(), float()) :: {:hit, pos_integer()} | :miss
   def roll(weapon_stats, hit_roll \\ :rand.uniform(), damage_roll \\ :rand.uniform()) do

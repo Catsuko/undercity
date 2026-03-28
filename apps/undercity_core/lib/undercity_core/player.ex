@@ -40,11 +40,11 @@ defmodule UndercityCore.Player do
   end
 
   @doc """
-  Attempts to exert the player: regenerates AP lazily, then spends `cost` AP.
+  Regenerates AP lazily then attempts to spend `cost` AP.
 
-  Returns `{:ok, player}` with updated action points, `{:error, :exhausted}` if
-  the player lacks AP after regeneration, or `{:error, :collapsed}` if their HP
-  has reached zero.
+  - Returns `{:ok, player}` with updated action points
+  - Returns `{:error, :exhausted}` if the player lacks AP after regeneration
+  - Returns `{:error, :collapsed}` if the player's HP is zero
   """
   @spec exert(t(), pos_integer(), integer()) :: {:ok, t()} | {:error, :exhausted} | {:error, :collapsed}
   def exert(%__MODULE__{} = player, cost, now \\ System.os_time(:second)) do
