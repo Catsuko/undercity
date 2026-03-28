@@ -2,10 +2,9 @@ defmodule UndercityCore.LootTable do
   @moduledoc """
   Per-block-type loot tables for searching.
 
-  A loot table is an ordered list of `{probability, item_id}` entries,
-  where `item_id` is a canonical atom from `UndercityCore.Item.Catalogue`.
-  Probabilities are cumulative: a roll is checked against each entry in order,
-  accumulating chances until a match is found or the table is exhausted.
+  - Each table is an ordered list of `{probability, item_id}` entries
+  - `item_id` is a canonical atom from `UndercityCore.Item.Catalogue`
+  - Probabilities are cumulative: a roll checks each entry in order until a match or exhaustion
   """
 
   alias UndercityCore.Item
@@ -27,6 +26,11 @@ defmodule UndercityCore.LootTable do
 
   @default_table [{0.10, :junk}]
 
+  @doc """
+  Returns the loot table for the given block type atom.
+
+  - Falls back to the default table (`[{0.10, :junk}]`) if no specific table exists
+  """
   @spec for_block_type(atom()) :: t()
   def for_block_type(type) do
     Map.get(@tables, type, @default_table)
@@ -36,6 +40,12 @@ defmodule UndercityCore.LootTable do
   @spec all_block_types() :: [atom()]
   def all_block_types, do: Map.keys(@tables)
 
+  @doc """
+  Rolls against a loot table, returning a found item or nothing.
+
+  - `value` is a float 0.0–1.0; defaults to `:rand.uniform/0` for testability
+  - Returns `{:found, item}` or `:nothing`
+  """
   @spec roll(t(), float()) :: {:found, Item.t()} | :nothing
   def roll(table, value \\ :rand.uniform()) do
     find_item(table, value, 0.0)

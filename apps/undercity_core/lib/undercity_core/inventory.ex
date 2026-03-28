@@ -13,12 +13,16 @@ defmodule UndercityCore.Inventory do
           items: [Item.t()]
         }
 
+  @doc """
+  Returns a new empty inventory.
+  """
   @spec new() :: t()
   def new, do: %__MODULE__{}
 
   @doc """
-  Adds an item to the inventory. Returns `{:ok, inventory}` on success
-  or `{:error, :full}` if the inventory is at capacity.
+  Adds an item to the inventory.
+
+  - Returns `{:error, :full}` if the inventory is at capacity (15 items)
   """
   @spec add_item(t(), Item.t()) :: {:ok, t()} | {:error, :full}
   def add_item(%__MODULE__{items: items} = inventory, %Item{} = item) do
@@ -29,18 +33,29 @@ defmodule UndercityCore.Inventory do
     end
   end
 
+  @doc """
+  Returns the list of items in the inventory.
+  """
   @spec list_items(t()) :: [Item.t()]
   def list_items(%__MODULE__{items: items}), do: items
 
+  @doc """
+  Returns true if the inventory is at maximum capacity (15 items).
+  """
   @spec full?(t()) :: boolean()
   def full?(%__MODULE__{items: items}), do: length(items) >= @max_size
 
+  @doc """
+  Returns the number of items currently in the inventory.
+  """
   @spec size(t()) :: non_neg_integer()
   def size(%__MODULE__{items: items}), do: length(items)
 
   @doc """
-  Finds the first item matching the given name.
-  Returns `{:ok, item, index}` or `:not_found`.
+  Finds the first item in the inventory matching the given name.
+
+  - Returns `{:ok, item, index}` with the item and its position
+  - Returns `:not_found` if no item matches
   """
   @spec find_item(t(), String.t()) :: {:ok, Item.t(), non_neg_integer()} | :not_found
   def find_item(%__MODULE__{items: items}, name) when is_binary(name) do

@@ -2,9 +2,9 @@ defmodule UndercityCore.WorldMap do
   @moduledoc """
   World map for the undercity.
 
-  Built at compile time from an external data file. Defines the blocks that
-  make up the world, their layout on the grid, and their connections. Exits
-  are derived automatically in both directions.
+  - Built at compile time from `priv/world.json`
+  - Defines blocks, their grid positions, and directional connections
+  - Exits are derived automatically in both directions
   """
 
   @world_file Path.join(__DIR__, "../../priv/world.json")
@@ -56,6 +56,9 @@ defmodule UndercityCore.WorldMap do
            |> Map.update(to, %{reverse => from}, &Map.put(&1, reverse, from))
          end)
 
+  @doc """
+  Returns the id of the default spawn block.
+  """
   def spawn_block, do: @spawn_block
 
   defp neighbourhood(block_id) do
@@ -77,10 +80,22 @@ defmodule UndercityCore.WorldMap do
 
   defp grid_cell(_r, _c), do: nil
 
+  @doc """
+  Returns the display name for the given block id, or nil if not found.
+  """
   def block_name(block_id), do: Map.get(@block_names, block_id)
 
+  @doc """
+  Returns the type atom for the given block id, or nil if not found.
+  """
   def block_type(block_id), do: Map.get(@block_types, block_id)
 
+  @doc """
+  Resolves a directional exit from the given block.
+
+  - Returns `{:ok, destination_id}` if an exit exists in that direction
+  - Returns `:error` if no exit exists
+  """
   def resolve_exit(block_id, direction) do
     case get_in(@exits, [block_id, direction]) do
       nil -> :error
@@ -88,6 +103,11 @@ defmodule UndercityCore.WorldMap do
     end
   end
 
+  @doc """
+  Returns the type of the building accessible via the `:enter` exit from the given block.
+
+  - Returns nil if the block has no `:enter` exit
+  """
   def building_type(block_id) do
     case get_in(@exits, [block_id, :enter]) do
       nil -> nil
@@ -125,6 +145,9 @@ defmodule UndercityCore.WorldMap do
     end
   end
 
+  @doc """
+  Returns all block definitions with their exits.
+  """
   def blocks do
     Enum.map(@block_defs, fn block ->
       Map.put(block, :exits, Map.get(@exits, block.id, %{}))

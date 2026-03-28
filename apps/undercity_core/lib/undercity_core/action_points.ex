@@ -2,9 +2,9 @@ defmodule UndercityCore.ActionPoints do
   @moduledoc """
   Pure domain logic for the action point (AP) system.
 
-  Players have a pool of AP that is spent when performing actions and
-  regenerates lazily over time. This module owns the rules: maximum AP,
-  regeneration rate, and the spend/regen computations.
+  - Players have a pool of AP spent on actions and regenerated lazily over time
+  - Owns maximum AP, regeneration rate, and spend/regen computations
+  - Configured via `:action_points_max` and `:action_points_regen_interval`
   """
 
   @max Application.compile_env(:undercity_core, :action_points_max, 50)

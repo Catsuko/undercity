@@ -145,7 +145,11 @@ defmodule UndercityServer.Actions.HealTest do
       assert [{"Healer healed you for 15."}] = Player.fetch_inbox(target_id)
     end
 
-    test "does not send inbox message when healed amount is 0", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
+    test "does not send inbox message when healed amount is 0", %{
+      actor_id: actor_id,
+      block_id: block_id,
+      target_id: target_id
+    } do
       Player.add_item(actor_id, Item.new("Salve", 1))
       :timer.sleep(10)
       Player.fetch_inbox(target_id)

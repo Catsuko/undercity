@@ -2,8 +2,7 @@ defmodule UndercityCore.Combat do
   @moduledoc """
   High-level facade for combat.
 
-  External modules (server layer, actions) should call through here rather
-  than reaching into sub-modules directly.
+  - External callers (server layer, actions) should call through here rather than sub-modules directly
   """
 
   alias UndercityCore.Combat.Resolution

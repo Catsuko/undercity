@@ -17,6 +17,9 @@ defmodule UndercityCore.Block do
           scribble: String.t() | nil
         }
 
+  @doc """
+  Creates a new block with the given id, name, type, and optional exits map.
+  """
   @spec new(String.t(), String.t(), block_type(), %{direction() => String.t()}) :: t()
   def new(id, name, type, exits \\ %{}) do
     %__MODULE__{
@@ -27,26 +30,41 @@ defmodule UndercityCore.Block do
     }
   end
 
+  @doc """
+  Adds a player ID to the block's people set.
+  """
   @spec add_person(t(), String.t()) :: t()
   def add_person(%__MODULE__{} = block, player_id) when is_binary(player_id) do
     %{block | people: MapSet.put(block.people, player_id)}
   end
 
+  @doc """
+  Removes a player ID from the block's people set.
+  """
   @spec remove_person(t(), String.t()) :: t()
   def remove_person(%__MODULE__{} = block, player_id) when is_binary(player_id) do
     %{block | people: MapSet.delete(block.people, player_id)}
   end
 
+  @doc """
+  Returns true if the given player ID is present in the block.
+  """
   @spec has_person?(t(), String.t()) :: boolean()
   def has_person?(%__MODULE__{} = block, player_id) when is_binary(player_id) do
     MapSet.member?(block.people, player_id)
   end
 
+  @doc """
+  Returns the list of player IDs currently in the block.
+  """
   @spec list_people(t()) :: [String.t()]
   def list_people(%__MODULE__{} = block) do
     MapSet.to_list(block.people)
   end
 
+  @doc """
+  Sets the scribble text on the block, replacing any existing message.
+  """
   @spec scribble(t(), String.t()) :: t()
   def scribble(%__MODULE__{} = block, text) when is_binary(text) do
     %{block | scribble: text}
