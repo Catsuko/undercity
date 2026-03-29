@@ -28,6 +28,11 @@ Style conventions for documentation in this project.
 - Use inline `code` for type names, function names, file paths, and field values referenced in prose.
 - Don't use code blocks for things that read clearly as inline references.
 
+## Indexing
+
+- When adding a new documentation page, add an entry to `docs/index.md` under the appropriate group.
+- When adding or removing headings from an existing page, update the corresponding entry in `docs/index.md`.
+
 ## Length
 
 - Move large reference tables (e.g. full block listings) to a dedicated file and link to it. Keep guides scannable.
