@@ -25,8 +25,8 @@ Use 'bd' for task tracking.
   - create a branch first
   - check the bead details and resolve any open ended requirements or questions with the user
   - summarize the implementation plan for the user before making code changes
-- When exploring or investigating:
-  - start with `docs/architecture.md` for a system overview
+- When exploring, investigating or gathering context:
+  - start with `docs/index.md` for an overview of available documentation
   - agent experts for each app can be consulted
 - Never commit or close beads unless the user has reviewed the changes, unless otherwise specified
 
