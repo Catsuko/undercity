@@ -1,6 +1,11 @@
 defmodule UndercityCli.View.Constitution do
   @moduledoc """
-  AP and HP tier logic with status and threshold messages.
+  Computes AP and HP tier classifications and produces player status messages for the CLI.
+
+  - Maps AP values to awareness tiers: `:rested`, `:weary`, `:exhausted`, `:spent`
+  - Maps HP values to health tiers: `:healthy`, `:sore`, `:wounded`, `:battered`, `:critical`, `:collapsed`
+  - Produces `{text, category}` tuples for use in the message log
+  - Generates threshold messages only when a tier boundary has been crossed between two states
   """
 
   @doc """

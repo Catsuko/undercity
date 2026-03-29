@@ -6,8 +6,10 @@ defmodule UndercityCore.Scribble do
   @max_length 80
 
   @doc """
-  Sanitises scribble text by stripping invalid characters and truncating.
-  Returns `{:ok, text}` or `:empty` if nothing remains.
+  Sanitises scribble text by stripping non-alphanumeric characters and truncating to 80 characters.
+
+  - Returns `{:ok, text}` with the sanitised string
+  - Returns `:empty` if nothing remains after sanitisation
   """
   @spec sanitise(String.t()) :: {:ok, String.t()} | :empty
   def sanitise(text) when is_binary(text) do

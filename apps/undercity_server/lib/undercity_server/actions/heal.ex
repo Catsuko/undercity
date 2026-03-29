@@ -1,10 +1,11 @@
 defmodule UndercityServer.Actions.Heal do
   @moduledoc """
-  Handles the heal action.
+  Resolves the heal action, restoring HP to a target player using a remedy item.
 
-  Routes self-heal through an atomic GenServer callback to avoid deadlock.
-  Routes other-heal through sequential pre-checks, item consumption on the
-  actor, and HP restoration on the target.
+  - Validates the target is present in the block before consuming any resources
+  - Validates the item at the given index is a known remedy
+  - Consumes the remedy and spends AP atomically on the actor via `Player.use_item/3`
+  - Applies HP restoration to the target and sends an inbox notification if healing another player
   """
 
   alias UndercityCore.Item.Remedy
@@ -13,6 +14,15 @@ defmodule UndercityServer.Actions.Heal do
 
   @ap_cost 1
 
+  @doc """
+  Executes a heal action from `player_id` targeting `target_id` using the item at `item_idx`.
+
+  - Returns `{:ok, {:healed, target_id, ap, healed}}` on success.
+  - Returns `{:error, :invalid_target}` if the target is not present in the block.
+  - Returns `{:error, :item_missing}` if no item exists at the given index.
+  - Returns `{:error, :not_a_remedy}` if the item at that index is not a remedy.
+  - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the actor cannot spend AP.
+  """
   def heal(player_id, healer_name, block_id, target_id, item_idx) do
     with :ok <- validate_target(block_id, target_id),
          {:ok, item_name} <- find_remedy(player_id, item_idx),

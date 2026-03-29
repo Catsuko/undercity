@@ -49,7 +49,9 @@ defmodule UndercityCore.Combat.Weapon do
 
   @doc """
   Finds the first weapon in the given inventory.
-  Returns `{:ok, item}` or `:none`.
+
+  - Returns `{:ok, item}` with the first matching weapon item
+  - Returns `:none` if no weapons are found
   """
   @spec find_in_inventory(Inventory.t()) :: {:ok, Item.t()} | :none
   def find_in_inventory(%Inventory{} = inventory) do

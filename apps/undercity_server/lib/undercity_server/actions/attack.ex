@@ -1,9 +1,11 @@
 defmodule UndercityServer.Actions.Attack do
   @moduledoc """
-  Handles the attack action.
+  Resolves the attack action, applying weapon damage to a target player.
 
-  Validates the target and weapon before spending AP, then resolves combat
-  and applies damage to the target.
+  - Validates the target is present in the block and is not the attacker
+  - Validates the weapon exists at the given inventory index and is a known weapon
+  - Spends 1 AP via `Player.perform/3` before resolving the hit roll
+  - Applies damage to the target's `Player` GenServer on a hit
   """
 
   alias UndercityCore.Combat
@@ -11,6 +13,15 @@ defmodule UndercityServer.Actions.Attack do
   alias UndercityServer.Block
   alias UndercityServer.Player
 
+  @doc """
+  Executes an attack from `player_id` against `target_id` using the weapon at `weapon_index`.
+
+  - Returns `{:ok, {:hit, target_id, weapon_name, damage}, ap}` on a successful hit.
+  - Returns `{:ok, {:miss, target_id}, ap}` when the hit roll fails or the target is already collapsed.
+  - Returns `{:error, :invalid_target}` if `target_id` is not in the block or equals `player_id`.
+  - Returns `{:error, :invalid_weapon}` if the index is out of range or the item is not a weapon.
+  - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the attacker cannot spend AP.
+  """
   def attack(player_id, player_name, block_id, target_id, weapon_index) do
     with :ok <- validate_target(player_id, block_id, target_id),
          {:ok, item} <- find_weapon(player_id, weapon_index),

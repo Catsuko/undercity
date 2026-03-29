@@ -1,16 +1,11 @@
 defmodule UndercityCli.State do
   @moduledoc """
-  The unified app state for the Undercity CLI TEA application.
+  Unified application state struct passed through every command dispatch in the Undercity CLI.
 
-  Consolidates game state and UI state into a single struct passed through
-  all command dispatch functions. Replaces the separate GameState struct and
-  the plain map used by App.
-
-  Commands take and return a State, updating whatever fields they touch.
-  When a command needs user selection (e.g. bare `drop`, `eat`, `attack`),
-  it opens a `%View.Selection{}` in `state.selection` via `Commands.Selection`.
-  App renders an overlay and re-dispatches via the selection's `on_confirm`
-  callback once the user confirms.
+  - Holds both game state (player identity, vicinity, AP, HP) and UI state (input buffer, message log, scroll offset)
+  - Commands receive and return a `State`, mutating only the fields they care about
+  - `selection` is set to a `%View.Selection{}` when a command needs interactive input; `nil` when idle
+  - `gateway` is the module used for all server calls, injected at startup to allow test mocking
   """
 
   defstruct [
@@ -41,6 +36,8 @@ defmodule UndercityCli.State do
           log_scroll: non_neg_integer()
         }
 
-  @doc "Clears the active selection overlay."
+  @doc """
+  Clears the active selection overlay, setting `state.selection` to `nil`.
+  """
   def clear_selection(state), do: %{state | selection: nil}
 end

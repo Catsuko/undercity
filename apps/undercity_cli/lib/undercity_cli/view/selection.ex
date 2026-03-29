@@ -1,11 +1,11 @@
 defmodule UndercityCli.View.Selection do
   @moduledoc """
-  UI primitive for presenting a navigable list to the player.
+  Struct and UI primitive for presenting a navigable item list overlay to the player.
 
-  Owns the struct, cursor navigation, confirm/cancel dispatch, and rendering.
-  Commands wire selections via `Commands.Selection`, which stores command-specific
-  callbacks in `on_confirm` and `on_cancel`. Non-command use cases can set
-  their own callbacks directly.
+  - Owns the `%Selection{}` struct with `label`, `choices`, `cursor`, `on_confirm`, and `on_cancel` fields
+  - Provides `move_up/1` and `move_down/1` for cursor navigation, clamped to the list bounds
+  - `confirm/2` and `cancel/2` invoke the stored callbacks with the current app state
+  - `render/1` produces a Ratatouille panel overlay with the choices and highlighted cursor row
   """
 
   import Ratatouille.View

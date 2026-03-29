@@ -11,11 +11,17 @@ defmodule UndercityCore.Item do
           uses: non_neg_integer() | nil
         }
 
+  @doc """
+  Creates a non-consumable item with the given name.
+  """
   @spec new(String.t()) :: t()
   def new(name) when is_binary(name) do
     %__MODULE__{name: name}
   end
 
+  @doc """
+  Creates a consumable item with the given name and number of uses.
+  """
   @spec new(String.t(), non_neg_integer()) :: t()
   def new(name, uses) when is_binary(name) and is_integer(uses) and uses > 0 do
     %__MODULE__{name: name, uses: uses}

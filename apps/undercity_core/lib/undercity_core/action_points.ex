@@ -2,9 +2,9 @@ defmodule UndercityCore.ActionPoints do
   @moduledoc """
   Pure domain logic for the action point (AP) system.
 
-  Players have a pool of AP that is spent when performing actions and
-  regenerates lazily over time. This module owns the rules: maximum AP,
-  regeneration rate, and the spend/regen computations.
+  - Players have a pool of AP spent on actions and regenerated lazily over time
+  - Owns maximum AP, regeneration rate, and spend/regen computations
+  - Configured via `:action_points_max` and `:action_points_regen_interval`
   """
 
   @max Application.compile_env(:undercity_core, :action_points_max, 50)
@@ -25,14 +25,17 @@ defmodule UndercityCore.ActionPoints do
 
   @doc """
   Returns the maximum action points a player can have.
-  Configured via `:action_points_max` (default: 50).
+
+  - Configured via `:action_points_max` application env (default: 50)
   """
   @spec max() :: non_neg_integer()
   def max, do: @max
 
   @doc """
   Applies lazy regeneration and returns the updated struct.
-  Regenerates 1 AP per `:action_points_regen_interval` seconds elapsed, capped at `max/0`.
+
+  - Gains 1 AP per `:action_points_regen_interval` seconds elapsed
+  - Capped at `max/0`
   """
   @spec regenerate(t(), integer()) :: t()
   def regenerate(%__MODULE__{ap: ap, updated_at: updated_at} = action_points, now \\ System.os_time(:second)) do
@@ -48,7 +51,10 @@ defmodule UndercityCore.ActionPoints do
   def current(%__MODULE__{ap: ap}), do: ap
 
   @doc """
-  Attempts to spend AP. Returns `{:ok, updated_struct}` or `{:error, :exhausted}`.
+  Attempts to spend `cost` AP from the pool.
+
+  - Returns `{:ok, updated_struct}` with the new AP and timestamp
+  - Returns `{:error, :exhausted}` if the player has insufficient AP
   """
   @spec spend(t(), pos_integer(), integer()) :: {:ok, t()} | {:error, :exhausted}
   def spend(action_points, cost, now \\ System.os_time(:second))

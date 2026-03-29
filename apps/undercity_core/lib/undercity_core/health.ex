@@ -2,8 +2,9 @@ defmodule UndercityCore.Health do
   @moduledoc """
   Pure domain logic for player health.
 
-  Players have a health pool with a fixed maximum. Health starts at max
-  and can be reduced or restored, but never exceeds the cap.
+  - Health pool has a fixed maximum of 50 HP
+  - Starts at max and can be reduced or restored
+  - Never exceeds the cap; damage floors at 0
   """
 
   @max 50
@@ -33,11 +34,11 @@ defmodule UndercityCore.Health do
   def current(%__MODULE__{hp: hp}), do: hp
 
   @doc """
-  Applies a validated heal, returning the amount actually healed.
+  Applies a heal, clamped to the remaining HP deficit.
 
-  Returns `{:ok, healed, new_health}` where `healed` is clamped to the
-  remaining HP deficit (may be 0 if already at max). Returns
-  `{:error, :collapsed}` if the player is at 0 HP.
+  - Returns `{:ok, healed, new_health}`
+    - `healed` may be 0 if already at max
+  - Returns `{:error, :collapsed}` if the player is at 0 HP
   """
   @spec heal(t(), pos_integer()) :: {:ok, non_neg_integer(), t()} | {:error, :collapsed}
   def heal(%__MODULE__{hp: 0}, _amount), do: {:error, :collapsed}

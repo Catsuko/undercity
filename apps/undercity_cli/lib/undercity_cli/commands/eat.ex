@@ -1,12 +1,26 @@
 defmodule UndercityCli.Commands.Eat do
-  @moduledoc "Handles eat commands (bare and indexed)."
+  @moduledoc """
+  Handles the `eat` command, consuming a food item from the player's inventory.
+
+  - `eat` — opens an inventory selector overlay
+  - `eat <n>` — eats the 1-based item at index `n` directly via Gateway
+  - Re-dispatch stage `{"eat", item_idx}` (integer) — executes the eat action
+  """
 
   alias UndercityCli.Commands
   alias UndercityCli.Commands.Selection
   alias UndercityCli.MessageBuffer
 
+  @doc "Returns the usage hint string for the eat command."
   def usage, do: "eat [n]"
 
+  @doc """
+  Dispatches an eat command, routing through the selection pipeline as needed.
+
+  - Opens an inventory overlay when called with a bare verb string.
+  - Parses and delegates to the canonical integer-index form when called with a string index.
+  - Executes via Gateway when called with an integer index.
+  """
   def dispatch(verb, state) when is_binary(verb) do
     Selection.from_inventory(state, verb, "Your inventory is empty.", "Eat which item?")
   end

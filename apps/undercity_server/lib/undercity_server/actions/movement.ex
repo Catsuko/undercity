@@ -13,8 +13,11 @@ defmodule UndercityServer.Actions.Movement do
   alias UndercityServer.Vicinity
 
   @doc """
-  Moves a player in a given direction from their current block.
-  Returns `{:ok, result, ap}` or `{:error, :exhausted}`.
+  Moves a player one step in `direction` from `from_block_id`.
+
+  - Returns `{:ok, vicinity, ap}` where `vicinity` describes the destination block.
+  - Returns `{:error, :no_exit}` if the direction has no exit from the current block.
+  - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   def move(player_id, from_block_id, direction) do
     Player.perform(player_id, fn ->

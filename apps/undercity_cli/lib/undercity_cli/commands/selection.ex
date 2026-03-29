@@ -17,10 +17,13 @@ defmodule UndercityCli.Commands.Selection do
 
   @doc """
   Fetches the player's inventory and presents a selector overlay.
-  Shows `empty_warning` and returns state unchanged if inventory is empty.
+
+  - Shows `empty_warning` as a message and returns state unchanged if the inventory is empty.
+  - Accepts an optional `args` list that is prepended to the cursor index when re-dispatching on confirm.
   """
   def from_inventory(state, command, empty_warning, prompt), do: from_inventory(state, command, [], empty_warning, prompt)
 
+  @doc false
   def from_inventory(state, command, args, empty_warning, prompt) do
     items = state.gateway.check_inventory(state.player_id)
     from_list(state, items, command, args, empty_warning, prompt)
@@ -28,17 +31,23 @@ defmodule UndercityCli.Commands.Selection do
 
   @doc """
   Reads people from the current vicinity and presents a selector overlay.
-  Shows `empty_warning` and returns state unchanged if no people are present.
+
+  - Shows `empty_warning` as a message and returns state unchanged if no people are present.
+  - Accepts an optional `args` list that is prepended to the cursor index when re-dispatching on confirm.
   """
   def from_people(state, command, empty_warning, prompt), do: from_people(state, command, [], empty_warning, prompt)
 
+  @doc false
   def from_people(state, command, args, empty_warning, prompt) do
     from_list(state, state.vicinity.people, command, args, empty_warning, prompt)
   end
 
   @doc """
-  Presents a selector overlay from a pre-fetched list.
-  Shows `empty_warning` and returns state unchanged if the list is nil or empty.
+  Presents a selector overlay from a pre-fetched list of items.
+
+  - Shows `empty_warning` as a message and returns state unchanged if `items` is `nil` or empty.
+  - On confirm, re-dispatches via `Commands.dispatch/3` using `command`, accumulated `args`, and the cursor index.
+  - On cancel, clears the selection and returns state unchanged.
   """
   def from_list(state, items, command, args, empty_warning, prompt) do
     case items do

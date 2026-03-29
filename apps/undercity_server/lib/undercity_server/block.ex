@@ -16,6 +16,13 @@ defmodule UndercityServer.Block do
 
   # Client API
 
+  @doc """
+  Starts the Block GenServer for the block described by `opts`.
+
+  - Required keys: `:id`, `:name`, `:type`.
+  - Optional keys: `:exits` (map of direction to block ID, default `%{}`), `:random` (0-arity fun, default `:rand.uniform/0`).
+  - Registers the process under the atom `:"block_{id}"`.
+  """
   def start_link(opts) do
     id = Keyword.fetch!(opts, :id)
     name = Keyword.fetch!(opts, :name)
@@ -26,40 +33,74 @@ defmodule UndercityServer.Block do
     GenServer.start_link(__MODULE__, {id, name, type, exits, random}, name: process_name(id))
   end
 
+  @doc """
+  Adds `player_id` to the block's present-player list and persists the change.
+
+  Returns `{block_id, [player_id]}` — the block ID and the updated list of present players.
+  """
   def join(block_id, player_id) when is_binary(player_id) do
     GenServer.call(via(block_id), {:join, player_id})
   end
 
+  @doc """
+  Removes `player_id` from the block's present-player list and persists the change.
+
+  Returns `:ok`.
+  """
   def leave(block_id, player_id) when is_binary(player_id) do
     GenServer.call(via(block_id), {:leave, player_id})
   end
 
+  @doc """
+  Returns `true` if `player_id` is currently present in the block, `false` otherwise.
+  """
   def has_person?(block_id, player_id) when is_binary(player_id) do
     GenServer.call(via(block_id), {:has_person, player_id})
   end
 
+  @doc """
+  Returns `{block_id, player_ids}` — the block ID and the list of currently present player IDs.
+  """
   def info(block_id) do
     GenServer.call(via(block_id), :info)
   end
 
+  @doc """
+  Performs a loot roll for the block and returns the result.
+
+  - Returns `{:found, %Item{}}` if the roll succeeds.
+  - Returns `:nothing` if the roll fails.
+  """
   def search(block_id) do
     GenServer.call(via(block_id), :search)
   end
 
+  @doc """
+  Writes `text` as the block's current scribble message and persists the change.
+
+  Returns `:ok`.
+  """
   def scribble(block_id, text) when is_binary(text) do
     GenServer.call(via(block_id), {:scribble, text})
   end
 
+  @doc """
+  Returns the current scribble text for the block, or `nil` if none has been written.
+  """
   def get_scribble(block_id) do
     GenServer.call(via(block_id), :get_scribble)
   end
 
+  @doc """
+  Returns the registered process name atom for the block with the given `id`.
+  """
   def process_name(id), do: :"block_#{id}"
 
   defp via(block_id), do: {process_name(block_id), UndercityServer.server_node()}
 
   # Server callbacks
 
+  @doc false
   @impl true
   def init({id, name, type, exits, random}) do
     block =
@@ -71,6 +112,7 @@ defmodule UndercityServer.Block do
     {:ok, {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call({:join, player_id}, _from, {block, random}) do
     block = CoreBlock.add_person(block, player_id)
@@ -78,6 +120,7 @@ defmodule UndercityServer.Block do
     {:reply, block_info(block), {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call({:leave, player_id}, _from, {block, random}) do
     block = CoreBlock.remove_person(block, player_id)
@@ -85,21 +128,25 @@ defmodule UndercityServer.Block do
     {:reply, :ok, {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call({:has_person, player_id}, _from, {block, random}) do
     {:reply, CoreBlock.has_person?(block, player_id), {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call(:info, _from, {block, random}) do
     {:reply, block_info(block), {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call(:search, _from, {block, random}) do
     {:reply, Search.search(block.type, random.()), {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call({:scribble, text}, _from, {block, random}) do
     block = CoreBlock.scribble(block, text)
@@ -107,6 +154,7 @@ defmodule UndercityServer.Block do
     {:reply, :ok, {block, random}}
   end
 
+  @doc false
   @impl true
   def handle_call(:get_scribble, _from, {block, random}) do
     {:reply, block.scribble, {block, random}}

@@ -35,10 +35,22 @@ defmodule UndercityServer do
   - `Actions.*` — one module per player action (movement, search, scribble, eat).
   """
 
+  @doc """
+  Returns the Erlang node atom for the running server.
+
+  - Returns `:"undercity_server@127.0.0.1"` when distribution is active.
+  - Returns `node()` (the local node) when running without distribution, e.g. in tests.
+  """
   def server_node do
     if Node.alive?(), do: :"undercity_server@127.0.0.1", else: node()
   end
 
+  @doc """
+  Returns the base data directory for DETS persistence.
+
+  - Reads from the `:data_dir` key in the `:undercity_server` application config.
+  - Defaults to `"data"` when not configured.
+  """
   def data_dir do
     Application.get_env(:undercity_server, :data_dir, "data")
   end

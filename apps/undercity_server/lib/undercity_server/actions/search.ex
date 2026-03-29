@@ -10,8 +10,12 @@ defmodule UndercityServer.Actions.Search do
   alias UndercityServer.Player
 
   @doc """
-  Performs a search action for the given player in the given block.
-  Returns `{:ok, result, ap}` or `{:error, :exhausted}`.
+  Executes a search action for `player_id` in `block_id`, spending 1 AP.
+
+  - Returns `{:ok, {:found, item}, ap}` when an item is found and added to inventory.
+  - Returns `{:ok, {:found_but_full, item}, ap}` when an item is found but inventory is full.
+  - Returns `{:ok, :nothing, ap}` when the search yields nothing.
+  - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   def search(player_id, block_id) do
     Player.perform(player_id, fn ->

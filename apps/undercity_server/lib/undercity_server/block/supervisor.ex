@@ -9,10 +9,17 @@ defmodule UndercityServer.Block.Supervisor do
 
   use Elixir.Supervisor
 
+  @doc """
+  Starts the supervisor for a single block, launching its Store and GenServer as a unit.
+
+  - `block` must be a map with `:id`, `:name`, `:type`, and `:exits` keys.
+  - An optional `:random` key overrides the randomness source used during search rolls.
+  """
   def start_link(block) do
     Supervisor.start_link(__MODULE__, block)
   end
 
+  @doc false
   @impl true
   def init(block) do
     children = [

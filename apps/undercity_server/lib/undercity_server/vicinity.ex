@@ -1,14 +1,10 @@
 defmodule UndercityServer.Vicinity do
   @moduledoc """
-  A limited window of the world surrounding a central block.
+  Struct representing the player's immediate surroundings, centred on a single block.
 
-  Represents what the player perceives from where they stand — the
-  block they occupy and the blocks around it. Moves with the player
-  as they travel through the world.
-
-  Use `build/1` to construct a vicinity from live server state (fetches
-  block info, player names, and scribble). Use `new/3` directly when
-  assembling from known data (e.g. in tests).
+  - Includes the central block's type, present players, neighbourhood grid, building type, and scribble
+  - Use `build/1` to construct from live server state (queries `Block` and `Player.Store`)
+  - Use `new/3` when assembling from known data, e.g. in tests
   """
 
   alias UndercityCore.WorldMap
@@ -18,8 +14,11 @@ defmodule UndercityServer.Vicinity do
   defstruct [:id, :type, :people, :neighbourhood, :building_type, :scribble]
 
   @doc """
-  Builds a vicinity by fetching block info, player names, and scribble
-  from the running server processes.
+  Builds a `Vicinity` for `block_id` by querying live server state.
+
+  - Fetches present player IDs from `Block.info/1`
+  - Resolves display names from `Player.Store.get_names/1`
+  - Fetches current scribble from `Block.get_scribble/1`
   """
   def build(block_id) do
     {^block_id, player_ids} = Block.info(block_id)
@@ -35,7 +34,10 @@ defmodule UndercityServer.Vicinity do
   end
 
   @doc """
-  Returns a new vicinity centred on the given block.
+  Constructs a `Vicinity` centred on `block_id` with the given `people` list.
+
+  - `people` is a list of `%{id: player_id, name: name}` maps.
+  - Optional: `:scribble` keyword — the block's scribble text, defaults to `nil`.
   """
   def new(block_id, people, opts \\ []) do
     %__MODULE__{
@@ -49,21 +51,23 @@ defmodule UndercityServer.Vicinity do
   end
 
   @doc """
-  Returns the name of the vicinity's central block.
+  Returns the display name of the vicinity's central block.
   """
   def name(%__MODULE__{} = vicinity) do
     name_for(centre_id(vicinity))
   end
 
   @doc """
-  Returns the name of a given block.
+  Returns the display name for `block_id`, falling back to the block ID string if no name is configured.
   """
   def name_for(block_id) do
     WorldMap.block_name(block_id) || block_id
   end
 
   @doc """
-  Returns true if the player is inside a building.
+  Returns `true` if the central block is inside a building, `false` otherwise.
+
+  A block is considered inside when the central block has no building type but its parent (neighbourhood centre) does.
   """
   def inside?(%__MODULE__{} = vicinity) do
     centre = centre_id(vicinity)
@@ -71,7 +75,7 @@ defmodule UndercityServer.Vicinity do
   end
 
   @doc """
-  Indicates if the given block is a building.
+  Returns `true` if `block_id` is the root of a building (has a building type configured).
   """
   def building?(block_id) do
     WorldMap.building_type(block_id) != nil

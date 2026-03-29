@@ -41,6 +41,9 @@ defmodule UndercityCli.Commands do
               end)
             )
 
+  @doc """
+  Returns a newline-separated string of usage hints for all registered commands, sorted alphabetically.
+  """
   def usage_hints do
     @command_routes
     |> Enum.map(fn {mod, _verbs} -> mod.usage() end)
@@ -48,6 +51,12 @@ defmodule UndercityCli.Commands do
     |> Enum.join("\n")
   end
 
+  @doc """
+  Dispatches the current input string in `state` to the appropriate command module.
+
+  - Parses `state.input`, clears it, and routes to the matching command via the compile-time verb map.
+  - Emits a warning and returns state unchanged if no matching command is found.
+  """
   def dispatch(state) do
     parsed = state.input |> String.trim() |> String.downcase() |> split()
     state = %{state | input: ""}
@@ -62,11 +71,24 @@ defmodule UndercityCli.Commands do
     end
   end
 
+  @doc """
+  Dispatches a pre-parsed command and argument list directly to its command module.
+
+  - Used by `Commands.Selection` to re-dispatch after a selection overlay is confirmed.
+  - `command` must be a registered verb string; raises if not found.
+  """
   def dispatch(command, args, state) do
     module = Map.fetch!(@commands, command)
     module.dispatch(reconstruct(command, args), state)
   end
 
+  @doc """
+  Normalises a Gateway result, handling shared error cases before delegating to a command-specific callback.
+
+  - `:exhausted` and `:collapsed` emit a warning and return state unchanged without calling `callback`.
+  - `:not_in_block` emits a warning and returns state unchanged.
+  - All other results are passed to `callback.(result, state)`.
+  """
   def handle_action({:error, :exhausted}, state, _callback) do
     MessageBuffer.warn("You are too exhausted to act.")
     state

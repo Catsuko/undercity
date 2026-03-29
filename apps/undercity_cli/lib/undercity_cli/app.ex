@@ -1,15 +1,12 @@
 defmodule UndercityCli.App do
   @moduledoc """
-  Ratatouille TEA application for the Undercity CLI.
+  Ratatouille TEA application that drives the Undercity CLI game loop.
 
-  Implements the Ratatouille.App behaviour: init/1, update/2, subscribe/1,
-  and render/1. The state holds all display state and is updated either by
-  subscription ticks (message polling) or keyboard events (input building and
-  command dispatch).
-
-  Context for init/1 is read from application env (`:undercity_cli, :context`)
-  since Ratatouille's runtime only exposes terminal window info via its built-in
-  context map.
+  - Implements `Ratatouille.App`: `init/1`, `update/2`, `subscribe/1`, and `render/1`
+  - Reads startup context (player, gateway, initial game state) from `:undercity_cli, :context` application env
+  - Dispatches keyboard input to `Commands` on Enter; handles arrow keys for log scrolling and selection navigation
+  - Polls the server inbox every 500 ms via a `Subscription.interval/2` tick
+  - Renders surroundings grid, location description, message log, and an optional selection overlay
   """
 
   @behaviour Ratatouille.App
@@ -40,6 +37,7 @@ defmodule UndercityCli.App do
   # panel border (top + bottom) adds 2 rows to the visible line count
   @log_panel_height @log_visible_lines + 2
 
+  @doc false
   @impl true
   def init(context) do
     %{
@@ -68,6 +66,7 @@ defmodule UndercityCli.App do
     }
   end
 
+  @doc false
   @impl true
   def update(state, {:sync_messages}) do
     new_msgs = sync_messages(state.gateway, state.player_id)
@@ -125,11 +124,13 @@ defmodule UndercityCli.App do
     end
   end
 
+  @doc false
   @impl true
   def subscribe(_state) do
     Subscription.interval(500, {:sync_messages})
   end
 
+  @doc false
   @impl true
   def render(state) do
     bottom_bar =

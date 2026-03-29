@@ -1,11 +1,10 @@
 defmodule UndercityServer.Session do
   @moduledoc """
-  Manages player sessions: connecting to the server node, entering the world,
-  and reconnecting existing players.
+  Manages the player connection lifecycle — initial connect, world entry, and reconnection.
 
-  Handles the connection lifecycle including retry logic with exponential
-  backoff. New players are created and spawned at the default block; returning
-  players are reconnected to whichever block they were last in.
+  - Attempts to connect to the server node with up to 5 retries using exponential backoff
+  - Creates new players at the spawn block on first entry
+  - Reconnects returning players to their last known block, scanning all blocks if presence records are stale
   """
 
   alias UndercityCore.ActionPoints
@@ -21,8 +20,12 @@ defmodule UndercityServer.Session do
   @retry_rate 50
 
   @doc """
-  Connects to the server node and enters the player into the world.
-  Returns {:ok, block_info} on success or {:error, reason} on failure.
+  Connects to the server node and enters `player_name` into the world.
+
+  - Returns `{:ok, {player_id, vicinity, constitution}}` on success.
+  - Returns `{:error, :server_not_found}` if the node cannot be reached after all retries.
+  - Returns `{:error, :server_down}` if the node is unreachable.
+  - Returns `{:error, :invalid_name}` if the name contains disallowed characters.
   """
   def connect(player_name) do
     server_node = UndercityServer.server_node()
@@ -51,8 +54,11 @@ defmodule UndercityServer.Session do
   end
 
   @doc """
-  Creates a new player and spawns them in the default block.
-  Returns a tuple of {player_id, vicinity, constitution}.
+  Enters `name` into the world, creating the player record if this is their first login.
+
+  - Returns `{player_id, vicinity, constitution}` for both new and returning players.
+  - Returns `{:error, :invalid_name}` if the name contains characters outside `[a-zA-Z0-9]`.
+  - Side effect: starts the player's GenServer process, joins them to the appropriate block.
   """
   def enter(name) when is_binary(name) do
     case PlayerStore.find_id_by_name(name) do
