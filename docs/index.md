@@ -112,6 +112,7 @@ This directory contains maps for specific districts:
 - Prose
 - Lists and tables
 - Code
+- Indexing
 - Length
 
 ### [Code Documentation Styleguide](code_docs.md)
