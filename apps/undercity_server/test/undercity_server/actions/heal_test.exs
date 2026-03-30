@@ -25,7 +25,7 @@ defmodule UndercityServer.Actions.HealTest do
       damage(actor_id, 20)
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:ok, 49} = Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      assert {:ok, 49} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
@@ -35,7 +35,7 @@ defmodule UndercityServer.Actions.HealTest do
     test "heals 0 and consumes item when HP is at max", %{actor_id: actor_id, block_id: block_id} do
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:ok, 49} = Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      assert {:ok, 49} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
@@ -46,7 +46,7 @@ defmodule UndercityServer.Actions.HealTest do
       Player.add_item(actor_id, Item.new("Salve", 1))
       damage(actor_id, 50)
 
-      assert {:error, :collapsed} = Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      assert {:error, :collapsed} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
 
       assert [%Item{name: "Salve"}] = Player.check_inventory(actor_id)
     end
@@ -54,14 +54,14 @@ defmodule UndercityServer.Actions.HealTest do
     test "returns :item_missing", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
 
-      assert {:error, :item_missing} = Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      assert {:error, :item_missing} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
     end
 
     test "returns :not_a_remedy", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
       Player.add_item(actor_id, Item.new("Junk"))
 
-      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
     end
 
     test "sends inbox message to actor on self-heal", %{actor_id: actor_id, block_id: block_id} do
@@ -70,7 +70,7 @@ defmodule UndercityServer.Actions.HealTest do
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 
-      Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      Heal.heal(actor_id, "player", block_id, actor_id, 0)
       :timer.sleep(10)
 
       assert [{:success, "You healed yourself for 15."}] = Player.fetch_inbox(actor_id)
@@ -81,7 +81,7 @@ defmodule UndercityServer.Actions.HealTest do
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 
-      Heal.heal(actor_id, "player", "player", block_id, actor_id, 0)
+      Heal.heal(actor_id, "player", block_id, actor_id, 0)
       :timer.sleep(10)
 
       assert [{:success, "You healed yourself for 0."}] = Player.fetch_inbox(actor_id)
@@ -100,7 +100,7 @@ defmodule UndercityServer.Actions.HealTest do
       damage(target_id, 20)
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:ok, 49} = Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
@@ -114,7 +114,7 @@ defmodule UndercityServer.Actions.HealTest do
     } do
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:ok, 49} = Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
@@ -124,7 +124,7 @@ defmodule UndercityServer.Actions.HealTest do
       damage(target_id, 50)
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
@@ -133,21 +133,21 @@ defmodule UndercityServer.Actions.HealTest do
     test "returns :item_missing when actor has no salve", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
       damage(target_id, 20)
 
-      assert {:error, :item_missing} = Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      assert {:error, :item_missing} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
     end
 
     test "returns :not_a_remedy", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
       damage(target_id, 20)
       Player.add_item(actor_id, Item.new("Junk"))
 
-      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
     end
 
     test "returns :invalid_target when target is not in block", %{actor_id: actor_id, block_id: block_id} do
       outsider_id = Helpers.start_player!()
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", "Outsider", block_id, outsider_id, 0)
+      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", block_id, outsider_id, 0)
 
       assert [%Item{name: "Salve"}] = Player.check_inventory(actor_id)
     end
@@ -158,7 +158,7 @@ defmodule UndercityServer.Actions.HealTest do
       :timer.sleep(10)
       Player.fetch_inbox(target_id)
 
-      Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      Heal.heal(actor_id, "Healer", block_id, target_id, 0)
       :timer.sleep(10)
 
       assert [{:success, "Healer healed you for 15."}] = Player.fetch_inbox(target_id)
@@ -173,7 +173,7 @@ defmodule UndercityServer.Actions.HealTest do
       :timer.sleep(10)
       Player.fetch_inbox(target_id)
 
-      Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      Heal.heal(actor_id, "Healer", block_id, target_id, 0)
       :timer.sleep(10)
 
       assert [] = Player.fetch_inbox(target_id)
@@ -185,10 +185,10 @@ defmodule UndercityServer.Actions.HealTest do
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 
-      Heal.heal(actor_id, "Healer", "Target", block_id, target_id, 0)
+      Heal.heal(actor_id, "Healer", block_id, target_id, 0)
       :timer.sleep(10)
 
-      assert [{:success, "You healed Target for 15."}] = Player.fetch_inbox(actor_id)
+      assert [{:success, "You healed Test Player for 15."}] = Player.fetch_inbox(actor_id)
     end
   end
 end

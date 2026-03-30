@@ -46,7 +46,7 @@ defmodule UndercityCli.Commands.UseTest do
 
   describe "selector path — self-heal" do
     test "success: updates ap" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:ok, 9}
       end)
 
@@ -55,7 +55,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "heals 0 when already full: ap spent" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:ok, 9}
       end)
 
@@ -64,7 +64,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "collapsed uses uniform message" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:error, :collapsed}
       end)
 
@@ -73,7 +73,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "item missing warns" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:error, :item_missing}
       end)
 
@@ -82,7 +82,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "exhausted uses uniform message" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:error, :exhausted}
       end)
 
@@ -93,7 +93,7 @@ defmodule UndercityCli.Commands.UseTest do
 
   describe "selector path — other-heal" do
     test "success: updates ap" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1", @target_name} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
         {:ok, 9}
       end)
 
@@ -102,7 +102,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "heals 0 when target already full: ap spent" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1", @target_name} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
         {:ok, 9}
       end)
 
@@ -111,7 +111,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "collapsed target: returns invalid_target" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1", @target_name} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
         {:error, :invalid_target}
       end)
 
@@ -120,7 +120,7 @@ defmodule UndercityCli.Commands.UseTest do
     end
 
     test "item missing warns" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1", @target_name} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
         {:error, :item_missing}
       end)
 
@@ -152,7 +152,7 @@ defmodule UndercityCli.Commands.UseTest do
     test "executes directly: self-heal" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1", "player1"} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
         {:ok, 9}
       end)
 
@@ -163,7 +163,7 @@ defmodule UndercityCli.Commands.UseTest do
     test "executes directly: other-heal" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
 
-      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1", @target_name} ->
+      expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
         {:ok, 9}
       end)
 

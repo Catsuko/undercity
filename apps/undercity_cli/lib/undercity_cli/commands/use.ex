@@ -91,7 +91,7 @@ defmodule UndercityCli.Commands.Use do
         state.player_id,
         state.vicinity.id,
         :heal,
-        {target_id, item_idx, state.player_name, target_name}
+        {target_id, item_idx, state.player_name}
       )
 
     Commands.handle_action(result, state, &handle_outcome(&1, &2, target_name))

@@ -136,11 +136,11 @@ defmodule UndercityServer.Player do
   @doc """
   Applies up to `amount` HP healing to the player, capped at their maximum HP.
 
-  - Returns `{:ok, healed}` where `healed` is the actual HP restored (may be 0 if at max).
+  - Returns `:ok` on success.
   - Returns `{:error, :invalid_target}` if the player is collapsed (HP is zero).
-  - Side effect: delivers an inbox notification if `healer_id` differs from `player_id` and healing occurred.
+  - Side effect: delivers inbox notifications to the healer and, if healing another player, to the target.
   """
-  @spec heal(String.t(), pos_integer(), String.t(), String.t()) :: {:ok, non_neg_integer()} | {:error, :invalid_target}
+  @spec heal(String.t(), pos_integer(), String.t(), String.t()) :: :ok | {:error, :invalid_target}
   def heal(player_id, amount, healer_id, healer_name) do
     PlayerServer.call(player_id, PlayerSupervisor, {:heal, amount, healer_id, healer_name})
   end

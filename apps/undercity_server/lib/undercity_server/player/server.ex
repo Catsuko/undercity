@@ -194,7 +194,9 @@ defmodule UndercityServer.Player.Server do
           PlayerInbox.success(state.player.id, "#{healer_name} healed you for #{healed}.")
         end
 
-        {:reply, {:ok, healed}, state, @idle_timeout_ms}
+        PlayerInbox.success(healer_id, heal_message(healer_id, state.player.id, state.player.name, healed))
+
+        {:reply, :ok, state, @idle_timeout_ms}
 
       {:error, :collapsed} ->
         {:reply, {:error, :invalid_target}, state, @idle_timeout_ms}
@@ -252,6 +254,9 @@ defmodule UndercityServer.Player.Server do
   def handle_info(:timeout, state) do
     {:stop, :normal, state}
   end
+
+  defp heal_message(same_id, same_id, _target_name, healed), do: "You healed yourself for #{healed}."
+  defp heal_message(_healer_id, _target_id, target_name, healed), do: "You healed #{target_name} for #{healed}."
 
   defp save!(state) do
     data = state.player |> Map.from_struct() |> Map.put(:block_id, state.block_id)
