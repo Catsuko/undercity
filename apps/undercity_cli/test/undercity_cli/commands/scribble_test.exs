@@ -23,7 +23,6 @@ defmodule UndercityCli.Commands.ScribbleTest do
 
   test "scribble with text succeeds and returns model with updated ap" do
     expect(Gateway, :perform, fn @player_id, _, :scribble, "hello" -> {:ok, 9} end)
-    expect(MessageBuffer, :success, fn "You scribble on the ground." -> :ok end)
     result = Scribble.dispatch({"scribble", "hello"}, @state)
     assert result.ap == 9
   end

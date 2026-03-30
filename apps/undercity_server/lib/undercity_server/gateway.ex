@@ -38,7 +38,7 @@ defmodule UndercityServer.Gateway do
   @doc """
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
-  - Returns `{:ok, item_name, ap}` on success.
+  - Returns `{:ok, ap}` on success.
   - Returns `{:error, :invalid_index}` if no item exists at that position.
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
@@ -80,6 +80,6 @@ defmodule UndercityServer.Gateway do
   defp dispatch(player_id, block_id, :attack, {target_id, weapon_index, attacker_name}),
     do: Actions.Attack.attack(player_id, attacker_name, block_id, target_id, weapon_index)
 
-  defp dispatch(player_id, block_id, :heal, {target_id, item_idx, healer_name}),
-    do: Actions.Heal.heal(player_id, healer_name, block_id, target_id, item_idx)
+  defp dispatch(player_id, block_id, :heal, {target_id, item_idx, healer_name, target_name}),
+    do: Actions.Heal.heal(player_id, healer_name, target_name, block_id, target_id, item_idx)
 end

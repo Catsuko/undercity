@@ -40,8 +40,7 @@ defmodule UndercityCli.Commands.Eat do
     |> Commands.handle_action(state, &handle_outcome/2)
   end
 
-  defp handle_outcome({:ok, item, _effect, new_ap, new_hp}, state) do
-    MessageBuffer.success("Ate a #{item.name}.")
+  defp handle_outcome({:ok, new_ap, new_hp}, state) do
     %{state | ap: new_ap, hp: new_hp}
   end
 

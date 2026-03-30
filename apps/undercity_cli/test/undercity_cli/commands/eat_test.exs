@@ -19,16 +19,14 @@ defmodule UndercityCli.Commands.EatTest do
   end
 
   test "indexed eat succeeds and returns model with updated ap and hp" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, %{name: "Bread"}, :restore, 9, 11} end)
-    expect(MessageBuffer, :success, fn "Ate a Bread." -> :ok end)
+    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, 9, 11} end)
     result = Eat.dispatch({"eat", "1"}, @state)
     assert result.ap == 9
     assert result.hp == 11
   end
 
   test "re-dispatch after selection executes eat" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, %{name: "Bread"}, :restore, 9, 11} end)
-    expect(MessageBuffer, :success, fn "Ate a Bread." -> :ok end)
+    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, 9, 11} end)
     result = Eat.dispatch({"eat", 0}, @state)
     assert result.ap == 9
     assert result.hp == 11

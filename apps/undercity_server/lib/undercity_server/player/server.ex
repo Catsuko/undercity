@@ -44,6 +44,16 @@ defmodule UndercityServer.Player.Server do
     GenServer.call(via(player_id), message)
   end
 
+  @doc """
+  Ensures the Player GenServer for `player_id` is running, then sends `message` via `GenServer.cast/2`.
+
+  - Starts the process under `supervisor` if it has stopped due to idle timeout.
+  """
+  def cast(player_id, supervisor, message) do
+    ensure_started(player_id, supervisor)
+    GenServer.cast(via(player_id), message)
+  end
+
   defp process_name(player_id), do: :"player_#{player_id}"
 
   defp via(player_id), do: {process_name(player_id), UndercityServer.server_node()}
@@ -87,7 +97,8 @@ defmodule UndercityServer.Player.Server do
       {:ok, player, item_name} ->
         state = %{state | player: player}
         save!(state)
-        {:reply, {:ok, item_name, ActionPoints.current(player.action_points)}, state, @idle_timeout_ms}
+        PlayerInbox.info(state.player.id, "You dropped #{item_name}.")
+        {:reply, {:ok, ActionPoints.current(player.action_points)}, state, @idle_timeout_ms}
 
       {:error, _} = error ->
         {:reply, error, state, @idle_timeout_ms}
@@ -98,11 +109,12 @@ defmodule UndercityServer.Player.Server do
   @impl true
   def handle_call({:eat_item, index}, _from, state) do
     case Player.eat(state.player, index, now()) do
-      {:ok, player, item, effect} ->
+      {:ok, player, item, _effect} ->
         state = %{state | player: player}
         save!(state)
+        PlayerInbox.success(state.player.id, "Ate a #{item.name}.")
 
-        {:reply, {:ok, item, effect, ActionPoints.current(player.action_points), Health.current(player.health)}, state,
+        {:reply, {:ok, ActionPoints.current(player.action_points), Health.current(player.health)}, state,
          @idle_timeout_ms}
 
       error ->
@@ -191,22 +203,6 @@ defmodule UndercityServer.Player.Server do
 
   @doc false
   @impl true
-  def handle_call({:take_damage, {attacker_name, weapon_name, damage}}, _from, state) do
-    if Health.current(state.player.health) == 0 do
-      {:reply, {:error, :collapsed}, state, @idle_timeout_ms}
-    else
-      health = Health.apply_effect(state.player.health, {:damage, damage})
-      player = %{state.player | health: health}
-      state = %{state | player: player}
-      save!(state)
-
-      PlayerInbox.warning(player.id, "#{attacker_name} attacks you with #{weapon_name} and does #{damage} damage.")
-      {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
-    end
-  end
-
-  @doc false
-  @impl true
   def handle_call(:fetch_inbox, _from, state) do
     {:reply, PlayerInbox.fetch(state.player.id), state, @idle_timeout_ms}
   end
@@ -232,6 +228,23 @@ defmodule UndercityServer.Player.Server do
     state = %{state | block_id: block_id}
     save!(state)
     {:reply, :ok, state, @idle_timeout_ms}
+  end
+
+  @doc false
+  @impl true
+  def handle_cast({:take_damage, {attacker_id, attacker_name, damage}}, state) do
+    if Health.current(state.player.health) == 0 do
+      {:noreply, state, @idle_timeout_ms}
+    else
+      health = Health.apply_effect(state.player.health, {:damage, damage})
+      player = %{state.player | health: health}
+      state = %{state | player: player}
+      save!(state)
+
+      PlayerInbox.warning(player.id, "#{attacker_name} hits you for #{damage} damage.")
+      PlayerInbox.success(attacker_id, "You hit #{player.name} for #{damage} damage.")
+      {:noreply, state, @idle_timeout_ms}
+    end
   end
 
   @doc false

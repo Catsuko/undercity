@@ -16,8 +16,7 @@ defmodule UndercityCli.CommandsTest do
     end
 
     test "routes search to Search" do
-      expect(Gateway, :perform, fn _, _, :search, _ -> {:ok, :nothing, 9} end)
-      expect(MessageBuffer, :warn, fn "You find nothing." -> :ok end)
+      expect(Gateway, :perform, fn _, _, :search, _ -> {:ok, 9} end)
       result = Commands.dispatch(%{@state | input: "search"})
       assert result.ap == 9
     end
@@ -35,8 +34,7 @@ defmodule UndercityCli.CommandsTest do
     end
 
     test "routes drop with index to Drop" do
-      expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
-      expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+      expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, 9} end)
       result = Commands.dispatch(%{@state | input: "drop 1"})
       assert result.ap == 9
     end

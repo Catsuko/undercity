@@ -5,19 +5,21 @@ defmodule UndercityServer.Actions.Attack do
   - Validates the target is present in the block and is not the attacker
   - Validates the weapon exists at the given inventory index and is a known weapon
   - Spends 1 AP via `Player.perform/3` before resolving the hit roll
-  - Applies damage to the target's `Player` GenServer on a hit
+  - On a hit, casts damage to the target's `Player` GenServer; the target server writes inbox
+    notifications to both attacker and target
+  - On a miss, writes "You miss." to the attacker's inbox directly
   """
 
   alias UndercityCore.Combat
   alias UndercityCore.Combat.Weapon
   alias UndercityServer.Block
   alias UndercityServer.Player
+  alias UndercityServer.Player.Inbox, as: PlayerInbox
 
   @doc """
   Executes an attack from `player_id` against `target_id` using the weapon at `weapon_index`.
 
-  - Returns `{:ok, {:hit, target_id, weapon_name, damage}, ap}` on a successful hit.
-  - Returns `{:ok, {:miss, target_id}, ap}` when the hit roll fails or the target is already collapsed.
+  - Returns `{:ok, ap}` on a successful hit or miss.
   - Returns `{:error, :invalid_target}` if `target_id` is not in the block or equals `player_id`.
   - Returns `{:error, :invalid_weapon}` if the index is out of range or the item is not a weapon.
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the attacker cannot spend AP.
@@ -26,7 +28,16 @@ defmodule UndercityServer.Actions.Attack do
     with :ok <- validate_target(player_id, block_id, target_id),
          {:ok, item} <- find_weapon(player_id, weapon_index),
          {:ok, stats} <- weapon_stats(item.name) do
-      Player.perform(player_id, fn -> resolve_attack(player_name, target_id, item.name, stats) end)
+      do_attack(player_id, player_name, target_id, stats)
+    end
+  end
+
+  defp do_attack(player_id, player_name, target_id, stats) do
+    case Player.perform(player_id, fn ->
+           resolve_attack(player_id, player_name, target_id, stats)
+         end) do
+      {:ok, _, ap} -> {:ok, ap}
+      {:error, _} = error -> error
     end
   end
 
@@ -50,16 +61,13 @@ defmodule UndercityServer.Actions.Attack do
     end
   end
 
-  defp resolve_attack(attacker_name, target_id, weapon_name, weapon_stats) do
+  defp resolve_attack(player_id, attacker_name, target_id, weapon_stats) do
     case Combat.resolve(weapon_stats) do
       {:hit, damage} ->
-        case Player.take_damage(target_id, {attacker_name, weapon_name, damage}) do
-          {:ok, _hp} -> {:hit, target_id, weapon_name, damage}
-          {:error, :collapsed} -> {:miss, target_id}
-        end
+        Player.take_damage(target_id, {player_id, attacker_name, damage})
 
       :miss ->
-        {:miss, target_id}
+        PlayerInbox.warning(player_id, "You miss.")
     end
   end
 end

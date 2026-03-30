@@ -28,12 +28,12 @@ defmodule UndercityServer.Player do
   @doc """
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
-  - Returns `{:ok, item_name, ap}` on success.
+  - Returns `{:ok, ap}` on success.
   - Returns `{:error, :invalid_index}` if the index is out of range.
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   @spec drop_item(String.t(), non_neg_integer()) ::
-          {:ok, String.t(), non_neg_integer()}
+          {:ok, non_neg_integer()}
           | {:error, :invalid_index}
           | {:error, :exhausted}
           | {:error, :collapsed}
@@ -44,13 +44,13 @@ defmodule UndercityServer.Player do
   @doc """
   Eats the item at `index` in the player's inventory, spending 1 AP and applying the food effect.
 
-  - Returns `{:ok, item, effect, ap, hp}` on success, where `effect` is `{:heal, n}` or `{:damage, n}`.
+  - Returns `{:ok, ap, hp}` on success.
   - Returns `{:error, :invalid_index}` if no item exists at that position.
   - Returns `{:error, :not_edible, item_name}` if the item cannot be eaten.
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   @spec eat_item(String.t(), non_neg_integer()) ::
-          {:ok, Item.t(), {:heal, pos_integer()} | {:damage, pos_integer()}, non_neg_integer(), non_neg_integer()}
+          {:ok, non_neg_integer(), non_neg_integer()}
           | {:error, :invalid_index}
           | {:error, :not_edible, String.t()}
           | {:error, :exhausted}
@@ -122,16 +122,15 @@ defmodule UndercityServer.Player do
   end
 
   @doc """
-  Applies `damage` to the player's health and sends an inbox notification.
+  Applies `damage` to the player's health and sends inbox notifications to both the target and attacker.
 
-  - Returns `{:ok, hp}` where `hp` is the remaining health after damage.
-  - Returns `{:error, :collapsed}` if the player is already at zero HP.
-  - Side effect: delivers an inbox message naming the attacker, weapon, and damage dealt.
+  - Fire-and-forget: returns `:ok` immediately without waiting for the result.
+  - Silently drops if the target is already at zero HP.
+  - Side effect: delivers a warning inbox message to the target and a success inbox message to the attacker.
   """
-  @spec take_damage(String.t(), {String.t(), String.t(), pos_integer()}) ::
-          {:ok, non_neg_integer()} | {:error, :collapsed}
-  def take_damage(player_id, {attacker_name, weapon_name, damage}) do
-    PlayerServer.call(player_id, PlayerSupervisor, {:take_damage, {attacker_name, weapon_name, damage}})
+  @spec take_damage(String.t(), {String.t(), String.t(), pos_integer()}) :: :ok
+  def take_damage(player_id, {attacker_id, attacker_name, damage}) do
+    PlayerServer.cast(player_id, PlayerSupervisor, {:take_damage, {attacker_id, attacker_name, damage}})
   end
 
   @doc """

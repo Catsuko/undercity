@@ -19,15 +19,13 @@ defmodule UndercityCli.Commands.DropTest do
   end
 
   test "indexed drop succeeds and returns model with updated ap" do
-    expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
-    expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+    expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, 9} end)
     result = Drop.dispatch({"drop", "1"}, @state)
     assert result.ap == 9
   end
 
   test "re-dispatch after selection executes drop" do
-    expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
-    expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+    expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, 9} end)
     result = Drop.dispatch({"drop", 0}, @state)
     assert result.ap == 9
   end
