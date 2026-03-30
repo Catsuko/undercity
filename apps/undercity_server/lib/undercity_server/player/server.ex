@@ -179,7 +179,7 @@ defmodule UndercityServer.Player.Server do
         save!(state)
 
         if healer_id != state.player.id and healed > 0 do
-          PlayerInbox.send_message(state.player.id, "#{healer_name} healed you for #{healed}.")
+          PlayerInbox.success(state.player.id, "#{healer_name} healed you for #{healed}.")
         end
 
         {:reply, {:ok, healed}, state, @idle_timeout_ms}
@@ -200,7 +200,7 @@ defmodule UndercityServer.Player.Server do
       state = %{state | player: player}
       save!(state)
 
-      PlayerInbox.send_message(player.id, "#{attacker_name} attacks you with #{weapon_name} and does #{damage} damage.")
+      PlayerInbox.warning(player.id, "#{attacker_name} attacks you with #{weapon_name} and does #{damage} damage.")
       {:reply, {:ok, Health.current(health)}, state, @idle_timeout_ms}
     end
   end
