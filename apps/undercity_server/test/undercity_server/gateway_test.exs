@@ -285,11 +285,11 @@ defmodule UndercityServer.GatewayTest do
     test "delegates to Inbox — returns messages sent via Inbox and clears them" do
       {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
 
-      Inbox.send_message(player_id, "first")
-      Inbox.send_message(player_id, "second")
+      Inbox.info(player_id, "first")
+      Inbox.info(player_id, "second")
       :timer.sleep(10)
 
-      assert [{"first"}, {"second"}] = Gateway.messages_for(player_id)
+      assert [{:info, "first"}, {:info, "second"}] = Gateway.messages_for(player_id)
       assert [] = Gateway.messages_for(player_id)
     end
   end

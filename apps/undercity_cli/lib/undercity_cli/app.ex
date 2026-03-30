@@ -175,7 +175,7 @@ defmodule UndercityCli.App do
   defp sync_messages(gateway, player_id) do
     player_id
     |> gateway.messages_for()
-    |> Enum.map(fn {text} -> {text, :warning} end)
+    |> Enum.map(fn {type, text} -> {text, type} end)
   end
 
   defp dispatch_command(state) do

@@ -267,14 +267,14 @@ defmodule UndercityServer.PlayerTest do
       Player.take_damage(id, {"Rat", "Claws", 5})
       :timer.sleep(10)
 
-      assert [{"Rat attacks you with Claws and does 5 damage."}] = Player.fetch_inbox(id)
+      assert [{:warning, "Rat attacks you with Claws and does 5 damage."}] = Player.fetch_inbox(id)
     end
 
     test "inbox message text matches the expected format", %{id: id} do
       Player.take_damage(id, {"Magnus", "Iron Pipe", 12})
       :timer.sleep(10)
 
-      assert [{"Magnus attacks you with Iron Pipe and does 12 damage."}] = Player.fetch_inbox(id)
+      assert [{:warning, "Magnus attacks you with Iron Pipe and does 12 damage."}] = Player.fetch_inbox(id)
     end
 
     test "no inbox message when player is already collapsed", %{id: id} do
