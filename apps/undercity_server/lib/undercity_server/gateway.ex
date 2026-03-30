@@ -38,7 +38,7 @@ defmodule UndercityServer.Gateway do
   @doc """
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
-  - Returns `{:ok, item_name, ap}` on success.
+  - Returns `{:ok, ap}` on success.
   - Returns `{:error, :invalid_index}` if no item exists at that position.
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """

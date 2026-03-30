@@ -5,7 +5,8 @@ defmodule UndercityServer.Actions.Heal do
   - Validates the target is present in the block before consuming any resources
   - Validates the item at the given index is a known remedy
   - Consumes the remedy and spends AP atomically on the actor via `Player.use_item/3`
-  - Applies HP restoration to the target and sends an inbox notification if healing another player
+  - Applies HP restoration to the target and sends an inbox notification to the target if healing another player
+  - Writes a typed inbox message to the actor describing the outcome
   """
 
   alias UndercityCore.Item.Remedy
@@ -17,7 +18,7 @@ defmodule UndercityServer.Actions.Heal do
   @doc """
   Executes a heal action from `player_id` targeting `target_id` using the item at `item_idx`.
 
-  - Returns `{:ok, {:healed, target_id, ap, healed}}` on success.
+  - Returns `{:ok, ap}` on success.
   - Returns `{:error, :invalid_target}` if the target is not present in the block.
   - Returns `{:error, :item_missing}` if no item exists at the given index.
   - Returns `{:error, :not_a_remedy}` if the item at that index is not a remedy.
@@ -27,15 +28,16 @@ defmodule UndercityServer.Actions.Heal do
     with :ok <- validate_target(block_id, target_id),
          {:ok, item_name} <- find_remedy(player_id, item_idx),
          {:ok, new_ap} <- Player.use_item(player_id, item_idx, @ap_cost) do
-      {:heal, amount} = Remedy.effect(item_name)
+      apply_heal(player_id, healer_name, target_id, item_name, new_ap)
+    end
+  end
 
-      case Player.heal(target_id, amount, player_id, healer_name) do
-        {:ok, healed} ->
-          {:ok, {:healed, target_id, new_ap, healed}}
+  defp apply_heal(player_id, healer_name, target_id, item_name, new_ap) do
+    {:heal, amount} = Remedy.effect(item_name)
 
-        {:error, :invalid_target} ->
-          {:error, :invalid_target}
-      end
+    case Player.heal(target_id, amount, player_id, healer_name) do
+      :ok -> {:ok, new_ap}
+      {:error, :invalid_target} -> {:error, :invalid_target}
     end
   end
 

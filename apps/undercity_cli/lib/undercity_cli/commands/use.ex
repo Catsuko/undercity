@@ -86,32 +86,32 @@ defmodule UndercityCli.Commands.Use do
   end
 
   defp execute(item_idx, target_id, target_name, state) do
-    is_self = target_id == state.player_id
-    result = state.gateway.perform(state.player_id, state.vicinity.id, :heal, {target_id, item_idx, state.player_name})
-    Commands.handle_action(result, state, &handle_outcome(&1, &2, target_name, is_self))
+    result =
+      state.gateway.perform(
+        state.player_id,
+        state.vicinity.id,
+        :heal,
+        {target_id, item_idx, state.player_name}
+      )
+
+    Commands.handle_action(result, state, &handle_outcome(&1, &2, target_name))
   end
 
-  defp handle_outcome({:ok, {:healed, _target_id, new_ap, healed}}, state, _target_name, true) do
-    MessageBuffer.success("You healed yourself for #{healed}.")
-    %{state | ap: new_ap, hp: state.hp + healed}
-  end
-
-  defp handle_outcome({:ok, {:healed, _target_id, new_ap, healed}}, state, target_name, false) do
-    MessageBuffer.success("You healed #{target_name} for #{healed}.")
+  defp handle_outcome({:ok, new_ap}, state, _target_name) do
     %{state | ap: new_ap}
   end
 
-  defp handle_outcome({:error, :item_missing}, state, _target_name, _is_self) do
+  defp handle_outcome({:error, :item_missing}, state, _target_name) do
     MessageBuffer.warn("You don't have that anymore.")
     state
   end
 
-  defp handle_outcome({:error, :not_a_remedy}, state, _target_name, _is_self) do
+  defp handle_outcome({:error, :not_a_remedy}, state, _target_name) do
     MessageBuffer.warn("You can't use that.")
     state
   end
 
-  defp handle_outcome({:error, :invalid_target}, state, target_name, _is_self) do
+  defp handle_outcome({:error, :invalid_target}, state, target_name) do
     not_here(target_name, state)
   end
 

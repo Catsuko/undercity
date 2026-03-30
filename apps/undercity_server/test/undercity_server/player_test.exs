@@ -98,7 +98,7 @@ defmodule UndercityServer.PlayerTest do
       Player.add_item(id, Item.new("Junk"))
       Player.add_item(id, Item.new("Chalk", 3))
 
-      assert {:ok, "Junk", 49} = Player.drop_item(id, 0)
+      assert {:ok, 49} = Player.drop_item(id, 0)
 
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
@@ -119,32 +119,30 @@ defmodule UndercityServer.PlayerTest do
   end
 
   describe "eat_item/2" do
-    test "consumes edible item and returns effect", %{id: id} do
+    test "consumes edible item and returns ap and hp", %{id: id} do
       Player.add_item(id, Item.new("Mushroom"))
 
-      assert {:ok, %Item{name: "Mushroom"}, effect, 49, _hp} = Player.eat_item(id, 0)
-      assert match?({:heal, 5}, effect) or match?({:damage, 5}, effect)
+      assert {:ok, 49, _hp} = Player.eat_item(id, 0)
 
       assert [] = Player.check_inventory(id)
     end
 
-    test "applies heal effect to health", %{id: id} do
-      # Damage the player first so heal is observable
-      Player.add_item(id, Item.new("Mushroom"))
-      Player.add_item(id, Item.new("Mushroom"))
-
-      # Keep eating until we get a damage then a heal
+    test "applies food effect to health", %{id: _id} do
+      # Run many eat attempts across fresh players to observe both heal and damage effects
+      # Pre-damage each player so there is room for healing to register as a positive delta
       results =
         for _ <- 1..100 do
-          id = Helpers.start_player!()
-          Player.add_item(id, Item.new("Mushroom"))
-          {:ok, _item, effect, _ap, _hp} = Player.eat_item(id, 0)
-          {id, effect}
+          fresh_id = Helpers.start_player!()
+          Player.take_damage(fresh_id, {"attacker_id", "Rat", 10})
+          Player.add_item(fresh_id, Item.new("Mushroom"))
+          initial_hp = Player.constitution(fresh_id).hp
+          {:ok, _ap, new_hp} = Player.eat_item(fresh_id, 0)
+          new_hp - initial_hp
         end
 
-      # Verify at least one heal and one damage occurred
-      assert Enum.any?(results, fn {_id, effect} -> match?({:heal, 5}, effect) end)
-      assert Enum.any?(results, fn {_id, effect} -> match?({:damage, 5}, effect) end)
+      # Verify at least one heal (+5) and one damage (-5) occurred
+      assert Enum.any?(results, fn delta -> delta > 0 end)
+      assert Enum.any?(results, fn delta -> delta < 0 end)
     end
 
     test "returns :not_edible for non-edible item", %{id: id} do
@@ -249,37 +247,39 @@ defmodule UndercityServer.PlayerTest do
 
   describe "take_damage/2" do
     test "reduces HP by the given amount", %{id: id} do
-      assert {:ok, 45} = Player.take_damage(id, {"Rat", "Claws", 5})
+      Player.take_damage(id, {"attacker_id", "Rat", 5})
       assert 45 = Player.constitution(id).hp
     end
 
     test "clamps HP at 0 when damage exceeds current HP", %{id: id} do
-      assert {:ok, 0} = Player.take_damage(id, {"Rat", "Claws", 100})
+      Player.take_damage(id, {"attacker_id", "Rat", 100})
       assert 0 = Player.constitution(id).hp
     end
 
-    test "returns :collapsed when player is already at 0 HP", %{id: id} do
-      Player.take_damage(id, {"Rat", "Claws", 50})
-      assert {:error, :collapsed} = Player.take_damage(id, {"Rat", "Claws", 10})
+    test "silently drops when player is already at 0 HP", %{id: id} do
+      Player.take_damage(id, {"attacker_id", "Rat", 50})
+      Player.take_damage(id, {"attacker_id", "Rat", 10})
+      assert 0 = Player.constitution(id).hp
     end
 
-    test "queues an inbox message after a valid hit", %{id: id} do
-      Player.take_damage(id, {"Rat", "Claws", 5})
+    test "sends warning inbox message to target", %{id: id} do
+      Player.take_damage(id, {"attacker_id", "Rat", 5})
       :timer.sleep(10)
 
-      assert [{:warning, "Rat attacks you with Claws and does 5 damage."}] = Player.fetch_inbox(id)
+      assert [{:warning, "Rat hits you for 5 damage."}] = Player.fetch_inbox(id)
     end
 
-    test "inbox message text matches the expected format", %{id: id} do
-      Player.take_damage(id, {"Magnus", "Iron Pipe", 12})
+    test "sends success inbox message to attacker", %{id: id} do
+      attacker_id = Helpers.start_player!()
+      Player.take_damage(id, {attacker_id, "Rat", 5})
       :timer.sleep(10)
 
-      assert [{:warning, "Magnus attacks you with Iron Pipe and does 12 damage."}] = Player.fetch_inbox(id)
+      assert [{:success, "You hit Test Player for 5 damage."}] = Player.fetch_inbox(attacker_id)
     end
 
     test "no inbox message when player is already collapsed", %{id: id} do
       collapse(id)
-      Player.take_damage(id, {"Rat", "Claws", 5})
+      Player.take_damage(id, {"attacker_id", "Rat", 5})
       :timer.sleep(10)
 
       assert [] = Player.fetch_inbox(id)
@@ -288,19 +288,19 @@ defmodule UndercityServer.PlayerTest do
 
   describe "heal/4" do
     test "restores HP by the given amount", %{id: id} do
-      Player.take_damage(id, {"Rat", "Claws", 20})
-      assert {:ok, 5} = Player.heal(id, 5, "healer_id", "Healer")
+      Player.take_damage(id, {"attacker_id", "Rat", 20})
+      assert :ok = Player.heal(id, 5, "healer_id", "Healer")
       assert 35 = Player.constitution(id).hp
     end
 
     test "clamps HP at max when heal exceeds deficit", %{id: id} do
-      Player.take_damage(id, {"Rat", "Claws", 5})
-      assert {:ok, 5} = Player.heal(id, 100, "healer_id", "Healer")
+      Player.take_damage(id, {"attacker_id", "Rat", 5})
+      assert :ok = Player.heal(id, 100, "healer_id", "Healer")
       assert 50 = Player.constitution(id).hp
     end
 
     test "returns healed 0 when HP is at max", %{id: id} do
-      assert {:ok, 0} = Player.heal(id, 10, "healer_id", "Healer")
+      assert :ok = Player.heal(id, 10, "healer_id", "Healer")
       assert 50 = Player.constitution(id).hp
     end
 

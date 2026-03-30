@@ -41,8 +41,7 @@ defmodule UndercityCli.Commands.Drop do
     |> Commands.handle_action(state, &handle_outcome/2)
   end
 
-  defp handle_outcome({:ok, item_name, new_ap}, state) do
-    MessageBuffer.info("You dropped #{item_name}.")
+  defp handle_outcome({:ok, new_ap}, state) do
     %{state | ap: new_ap}
   end
 

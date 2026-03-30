@@ -24,8 +24,7 @@ defmodule UndercityCli.Commands.SelectionTest do
     end
 
     test "on_confirm dispatches to the command with cursor appended to args" do
-      expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, "Sword", 9} end)
-      expect(MessageBuffer, :info, fn "You dropped Sword." -> :ok end)
+      expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, 9} end)
 
       state = Selection.from_list(@state, @items, "drop", [], "Nothing here.", "Drop what?")
       result = state.selection.on_confirm.(state)
@@ -40,10 +39,8 @@ defmodule UndercityCli.Commands.SelectionTest do
       state = %{@state | vicinity: vicinity}
 
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {"t1", 0, _} ->
-        {:ok, {:hit, "t1", "Iron Pipe", 3}, 7}
+        {:ok, 7}
       end)
-
-      expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 3 damage." -> :ok end)
 
       state = Selection.from_list(state, @items, "attack", ["Zara"], "Nothing here.", "Attack with what?")
       result = state.selection.on_confirm.(state)

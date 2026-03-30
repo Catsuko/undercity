@@ -45,26 +45,22 @@ defmodule UndercityCli.Commands.UseTest do
   end
 
   describe "selector path — self-heal" do
-    test "success: updates ap and hp" do
+    test "success: updates ap" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
-        {:ok, {:healed, @player_id, 9, 15}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed yourself for 15." -> :ok end)
       result = Use.dispatch({"use", 0, 0}, @state_with_people)
       assert result.ap == 9
-      assert result.hp == @state_with_people.hp + 15
     end
 
-    test "heals 0 when already full: ap spent, hp unchanged" do
+    test "heals 0 when already full: ap spent" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
-        {:ok, {:healed, @player_id, 9, 0}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed yourself for 0." -> :ok end)
       result = Use.dispatch({"use", 0, 0}, @state_with_people)
       assert result.ap == 9
-      assert result.hp == @state_with_people.hp
     end
 
     test "collapsed uses uniform message" do
@@ -96,23 +92,20 @@ defmodule UndercityCli.Commands.UseTest do
   end
 
   describe "selector path — other-heal" do
-    test "success: updates ap only (not hp)" do
+    test "success: updates ap" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
-        {:ok, {:healed, @target_id, 9, 15}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed Zara for 15." -> :ok end)
       result = Use.dispatch({"use", 0, 1}, @state_with_people)
       assert result.ap == 9
-      assert result.hp == @state_with_people.hp
     end
 
     test "heals 0 when target already full: ap spent" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
-        {:ok, {:healed, @target_id, 9, 0}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed Zara for 0." -> :ok end)
       result = Use.dispatch({"use", 0, 1}, @state_with_people)
       assert result.ap == 9
     end
@@ -160,23 +153,20 @@ defmodule UndercityCli.Commands.UseTest do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
 
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
-        {:ok, {:healed, @player_id, 9, 15}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed yourself for 15." -> :ok end)
       result = Use.dispatch({"use", "1 player1"}, @state_with_people)
       assert result.ap == 9
-      assert result.hp == @state_with_people.hp + 15
     end
 
     test "executes directly: other-heal" do
       expect(Gateway, :check_inventory, fn @player_id -> @inventory end)
 
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
-        {:ok, {:healed, @target_id, 9, 15}}
+        {:ok, 9}
       end)
 
-      expect(MessageBuffer, :success, fn "You healed Zara for 15." -> :ok end)
       result = Use.dispatch({"use", "1 #{@target_name}"}, @state_with_people)
       assert result.ap == 9
     end

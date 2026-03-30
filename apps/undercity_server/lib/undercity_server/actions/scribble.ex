@@ -26,7 +26,7 @@ defmodule UndercityServer.Actions.Scribble do
 
       {:ok, sanitised} ->
         with {:ok, ap} <- Player.use_item(player_id, "Chalk", 1) do
-          Block.scribble(block_id, sanitised)
+          Block.scribble(block_id, player_id, sanitised)
           {:ok, ap}
         end
     end

@@ -79,6 +79,6 @@ defmodule UndercityServer.Player.Inbox do
 
   @spec send_message(String.t(), message()) :: :ok
   defp send_message(player_id, message) do
-    GenServer.cast(__MODULE__, {:send_message, player_id, message})
+    GenServer.cast({__MODULE__, UndercityServer.server_node()}, {:send_message, player_id, message})
   end
 end

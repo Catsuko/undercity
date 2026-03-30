@@ -44,22 +44,11 @@ defmodule UndercityCli.Commands.AttackTest do
   end
 
   describe "fully specified attack" do
-    test "hit: success message with weapon, damage, and updated ap" do
+    test "hit or miss: updates ap" do
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _} ->
-        {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
+        {:ok, 7}
       end)
 
-      expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 4 damage." -> :ok end)
-      result = Attack.dispatch({"attack", @target_name, 0}, @state_with_people)
-      assert result.ap == 7
-    end
-
-    test "miss: warning message, ap spent" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _} ->
-        {:ok, {:miss, @target_id}, 7}
-      end)
-
-      expect(MessageBuffer, :warn, fn "You attack Zara and miss." -> :ok end)
       result = Attack.dispatch({"attack", @target_name, 0}, @state_with_people)
       assert result.ap == 7
     end
@@ -91,10 +80,9 @@ defmodule UndercityCli.Commands.AttackTest do
   describe "typed attack with rest string" do
     test "attack goblin 1 executes directly without overlay" do
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 0, _} ->
-        {:ok, {:hit, @target_id, "Iron Pipe", 4}, 7}
+        {:ok, 7}
       end)
 
-      expect(MessageBuffer, :success, fn "You attack Zara with Iron Pipe and do 4 damage." -> :ok end)
       result = Attack.dispatch({"attack", "#{@target_name} 1"}, @state_with_people)
       assert result.ap == 7
     end
@@ -108,10 +96,9 @@ defmodule UndercityCli.Commands.AttackTest do
 
     test "uses trailing number as weapon index" do
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 1, _} ->
-        {:ok, {:hit, @target_id, "Junk", 2}, 7}
+        {:ok, 7}
       end)
 
-      expect(MessageBuffer, :success, fn "You attack Zara with Junk and do 2 damage." -> :ok end)
       result = Attack.dispatch({"attack", "#{@target_name} 2"}, @state_with_people)
       assert result.ap == 7
     end

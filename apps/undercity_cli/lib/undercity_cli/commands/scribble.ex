@@ -29,7 +29,6 @@ defmodule UndercityCli.Commands.Scribble do
     |> state.gateway.perform(state.vicinity.id, :scribble, text)
     |> Commands.handle_action(state, fn
       {:ok, new_ap}, state ->
-        MessageBuffer.success("You scribble #{BlockDescription.scribble_surface(state.vicinity)}.")
         %{state | ap: new_ap}
 
       {:error, :empty_message}, state ->

@@ -54,7 +54,7 @@ defmodule UndercityCli.Commands.Attack do
       {:ok, person} ->
         state.player_id
         |> state.gateway.perform(state.vicinity.id, :attack, {person.id, weapon_idx, state.player_name})
-        |> Commands.handle_action(state, &handle_outcome(&1, &2, target_name))
+        |> Commands.handle_action(state, &handle_outcome/2)
 
       {:error, :invalid_target} ->
         MessageBuffer.warn("You miss.")
@@ -66,17 +66,11 @@ defmodule UndercityCli.Commands.Attack do
     Selection.from_inventory(state, verb, [target_name], "You have nothing to attack with.", "Attack with what?")
   end
 
-  defp handle_outcome({:ok, {:hit, _target_id, weapon_name, damage}, new_ap}, state, target_name) do
-    MessageBuffer.success("You attack #{target_name} with #{weapon_name} and do #{damage} damage.")
+  defp handle_outcome({:ok, new_ap}, state) do
     %{state | ap: new_ap}
   end
 
-  defp handle_outcome({:ok, {:miss, _target_id}, new_ap}, state, target_name) do
-    MessageBuffer.warn("You attack #{target_name} and miss.")
-    %{state | ap: new_ap}
-  end
-
-  defp handle_outcome({:error, :invalid_weapon}, state, _target_name) do
+  defp handle_outcome({:error, :invalid_weapon}, state) do
     MessageBuffer.warn("You can't attack with that.")
     state
   end
