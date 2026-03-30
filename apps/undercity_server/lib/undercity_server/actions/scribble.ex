@@ -8,10 +8,8 @@ defmodule UndercityServer.Actions.Scribble do
   """
 
   alias UndercityCore.Scribble
-  alias UndercityCore.WorldMap
   alias UndercityServer.Block
   alias UndercityServer.Player
-  alias UndercityServer.Player.Inbox, as: PlayerInbox
 
   @doc """
   Scribbles a sanitised message on `block_id` using one use of Chalk from the player's inventory.
@@ -28,18 +26,9 @@ defmodule UndercityServer.Actions.Scribble do
 
       {:ok, sanitised} ->
         with {:ok, ap} <- Player.use_item(player_id, "Chalk", 1) do
-          Block.scribble(block_id, sanitised)
-          PlayerInbox.success(player_id, "You scribble #{scribble_surface(block_id)}.")
+          Block.scribble(block_id, player_id, sanitised)
           {:ok, ap}
         end
-    end
-  end
-
-  defp scribble_surface(block_id) do
-    case WorldMap.block_type(block_id) do
-      :graveyard -> "on a tombstone"
-      :space -> "on the wall"
-      _ -> "on the ground"
     end
   end
 end

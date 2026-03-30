@@ -13,6 +13,7 @@ defmodule UndercityServer.Block do
   alias UndercityCore.Block, as: CoreBlock
   alias UndercityCore.Search
   alias UndercityServer.Block.Store
+  alias UndercityServer.Player.Inbox, as: PlayerInbox
 
   # Client API
 
@@ -59,7 +60,8 @@ defmodule UndercityServer.Block do
   end
 
   @doc """
-  Returns `{block_id, player_ids}` — the block ID and the list of currently present player IDs.
+  Returns `{block_id, player_ids, scribble}` — the block ID, the list of currently present player IDs,
+  and the current scribble text (or `nil` if none has been written).
   """
   def info(block_id) do
     GenServer.call(via(block_id), :info)
@@ -76,19 +78,13 @@ defmodule UndercityServer.Block do
   end
 
   @doc """
-  Writes `text` as the block's current scribble message and persists the change.
+  Writes `text` as the block's current scribble message, persists the change,
+  and sends a success inbox message to `player_id`.
 
   Returns `:ok`.
   """
-  def scribble(block_id, text) when is_binary(text) do
-    GenServer.call(via(block_id), {:scribble, text})
-  end
-
-  @doc """
-  Returns the current scribble text for the block, or `nil` if none has been written.
-  """
-  def get_scribble(block_id) do
-    GenServer.call(via(block_id), :get_scribble)
+  def scribble(block_id, player_id, text) when is_binary(player_id) and is_binary(text) do
+    GenServer.cast(via(block_id), {:scribble, player_id, text})
   end
 
   @doc """
@@ -137,7 +133,7 @@ defmodule UndercityServer.Block do
   @doc false
   @impl true
   def handle_call(:info, _from, {block, random}) do
-    {:reply, block_info(block), {block, random}}
+    {:reply, {block.id, CoreBlock.list_people(block), block.scribble}, {block, random}}
   end
 
   @doc false
@@ -148,17 +144,16 @@ defmodule UndercityServer.Block do
 
   @doc false
   @impl true
-  def handle_call({:scribble, text}, _from, {block, random}) do
+  def handle_cast({:scribble, player_id, text}, {block, random}) do
     block = CoreBlock.scribble(block, text)
     Store.save_block(block.id, block)
-    {:reply, :ok, {block, random}}
-  end
-
-  @doc false
-  @impl true
-  def handle_call(:get_scribble, _from, {block, random}) do
-    {:reply, block.scribble, {block, random}}
+    PlayerInbox.success(player_id, "You scribble #{scribble_surface(block.type)}.")
+    {:noreply, {block, random}}
   end
 
   defp block_info(block), do: {block.id, CoreBlock.list_people(block)}
+
+  defp scribble_surface(:graveyard), do: "on a tombstone"
+  defp scribble_surface(:space), do: "on the wall"
+  defp scribble_surface(_), do: "on the ground"
 end

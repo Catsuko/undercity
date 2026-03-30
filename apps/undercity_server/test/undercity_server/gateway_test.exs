@@ -105,7 +105,7 @@ defmodule UndercityServer.GatewayTest do
 
       {:ok, {:ok, _vicinity}, _constitution} = Gateway.perform(player_id, "ashwarden_square", :move, :north)
 
-      {"ashwarden_square", people} = Block.info("ashwarden_square")
+      {"ashwarden_square", people, _scribble} = Block.info("ashwarden_square")
       refute player_id in people
     end
 
@@ -229,7 +229,8 @@ defmodule UndercityServer.GatewayTest do
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello world")
 
-      assert "hello world" = Block.get_scribble(vicinity.id)
+      {_id, _people, scribble} = Block.info(vicinity.id)
+      assert scribble == "hello world"
     end
 
     test "returns error when player has no chalk" do
@@ -244,7 +245,8 @@ defmodule UndercityServer.GatewayTest do
 
       assert {:ok, _constitution} = Gateway.perform(player_id, vicinity.id, :scribble, "hello!")
 
-      assert "hello" = Block.get_scribble(vicinity.id)
+      {_id, _people, scribble} = Block.info(vicinity.id)
+      assert scribble == "hello"
     end
 
     test "noops for empty scribble without consuming chalk" do

@@ -10,11 +10,12 @@ defmodule UndercityServer.BlockTest do
   end
 
   describe "info/1" do
-    test "returns block id and people", %{id: id} do
-      {block_id, people} = Block.info(id)
+    test "returns block id, people, and scribble", %{id: id} do
+      {block_id, people, scribble} = Block.info(id)
 
       assert block_id == id
       assert people == []
+      assert scribble == nil
     end
   end
 
@@ -36,7 +37,7 @@ defmodule UndercityServer.BlockTest do
       Block.join(id, player1)
       Block.join(id, player2)
 
-      {_id, people} = Block.info(id)
+      {_id, people, _scribble} = Block.info(id)
       assert length(people) == 2
     end
   end
@@ -48,7 +49,7 @@ defmodule UndercityServer.BlockTest do
 
       assert :ok = Block.leave(id, player_id)
 
-      {_id, people} = Block.info(id)
+      {_id, people, _scribble} = Block.info(id)
       assert people == []
     end
 
@@ -60,7 +61,7 @@ defmodule UndercityServer.BlockTest do
 
       Block.leave(id, player1)
 
-      {_id, people} = Block.info(id)
+      {_id, people, _scribble} = Block.info(id)
       assert length(people) == 1
       assert player2 in people
     end
@@ -74,21 +75,26 @@ defmodule UndercityServer.BlockTest do
     end
   end
 
-  describe "scribble/2" do
+  describe "scribble/3" do
     test "sets a scribble on the block", %{id: id} do
-      assert :ok = Block.scribble(id, "hello world")
-      assert "hello world" = Block.get_scribble(id)
+      player_id = Helpers.player_id()
+      assert :ok = Block.scribble(id, player_id, "hello world")
+      {^id, _people, scribble} = Block.info(id)
+      assert scribble == "hello world"
     end
 
     test "overwrites an existing scribble", %{id: id} do
-      Block.scribble(id, "first")
-      Block.scribble(id, "second")
+      player_id = Helpers.player_id()
+      Block.scribble(id, player_id, "first")
+      Block.scribble(id, player_id, "second")
 
-      assert "second" = Block.get_scribble(id)
+      {^id, _people, scribble} = Block.info(id)
+      assert scribble == "second"
     end
 
     test "scribble defaults to nil", %{id: id} do
-      assert nil == Block.get_scribble(id)
+      {^id, _people, scribble} = Block.info(id)
+      assert scribble == nil
     end
   end
 

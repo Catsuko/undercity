@@ -16,14 +16,12 @@ defmodule UndercityServer.Vicinity do
   @doc """
   Builds a `Vicinity` for `block_id` by querying live server state.
 
-  - Fetches present player IDs from `Block.info/1`
+  - Fetches present player IDs and scribble from `Block.info/1`
   - Resolves display names from `Player.Store.get_names/1`
-  - Fetches current scribble from `Block.get_scribble/1`
   """
   def build(block_id) do
-    {^block_id, player_ids} = Block.info(block_id)
+    {^block_id, player_ids, scribble} = Block.info(block_id)
     names = PlayerStore.get_names(player_ids)
-    scribble = Block.get_scribble(block_id)
 
     people =
       Enum.map(player_ids, fn id ->
