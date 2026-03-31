@@ -128,8 +128,9 @@ defmodule UndercityServer.Player.Server do
 
       {:error, :not_edible, item_name} ->
         PlayerInbox.failure(state.player.id, "You can't eat #{item_name}.")
-        {:reply, {:ok, ActionPoints.current(state.player.action_points), Health.current(state.player.health)},
-         state, @idle_timeout_ms}
+
+        {:reply, {:ok, ActionPoints.current(state.player.action_points), Health.current(state.player.health)}, state,
+         @idle_timeout_ms}
 
       {:error, :exhausted} = error ->
         PlayerInbox.warning(state.player.id, "You are too exhausted to act.")
