@@ -39,7 +39,7 @@ defmodule UndercityServer.Gateway do
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
   - Returns `{:ok, ap}` on success.
-  - Returns `{:error, :invalid_index}` if no item exists at that position.
+  - Returns `{:ok, ap}` unchanged if no item exists at that position (silent noop).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   defdelegate drop_item(player_id, index), to: Player
@@ -60,6 +60,8 @@ defmodule UndercityServer.Gateway do
   Dispatches a player action to the appropriate `Actions.*` module.
 
   - The `:eat` action does not require block-presence validation and is dispatched directly.
+    Returns `{:ok, ap, hp}` on success or silent noop (out of range, not edible).
+    Returns `{:error, :exhausted}` or `{:error, :collapsed}` if AP cannot be spent.
   - All other actions require `player_id` to be present in `block_id`; returns `{:error, :not_in_block}` if not.
   - Supported actions: `:eat`, `:move`, `:search`, `:scribble`, `:attack`, `:heal`.
   """

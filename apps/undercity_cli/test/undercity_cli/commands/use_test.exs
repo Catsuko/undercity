@@ -72,12 +72,11 @@ defmodule UndercityCli.Commands.UseTest do
       assert Use.dispatch({"use", 0, 0}, @state_with_people) == @state_with_people
     end
 
-    test "item missing warns" do
+    test "item missing noop returns unchanged state" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@player_id, 0, "player1"} ->
-        {:error, :item_missing}
+        {:ok, @state.ap}
       end)
 
-      expect(MessageBuffer, :warn, fn "You don't have that anymore." -> :ok end)
       assert Use.dispatch({"use", 0, 0}, @state_with_people) == @state_with_people
     end
 
@@ -110,21 +109,19 @@ defmodule UndercityCli.Commands.UseTest do
       assert result.ap == 9
     end
 
-    test "collapsed target: returns invalid_target" do
+    test "collapsed target: noop returns unchanged state" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
-        {:error, :invalid_target}
+        {:ok, @state.ap}
       end)
 
-      expect(MessageBuffer, :warn, fn "Zara can't be healed." -> :ok end)
       assert Use.dispatch({"use", 0, 1}, @state_with_people) == @state_with_people
     end
 
-    test "item missing warns" do
+    test "item missing noop returns unchanged state" do
       expect(Gateway, :perform, fn @player_id, @block_id, :heal, {@target_id, 0, "player1"} ->
-        {:error, :item_missing}
+        {:ok, @state.ap}
       end)
 
-      expect(MessageBuffer, :warn, fn "You don't have that anymore." -> :ok end)
       assert Use.dispatch({"use", 0, 1}, @state_with_people) == @state_with_people
     end
   end

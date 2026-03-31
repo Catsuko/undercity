@@ -51,17 +51,29 @@ defmodule UndercityServer.Actions.HealTest do
       assert [%Item{name: "Salve"}] = Player.check_inventory(actor_id)
     end
 
-    test "returns :item_missing", %{actor_id: actor_id, block_id: block_id} do
+    test "returns ok noop and writes inbox failure when item missing", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
+      :timer.sleep(10)
+      Player.fetch_inbox(actor_id)
+      initial_ap = Player.constitution(actor_id).ap
 
-      assert {:error, :item_missing} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
+      assert {:ok, ^initial_ap} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You don't have that anymore."}] = Player.fetch_inbox(actor_id)
     end
 
-    test "returns :not_a_remedy", %{actor_id: actor_id, block_id: block_id} do
+    test "returns ok noop and writes inbox failure when not a remedy", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
       Player.add_item(actor_id, Item.new("Junk"))
+      :timer.sleep(10)
+      Player.fetch_inbox(actor_id)
+      initial_ap = Player.constitution(actor_id).ap
 
-      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
+      assert {:ok, ^initial_ap} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You can't use that."}] = Player.fetch_inbox(actor_id)
     end
 
     test "sends inbox message to actor on self-heal", %{actor_id: actor_id, block_id: block_id} do
@@ -120,36 +132,64 @@ defmodule UndercityServer.Actions.HealTest do
       assert 49 = Player.constitution(actor_id).ap
     end
 
-    test "returns :invalid_target when target HP is 0", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
+    test "returns ok noop and writes inbox failure when target HP is 0", %{
+      actor_id: actor_id,
+      block_id: block_id,
+      target_id: target_id
+    } do
       damage(target_id, 50)
       Player.add_item(actor_id, Item.new("Salve", 1))
 
-      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      :timer.sleep(10)
 
       assert [] = Player.check_inventory(actor_id)
       assert 49 = Player.constitution(actor_id).ap
+      assert [{:failure, "They can't be healed."}] = Player.fetch_inbox(actor_id)
     end
 
-    test "returns :item_missing when actor has no salve", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
+    test "returns ok noop and writes inbox failure when item missing", %{
+      actor_id: actor_id,
+      block_id: block_id,
+      target_id: target_id
+    } do
       damage(target_id, 20)
+      initial_ap = Player.constitution(actor_id).ap
 
-      assert {:error, :item_missing} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      assert {:ok, ^initial_ap} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You don't have that anymore."}] = Player.fetch_inbox(actor_id)
     end
 
-    test "returns :not_a_remedy", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
+    test "returns ok noop and writes inbox failure when not a remedy", %{
+      actor_id: actor_id,
+      block_id: block_id,
+      target_id: target_id
+    } do
       damage(target_id, 20)
       Player.add_item(actor_id, Item.new("Junk"))
+      initial_ap = Player.constitution(actor_id).ap
 
-      assert {:error, :not_a_remedy} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      assert {:ok, ^initial_ap} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You can't use that."}] = Player.fetch_inbox(actor_id)
     end
 
-    test "returns :invalid_target when target is not in block", %{actor_id: actor_id, block_id: block_id} do
+    test "returns ok noop and writes inbox failure when target is not in block", %{
+      actor_id: actor_id,
+      block_id: block_id
+    } do
       outsider_id = Helpers.start_player!()
       Player.add_item(actor_id, Item.new("Salve", 1))
+      initial_ap = Player.constitution(actor_id).ap
 
-      assert {:error, :invalid_target} = Heal.heal(actor_id, "Healer", block_id, outsider_id, 0)
+      assert {:ok, ^initial_ap} = Heal.heal(actor_id, "Healer", block_id, outsider_id, 0)
+      :timer.sleep(10)
 
       assert [%Item{name: "Salve"}] = Player.check_inventory(actor_id)
+      assert [{:failure, "They can't be healed."}] = Player.fetch_inbox(actor_id)
     end
 
     test "sends inbox message to target on success", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do

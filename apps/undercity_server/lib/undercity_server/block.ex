@@ -88,6 +88,13 @@ defmodule UndercityServer.Block do
   end
 
   @doc """
+  Returns the scribble surface description string for `block_id`, e.g. `"on the ground"`.
+  """
+  def scribble_surface_text(block_id) do
+    GenServer.call(via(block_id), :scribble_surface_text)
+  end
+
+  @doc """
   Returns the registered process name atom for the block with the given `id`.
   """
   def process_name(id), do: :"block_#{id}"
@@ -140,6 +147,12 @@ defmodule UndercityServer.Block do
   @impl true
   def handle_call(:search, _from, {block, random}) do
     {:reply, Search.search(block.type, random.()), {block, random}}
+  end
+
+  @doc false
+  @impl true
+  def handle_call(:scribble_surface_text, _from, {block, random}) do
+    {:reply, scribble_surface(block.type), {block, random}}
   end
 
   @doc false

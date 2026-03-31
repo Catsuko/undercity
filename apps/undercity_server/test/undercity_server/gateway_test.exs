@@ -88,6 +88,22 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
+  describe "drop_item/2" do
+    test "drops item and returns updated ap", %{} do
+      {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      Player.add_item(player_id, UndercityCore.Item.new("Junk"))
+
+      assert {:ok, 49} = Gateway.drop_item(player_id, 0)
+      assert [] = Player.check_inventory(player_id)
+    end
+
+    test "returns ok noop when index is out of range" do
+      {player_id, _vicinity, constitution} = Helpers.enter_player!(Helpers.player_name())
+
+      assert {:ok, constitution.ap} == Gateway.drop_item(player_id, 0)
+    end
+  end
+
   describe "perform/4 :move" do
     test "moves a player to an adjacent block" do
       name = Helpers.player_name()
@@ -116,6 +132,32 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
+  describe "perform/4 :eat" do
+    test "eats item and returns updated ap and hp" do
+      {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      Player.add_item(player_id, UndercityCore.Item.new("Mushroom"))
+
+      assert {:ok, 49, _hp} = Gateway.perform(player_id, vicinity.id, :eat, 0)
+      assert [] = Player.check_inventory(player_id)
+    end
+
+    test "returns ok noop when index is out of range" do
+      {player_id, vicinity, constitution} = Helpers.enter_player!(Helpers.player_name())
+
+      assert {:ok, constitution.ap, constitution.hp} == Gateway.perform(player_id, vicinity.id, :eat, 0)
+    end
+
+    test "returns ok noop for non-edible item and writes inbox failure" do
+      {player_id, vicinity, constitution} = Helpers.enter_player!(Helpers.player_name())
+      Player.add_item(player_id, UndercityCore.Item.new("Junk"))
+
+      assert {:ok, constitution.ap, constitution.hp} == Gateway.perform(player_id, vicinity.id, :eat, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You can't eat Junk."}] = Player.fetch_inbox(player_id)
+    end
+  end
+
   describe "perform/4 :search" do
     test "returns ap on any outcome" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
@@ -131,23 +173,31 @@ defmodule UndercityServer.GatewayTest do
   end
 
   describe "perform/4 :attack" do
-    test "returns :invalid_weapon when item at index is not a weapon" do
+    test "returns ok noop and writes failure inbox when item at index is not a weapon" do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(attacker_id, UndercityCore.Item.new("Junk"))
+      initial_ap = Player.constitution(attacker_id).ap
 
-      assert {:error, :invalid_weapon} =
+      assert {:ok, ^initial_ap} =
                Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
+
+      :timer.sleep(10)
+      assert [{:failure, "You can't attack with that."}] = Player.fetch_inbox(attacker_id)
     end
 
-    test "returns :invalid_weapon when weapon index is out of bounds" do
+    test "returns ok noop and writes failure inbox when weapon index is out of bounds" do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      initial_ap = Player.constitution(attacker_id).ap
 
-      assert {:error, :invalid_weapon} =
+      assert {:ok, ^initial_ap} =
                Gateway.perform(attacker_id, vicinity.id, :attack, {target_id, 0, attacker_name})
+
+      :timer.sleep(10)
+      assert [{:failure, "You can't attack with that."}] = Player.fetch_inbox(attacker_id)
     end
 
     test "returns ap on hit or miss" do
@@ -170,16 +220,20 @@ defmodule UndercityServer.GatewayTest do
       assert new_ap < 50
     end
 
-    test "returns :invalid_target when player attacks themselves" do
+    test "returns ok noop and writes warning inbox when player attacks themselves" do
       attacker_name = Helpers.player_name()
       {player_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       Player.add_item(player_id, UndercityCore.Item.new("Iron Pipe"))
+      initial_ap = Player.constitution(player_id).ap
 
-      assert {:error, :invalid_target} =
+      assert {:ok, ^initial_ap} =
                Gateway.perform(player_id, vicinity.id, :attack, {player_id, 0, attacker_name})
+
+      :timer.sleep(10)
+      assert [{:warning, "You miss."}] = Player.fetch_inbox(player_id)
     end
 
-    test "returns :invalid_target when target is not in block" do
+    test "returns ok noop and writes warning inbox when target is not in block" do
       attacker_name = Helpers.player_name()
       {attacker_id, vicinity, _constitution} = Helpers.enter_player!(attacker_name)
       {target_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
@@ -187,9 +241,15 @@ defmodule UndercityServer.GatewayTest do
 
       # target is in ashwarden_square; attacker tries to attack from a different block
       {:ok, {:ok, _}, _} = Gateway.perform(attacker_id, vicinity.id, :move, :north)
+      :timer.sleep(10)
+      Player.fetch_inbox(attacker_id)
+      after_move_ap = Player.constitution(attacker_id).ap
 
-      assert {:error, :invalid_target} =
+      assert {:ok, ^after_move_ap} =
                Gateway.perform(attacker_id, "wardens_archive", :attack, {target_id, 0, attacker_name})
+
+      :timer.sleep(10)
+      assert [{:warning, "You miss."}] = Player.fetch_inbox(attacker_id)
     end
 
     test "returns ap when target is already collapsed (miss)" do
@@ -233,10 +293,14 @@ defmodule UndercityServer.GatewayTest do
       assert scribble == "hello world"
     end
 
-    test "returns error when player has no chalk" do
+    test "returns ok noop and writes failure inbox when player has no chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      initial_ap = Player.constitution(player_id).ap
 
-      assert {:error, :item_missing} = Gateway.perform(player_id, vicinity.id, :scribble, "hello")
+      assert {:ok, ^initial_ap} = Gateway.perform(player_id, vicinity.id, :scribble, "hello")
+      :timer.sleep(10)
+
+      assert [{:failure, "You have no chalk."}] = Player.fetch_inbox(player_id)
     end
 
     test "strips invalid characters from scribble text" do
@@ -252,8 +316,9 @@ defmodule UndercityServer.GatewayTest do
     test "noops for empty scribble without consuming chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      initial_ap = Player.constitution(player_id).ap
 
-      assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
+      assert {:ok, ^initial_ap} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
       items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items

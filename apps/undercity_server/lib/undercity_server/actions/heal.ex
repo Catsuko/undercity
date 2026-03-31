@@ -12,6 +12,7 @@ defmodule UndercityServer.Actions.Heal do
   alias UndercityCore.Item.Remedy
   alias UndercityServer.Block
   alias UndercityServer.Player
+  alias UndercityServer.Player.Inbox, as: PlayerInbox
 
   @ap_cost 1
 
@@ -19,9 +20,8 @@ defmodule UndercityServer.Actions.Heal do
   Executes a heal action from `player_id` targeting `target_id` using the item at `item_idx`.
 
   - Returns `{:ok, ap}` on success.
-  - Returns `{:error, :invalid_target}` if the target is not present in the block.
-  - Returns `{:error, :item_missing}` if no item exists at the given index.
-  - Returns `{:error, :not_a_remedy}` if the item at that index is not a remedy.
+  - Returns `{:ok, ap}` unchanged if the target is not present in the block, the item is
+    missing, or the item is not a remedy (silent noop with inbox failure message).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the actor cannot spend AP.
   """
   def heal(player_id, healer_name, block_id, target_id, item_idx) do
@@ -29,6 +29,21 @@ defmodule UndercityServer.Actions.Heal do
          {:ok, item_name} <- find_remedy(player_id, item_idx),
          {:ok, new_ap} <- Player.use_item(player_id, item_idx, @ap_cost) do
       apply_heal(player_id, healer_name, target_id, item_name, new_ap)
+    else
+      {:error, :invalid_target} ->
+        PlayerInbox.failure(player_id, "They can't be healed.")
+        {:ok, Player.constitution(player_id).ap}
+
+      {:error, :item_missing} ->
+        PlayerInbox.failure(player_id, "You don't have that anymore.")
+        {:ok, Player.constitution(player_id).ap}
+
+      {:error, :not_a_remedy} ->
+        PlayerInbox.failure(player_id, "You can't use that.")
+        {:ok, Player.constitution(player_id).ap}
+
+      {:error, _} = error ->
+        error
     end
   end
 
@@ -36,8 +51,12 @@ defmodule UndercityServer.Actions.Heal do
     {:heal, amount} = Remedy.effect(item_name)
 
     case Player.heal(target_id, amount, player_id, healer_name) do
-      :ok -> {:ok, new_ap}
-      {:error, :invalid_target} -> {:error, :invalid_target}
+      :ok ->
+        {:ok, new_ap}
+
+      {:error, :invalid_target} ->
+        PlayerInbox.failure(player_id, "They can't be healed.")
+        {:ok, new_ap}
     end
   end
 

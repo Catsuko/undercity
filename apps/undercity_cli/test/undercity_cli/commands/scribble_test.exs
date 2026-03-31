@@ -27,15 +27,13 @@ defmodule UndercityCli.Commands.ScribbleTest do
     assert result.ap == 9
   end
 
-  test "scribble with empty message returns model unchanged with success message" do
-    expect(Gateway, :perform, fn @player_id, _, :scribble, "" -> {:error, :empty_message} end)
-    expect(MessageBuffer, :success, fn "You scribble on the ground." -> :ok end)
+  test "empty message noop returns unchanged state" do
+    expect(Gateway, :perform, fn @player_id, _, :scribble, "" -> {:ok, @state.ap} end)
     assert Scribble.dispatch({"scribble", ""}, @state) == @state
   end
 
-  test "no chalk returns model unchanged with warning" do
-    expect(Gateway, :perform, fn @player_id, _, :scribble, "hello" -> {:error, :item_missing} end)
-    expect(MessageBuffer, :warn, fn "You have no chalk." -> :ok end)
+  test "no chalk noop returns unchanged state" do
+    expect(Gateway, :perform, fn @player_id, _, :scribble, "hello" -> {:ok, @state.ap} end)
     assert Scribble.dispatch({"scribble", "hello"}, @state) == @state
   end
 end

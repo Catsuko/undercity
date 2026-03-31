@@ -20,8 +20,8 @@ defmodule UndercityServer.Actions.Attack do
   Executes an attack from `player_id` against `target_id` using the weapon at `weapon_index`.
 
   - Returns `{:ok, ap}` on a successful hit or miss.
-  - Returns `{:error, :invalid_target}` if `target_id` is not in the block or equals `player_id`.
-  - Returns `{:error, :invalid_weapon}` if the index is out of range or the item is not a weapon.
+  - Returns `{:ok, ap}` unchanged if the target is not in the block or the item is not a weapon
+    (inbox message written).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the attacker cannot spend AP.
   """
   def attack(player_id, player_name, block_id, target_id, weapon_index) do
@@ -29,6 +29,14 @@ defmodule UndercityServer.Actions.Attack do
          {:ok, item} <- find_weapon(player_id, weapon_index),
          {:ok, stats} <- weapon_stats(item.name) do
       do_attack(player_id, player_name, target_id, stats)
+    else
+      {:error, :invalid_target} ->
+        PlayerInbox.warning(player_id, "You miss.")
+        {:ok, Player.constitution(player_id).ap}
+
+      {:error, :invalid_weapon} ->
+        PlayerInbox.failure(player_id, "You can't attack with that.")
+        {:ok, Player.constitution(player_id).ap}
     end
   end
 

@@ -103,18 +103,33 @@ defmodule UndercityServer.PlayerTest do
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
-    test "returns :invalid_index for out of range", %{id: id} do
-      assert {:error, :invalid_index} = Player.drop_item(id, 0)
+    test "returns ok noop for out of range index", %{id: id} do
+      initial_ap = Player.constitution(id).ap
+      assert {:ok, ^initial_ap} = Player.drop_item(id, 0)
+      assert [] = Player.fetch_inbox(id)
     end
 
-    test "returns :exhausted when AP insufficient", %{id: id} do
+    test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
       assert {:error, :exhausted} = Player.drop_item(id, 0)
+      :timer.sleep(10)
 
       assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+      assert [{:warning, "You are too exhausted to act."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.drop_item(id, 0)
+      :timer.sleep(10)
+
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+      assert [{:warning, "Your body has given out."}] = Player.fetch_inbox(id)
     end
   end
 
@@ -145,41 +160,65 @@ defmodule UndercityServer.PlayerTest do
       assert Enum.any?(results, fn delta -> delta < 0 end)
     end
 
-    test "returns :not_edible for non-edible item", %{id: id} do
+    test "returns ok noop for non-edible item", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
+      initial = Player.constitution(id)
 
-      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
-
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
       assert [%Item{name: "Junk"}] = Player.check_inventory(id)
     end
 
-    test "returns :invalid_index for out of range", %{id: id} do
-      assert {:error, :invalid_index} = Player.eat_item(id, 0)
+    test "returns ok noop for out of range index", %{id: id} do
+      initial = Player.constitution(id)
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
+      assert [] = Player.fetch_inbox(id)
     end
 
-    test "returns :exhausted when AP insufficient", %{id: id} do
+    test "returns ok noop for non-edible item and writes inbox failure", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+      initial = Player.constitution(id)
+
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
+      :timer.sleep(10)
+
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+      assert [{:failure, "You can't eat Junk."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
       Player.add_item(id, Item.new("Mushroom"))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
       assert {:error, :exhausted} = Player.eat_item(id, 0)
+      :timer.sleep(10)
 
       assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+      assert [{:warning, "You are too exhausted to act."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
+      Player.add_item(id, Item.new("Mushroom"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.eat_item(id, 0)
+      :timer.sleep(10)
+
+      assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+      assert [{:warning, "Your body has given out."}] = Player.fetch_inbox(id)
     end
 
     test "does not consume item when not edible", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
 
-      assert {:error, :not_edible, "Chalk"} = Player.eat_item(id, 0)
-
+      assert {:ok, _ap, _hp} = Player.eat_item(id, 0)
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
     test "does not spend AP when item is not edible", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
 
-      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
-
+      assert {:ok, 50, _hp} = Player.eat_item(id, 0)
       assert 50 = Player.constitution(id).ap
     end
   end

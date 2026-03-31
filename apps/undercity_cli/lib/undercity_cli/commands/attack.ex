@@ -70,11 +70,6 @@ defmodule UndercityCli.Commands.Attack do
     %{state | ap: new_ap}
   end
 
-  defp handle_outcome({:error, :invalid_weapon}, state) do
-    MessageBuffer.warn("You can't attack with that.")
-    state
-  end
-
   defp find_person(people, name) do
     case Enum.find(people || [], fn p -> p.name == name end) do
       nil -> {:error, :invalid_target}

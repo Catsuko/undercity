@@ -29,12 +29,11 @@ defmodule UndercityServer.Player do
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
   - Returns `{:ok, ap}` on success.
-  - Returns `{:error, :invalid_index}` if the index is out of range.
+  - Returns `{:ok, ap}` unchanged if the index is out of range (silent noop).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   @spec drop_item(String.t(), non_neg_integer()) ::
           {:ok, non_neg_integer()}
-          | {:error, :invalid_index}
           | {:error, :exhausted}
           | {:error, :collapsed}
   def drop_item(player_id, index) do
@@ -45,14 +44,11 @@ defmodule UndercityServer.Player do
   Eats the item at `index` in the player's inventory, spending 1 AP and applying the food effect.
 
   - Returns `{:ok, ap, hp}` on success.
-  - Returns `{:error, :invalid_index}` if no item exists at that position.
-  - Returns `{:error, :not_edible, item_name}` if the item cannot be eaten.
+  - Returns `{:ok, ap, hp}` unchanged if the index is out of range or the item is not edible (silent noop).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   @spec eat_item(String.t(), non_neg_integer()) ::
           {:ok, non_neg_integer(), non_neg_integer()}
-          | {:error, :invalid_index}
-          | {:error, :not_edible, String.t()}
           | {:error, :exhausted}
           | {:error, :collapsed}
   def eat_item(player_id, index) do

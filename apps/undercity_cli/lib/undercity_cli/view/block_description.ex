@@ -97,7 +97,7 @@ defmodule UndercityCli.View.BlockDescription do
               text(
                 content: text,
                 color: @grid_color,
-                attributes: Ratatouille.Constants.attribute(:bold)
+                attributes: [Ratatouille.Constants.attribute(:bold)]
               )
 
               text(content: " #{surface}.", color: @grid_color)

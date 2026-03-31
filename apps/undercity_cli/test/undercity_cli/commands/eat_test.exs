@@ -32,9 +32,8 @@ defmodule UndercityCli.Commands.EatTest do
     assert result.hp == 11
   end
 
-  test "not edible returns model unchanged with warning" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :not_edible, "Rock"} end)
-    expect(MessageBuffer, :warn, fn "You can't eat Rock." -> :ok end)
+  test "not edible noop returns model with unchanged ap and hp" do
+    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, @state.ap, @state.hp} end)
     assert Eat.dispatch({"eat", "1"}, @state) == @state
   end
 
@@ -43,9 +42,10 @@ defmodule UndercityCli.Commands.EatTest do
     assert Eat.dispatch({"eat", "0"}, @state) == @state
   end
 
-  test "gateway invalid index returns model unchanged with warning" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :invalid_index} end)
-    expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert Eat.dispatch({"eat", "1"}, @state) == @state
+  test "gateway noop on invalid index updates ap and hp" do
+    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, 9, 11} end)
+    result = Eat.dispatch({"eat", "1"}, @state)
+    assert result.ap == 9
+    assert result.hp == 11
   end
 end
