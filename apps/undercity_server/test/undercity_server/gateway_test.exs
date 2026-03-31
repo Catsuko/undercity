@@ -275,10 +275,14 @@ defmodule UndercityServer.GatewayTest do
       assert scribble == "hello world"
     end
 
-    test "returns error when player has no chalk" do
+    test "returns ok noop and writes failure inbox when player has no chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      initial_ap = Player.constitution(player_id).ap
 
-      assert {:error, :item_missing} = Gateway.perform(player_id, vicinity.id, :scribble, "hello")
+      assert {:ok, ^initial_ap} = Gateway.perform(player_id, vicinity.id, :scribble, "hello")
+      :timer.sleep(10)
+
+      assert [{:failure, "You have no chalk."}] = Player.fetch_inbox(player_id)
     end
 
     test "strips invalid characters from scribble text" do
@@ -294,8 +298,9 @@ defmodule UndercityServer.GatewayTest do
     test "noops for empty scribble without consuming chalk" do
       {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(player_id, UndercityCore.Item.new("Chalk", 2))
+      initial_ap = Player.constitution(player_id).ap
 
-      assert {:error, :empty_message} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
+      assert {:ok, ^initial_ap} = Gateway.perform(player_id, vicinity.id, :scribble, "!!!")
 
       items = Gateway.check_inventory(player_id)
       assert [%UndercityCore.Item{name: "Chalk", uses: 2}] = items

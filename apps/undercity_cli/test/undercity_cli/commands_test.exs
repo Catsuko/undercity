@@ -47,8 +47,7 @@ defmodule UndercityCli.CommandsTest do
     end
 
     test "routes scribble with text to Scribble" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :scribble, "hello" -> {:error, :item_missing} end)
-      expect(MessageBuffer, :warn, fn "You have no chalk." -> :ok end)
+      expect(Gateway, :perform, fn @player_id, @block_id, :scribble, "hello" -> {:ok, 10} end)
       assert Commands.dispatch(%{@state | input: "scribble hello"}) == @state
     end
 
@@ -85,8 +84,7 @@ defmodule UndercityCli.CommandsTest do
 
   describe "input splitting" do
     test "scribble captures multi-word rest" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :scribble, "hello world" -> {:error, :item_missing} end)
-      expect(MessageBuffer, :warn, fn "You have no chalk." -> :ok end)
+      expect(Gateway, :perform, fn @player_id, @block_id, :scribble, "hello world" -> {:ok, 10} end)
       assert Commands.dispatch(%{@state | input: "scribble hello world"}) == @state
     end
 
