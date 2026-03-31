@@ -53,12 +53,11 @@ defmodule UndercityCli.Commands.AttackTest do
       assert result.ap == 7
     end
 
-    test "invalid weapon: warning, model unchanged" do
+    test "invalid weapon: noop returns unchanged state" do
       expect(Gateway, :perform, fn @player_id, @block_id, :attack, {@target_id, 1, _} ->
-        {:error, :invalid_weapon}
+        {:ok, @state.ap}
       end)
 
-      expect(MessageBuffer, :warn, fn "You can't attack with that." -> :ok end)
       assert Attack.dispatch({"attack", @target_name, 1}, @state_with_people) == @state_with_people
     end
 
