@@ -29,12 +29,11 @@ defmodule UndercityServer.Player do
   Drops the item at `index` from the player's inventory, spending 1 AP.
 
   - Returns `{:ok, ap}` on success.
-  - Returns `{:error, :invalid_index}` if the index is out of range.
+  - Returns `{:ok, ap}` unchanged if the index is out of range (silent noop).
   - Returns `{:error, :exhausted}` or `{:error, :collapsed}` if the player cannot spend AP.
   """
   @spec drop_item(String.t(), non_neg_integer()) ::
           {:ok, non_neg_integer()}
-          | {:error, :invalid_index}
           | {:error, :exhausted}
           | {:error, :collapsed}
   def drop_item(player_id, index) do

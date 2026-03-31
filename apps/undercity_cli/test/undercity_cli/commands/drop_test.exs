@@ -35,9 +35,8 @@ defmodule UndercityCli.Commands.DropTest do
     assert Drop.dispatch({"drop", "0"}, @state) == @state
   end
 
-  test "gateway invalid index returns model unchanged with warning" do
-    expect(Gateway, :drop_item, fn @player_id, 0 -> {:error, :invalid_index} end)
-    expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-    assert Drop.dispatch({"drop", "1"}, @state) == @state
+  test "gateway noop on invalid index updates ap" do
+    expect(Gateway, :drop_item, fn @player_id, 0 -> {:ok, 9} end)
+    assert Drop.dispatch({"drop", "1"}, @state).ap == 9
   end
 end

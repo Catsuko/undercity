@@ -103,18 +103,33 @@ defmodule UndercityServer.PlayerTest do
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
-    test "returns :invalid_index for out of range", %{id: id} do
-      assert {:error, :invalid_index} = Player.drop_item(id, 0)
+    test "returns ok noop for out of range index", %{id: id} do
+      initial_ap = Player.constitution(id).ap
+      assert {:ok, ^initial_ap} = Player.drop_item(id, 0)
+      assert [] = Player.fetch_inbox(id)
     end
 
-    test "returns :exhausted when AP insufficient", %{id: id} do
+    test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
       assert {:error, :exhausted} = Player.drop_item(id, 0)
+      :timer.sleep(10)
 
       assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+      assert [{:warning, "You are too exhausted to act."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.drop_item(id, 0)
+      :timer.sleep(10)
+
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
+      assert [{:warning, "Your body has given out."}] = Player.fetch_inbox(id)
     end
   end
 

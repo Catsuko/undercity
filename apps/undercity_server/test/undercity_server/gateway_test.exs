@@ -88,6 +88,22 @@ defmodule UndercityServer.GatewayTest do
     end
   end
 
+  describe "drop_item/2" do
+    test "drops item and returns updated ap", %{} do
+      {player_id, _vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+      Player.add_item(player_id, UndercityCore.Item.new("Junk"))
+
+      assert {:ok, 49} = Gateway.drop_item(player_id, 0)
+      assert [] = Player.check_inventory(player_id)
+    end
+
+    test "returns ok noop when index is out of range" do
+      {player_id, _vicinity, constitution} = Helpers.enter_player!(Helpers.player_name())
+
+      assert {:ok, constitution.ap} == Gateway.drop_item(player_id, 0)
+    end
+  end
+
   describe "perform/4 :move" do
     test "moves a player to an adjacent block" do
       name = Helpers.player_name()

@@ -100,8 +100,17 @@ defmodule UndercityServer.Player.Server do
         PlayerInbox.info(state.player.id, "You dropped #{item_name}.")
         {:reply, {:ok, ActionPoints.current(player.action_points)}, state, @idle_timeout_ms}
 
-      {:error, _} = error ->
+      {:error, :exhausted} = error ->
+        PlayerInbox.warning(state.player.id, "You are too exhausted to act.")
         {:reply, error, state, @idle_timeout_ms}
+
+      {:error, :collapsed} = error ->
+        PlayerInbox.warning(state.player.id, "Your body has given out.")
+        {:reply, error, state, @idle_timeout_ms}
+
+      {:error, :invalid_index} ->
+        # Race condition: CLI validates before calling, so this is a silent noop
+        {:reply, {:ok, ActionPoints.current(state.player.action_points)}, state, @idle_timeout_ms}
     end
   end
 
