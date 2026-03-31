@@ -28,8 +28,12 @@ defmodule UndercityCli.Commands.Eat do
   # Typed "eat 1" — parse index and delegate to canonical form
   def dispatch({verb, index}, state) when is_binary(index) do
     case Integer.parse(index) do
-      {n, ""} when n >= 1 -> dispatch({verb, n - 1}, state)
-      _ -> handle_outcome({:error, :invalid_index}, state)
+      {n, ""} when n >= 1 ->
+        dispatch({verb, n - 1}, state)
+
+      _ ->
+        MessageBuffer.warn("Invalid item selection.")
+        state
     end
   end
 
@@ -44,13 +48,7 @@ defmodule UndercityCli.Commands.Eat do
     %{state | ap: new_ap, hp: new_hp}
   end
 
-  defp handle_outcome({:error, :not_edible, item_name}, state) do
-    MessageBuffer.warn("You can't eat #{item_name}.")
-    state
-  end
-
-  defp handle_outcome({:error, :invalid_index}, state) do
-    MessageBuffer.warn("Invalid item selection.")
+  defp handle_outcome({:error, :not_edible, _item_name}, state) do
     state
   end
 end

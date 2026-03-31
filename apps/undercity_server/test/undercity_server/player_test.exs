@@ -168,18 +168,42 @@ defmodule UndercityServer.PlayerTest do
       assert [%Item{name: "Junk"}] = Player.check_inventory(id)
     end
 
-    test "returns :invalid_index for out of range", %{id: id} do
-      assert {:error, :invalid_index} = Player.eat_item(id, 0)
+    test "returns ok noop for out of range index", %{id: id} do
+      initial = Player.constitution(id)
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
+      assert [] = Player.fetch_inbox(id)
     end
 
-    test "returns :exhausted when AP insufficient", %{id: id} do
+    test "returns :not_edible and writes inbox failure", %{id: id} do
+      Player.add_item(id, Item.new("Junk"))
+
+      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
+      :timer.sleep(10)
+
+      assert [{:failure, "You can't eat Junk."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
       Player.add_item(id, Item.new("Mushroom"))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
       assert {:error, :exhausted} = Player.eat_item(id, 0)
+      :timer.sleep(10)
 
       assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+      assert [{:warning, "You are too exhausted to act."}] = Player.fetch_inbox(id)
+    end
+
+    test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
+      Player.add_item(id, Item.new("Mushroom"))
+      collapse(id)
+
+      assert {:error, :collapsed} = Player.eat_item(id, 0)
+      :timer.sleep(10)
+
+      assert [%Item{name: "Mushroom"}] = Player.check_inventory(id)
+      assert [{:warning, "Your body has given out."}] = Player.fetch_inbox(id)
     end
 
     test "does not consume item when not edible", %{id: id} do

@@ -40,9 +40,10 @@ defmodule UndercityCli.CommandsTest do
     end
 
     test "routes eat with index to Eat" do
-      expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :invalid_index} end)
-      expect(MessageBuffer, :warn, fn "Invalid item selection." -> :ok end)
-      assert Commands.dispatch(%{@state | input: "eat 1"}) == @state
+      expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, 9, 11} end)
+      result = Commands.dispatch(%{@state | input: "eat 1"})
+      assert result.ap == 9
+      assert result.hp == 11
     end
 
     test "routes scribble with text to Scribble" do
