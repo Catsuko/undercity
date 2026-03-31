@@ -66,7 +66,7 @@ defmodule UndercityCli.Commands.Use do
   # Selector path: item_idx from pending args, target_idx from TargetSelector confirm
   def dispatch({_verb, item_idx, target_idx}, state) when is_integer(item_idx) and is_integer(target_idx) do
     target = Enum.at(state.vicinity.people, target_idx)
-    execute(item_idx, target.id, target.name, state)
+    execute(item_idx, target.id, state)
   end
 
   # Typed path: item_idx and target_name from input parsing
@@ -79,40 +79,20 @@ defmodule UndercityCli.Commands.Use do
 
       _item ->
         case find_person(state.vicinity.people, target_name) do
-          {:ok, person} -> execute(item_idx, person.id, person.name, state)
+          {:ok, person} -> execute(item_idx, person.id, state)
           {:error, :invalid_target} -> not_here(target_name, state)
         end
     end
   end
 
-  defp execute(item_idx, target_id, target_name, state) do
-    result =
-      state.gateway.perform(
-        state.player_id,
-        state.vicinity.id,
-        :heal,
-        {target_id, item_idx, state.player_name}
-      )
-
-    Commands.handle_action(result, state, &handle_outcome(&1, &2, target_name))
+  defp execute(item_idx, target_id, state) do
+    state.player_id
+    |> state.gateway.perform(state.vicinity.id, :heal, {target_id, item_idx, state.player_name})
+    |> Commands.handle_action(state, &handle_outcome/2)
   end
 
-  defp handle_outcome({:ok, new_ap}, state, _target_name) do
+  defp handle_outcome({:ok, new_ap}, state) do
     %{state | ap: new_ap}
-  end
-
-  defp handle_outcome({:error, :item_missing}, state, _target_name) do
-    MessageBuffer.warn("You don't have that anymore.")
-    state
-  end
-
-  defp handle_outcome({:error, :not_a_remedy}, state, _target_name) do
-    MessageBuffer.warn("You can't use that.")
-    state
-  end
-
-  defp handle_outcome({:error, :invalid_target}, state, target_name) do
-    not_here(target_name, state)
   end
 
   defp invalid_item(state) do
