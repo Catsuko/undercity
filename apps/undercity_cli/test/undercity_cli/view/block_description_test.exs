@@ -142,7 +142,7 @@ defmodule UndercityCli.View.BlockDescriptionTest do
       assert output =~ "on the ground."
 
       scribble_el = find_element_by_content(elements, "beware the dark")
-      assert scribble_el.attributes.attributes == Ratatouille.Constants.attribute(:bold)
+      assert scribble_el.attributes.attributes == [Ratatouille.Constants.attribute(:bold)]
     end
 
     test "does not render scribble line when nil" do
