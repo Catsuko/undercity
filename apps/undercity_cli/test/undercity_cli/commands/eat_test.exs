@@ -32,8 +32,8 @@ defmodule UndercityCli.Commands.EatTest do
     assert result.hp == 11
   end
 
-  test "not edible returns model unchanged" do
-    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:error, :not_edible, "Rock"} end)
+  test "not edible noop returns model with unchanged ap and hp" do
+    expect(Gateway, :perform, fn @player_id, @block_id, :eat, 0 -> {:ok, @state.ap, @state.hp} end)
     assert Eat.dispatch({"eat", "1"}, @state) == @state
   end
 

@@ -147,11 +147,11 @@ defmodule UndercityServer.GatewayTest do
       assert {:ok, constitution.ap, constitution.hp} == Gateway.perform(player_id, vicinity.id, :eat, 0)
     end
 
-    test "returns :not_edible and writes inbox failure" do
-      {player_id, vicinity, _constitution} = Helpers.enter_player!(Helpers.player_name())
+    test "returns ok noop for non-edible item and writes inbox failure" do
+      {player_id, vicinity, constitution} = Helpers.enter_player!(Helpers.player_name())
       Player.add_item(player_id, UndercityCore.Item.new("Junk"))
 
-      assert {:error, :not_edible, "Junk"} = Gateway.perform(player_id, vicinity.id, :eat, 0)
+      assert {:ok, constitution.ap, constitution.hp} == Gateway.perform(player_id, vicinity.id, :eat, 0)
       :timer.sleep(10)
 
       assert [{:failure, "You can't eat Junk."}] = Player.fetch_inbox(player_id)

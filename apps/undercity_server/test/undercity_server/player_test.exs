@@ -160,11 +160,11 @@ defmodule UndercityServer.PlayerTest do
       assert Enum.any?(results, fn delta -> delta < 0 end)
     end
 
-    test "returns :not_edible for non-edible item", %{id: id} do
+    test "returns ok noop for non-edible item", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
+      initial = Player.constitution(id)
 
-      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
-
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
       assert [%Item{name: "Junk"}] = Player.check_inventory(id)
     end
 
@@ -174,12 +174,14 @@ defmodule UndercityServer.PlayerTest do
       assert [] = Player.fetch_inbox(id)
     end
 
-    test "returns :not_edible and writes inbox failure", %{id: id} do
+    test "returns ok noop for non-edible item and writes inbox failure", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
+      initial = Player.constitution(id)
 
-      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
+      assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
       :timer.sleep(10)
 
+      assert [%Item{name: "Junk"}] = Player.check_inventory(id)
       assert [{:failure, "You can't eat Junk."}] = Player.fetch_inbox(id)
     end
 
@@ -209,16 +211,14 @@ defmodule UndercityServer.PlayerTest do
     test "does not consume item when not edible", %{id: id} do
       Player.add_item(id, Item.new("Chalk", 3))
 
-      assert {:error, :not_edible, "Chalk"} = Player.eat_item(id, 0)
-
+      assert {:ok, _ap, _hp} = Player.eat_item(id, 0)
       assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
     end
 
     test "does not spend AP when item is not edible", %{id: id} do
       Player.add_item(id, Item.new("Junk"))
 
-      assert {:error, :not_edible, "Junk"} = Player.eat_item(id, 0)
-
+      assert {:ok, 50, _hp} = Player.eat_item(id, 0)
       assert 50 = Player.constitution(id).ap
     end
   end

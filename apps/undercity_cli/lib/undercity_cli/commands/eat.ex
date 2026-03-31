@@ -47,8 +47,4 @@ defmodule UndercityCli.Commands.Eat do
   defp handle_outcome({:ok, new_ap, new_hp}, state) do
     %{state | ap: new_ap, hp: new_hp}
   end
-
-  defp handle_outcome({:error, :not_edible, _item_name}, state) do
-    state
-  end
 end
