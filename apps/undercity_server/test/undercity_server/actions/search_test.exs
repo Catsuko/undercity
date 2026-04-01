@@ -59,7 +59,7 @@ defmodule UndercityServer.Actions.SearchTest do
 
     test "does not add item when inventory is full", %{player_id: player_id} do
       block_id = start_block(always_finds())
-      for _ <- 1..15, do: Player.add_item(player_id, Item.new("Junk"))
+      for _ <- 1..15, do: Player.add_item(player_id, Item.build(:junk))
 
       assert {:ok, _ap} = Search.search(player_id, block_id)
 
@@ -70,7 +70,7 @@ defmodule UndercityServer.Actions.SearchTest do
 
     test "sends :found_but_full inbox message when inventory is full", %{player_id: player_id} do
       block_id = start_block(always_finds())
-      for _ <- 1..15, do: Player.add_item(player_id, Item.new("Junk"))
+      for _ <- 1..15, do: Player.add_item(player_id, Item.build(:junk))
       :timer.sleep(10)
       Player.fetch_inbox(player_id)
 

@@ -25,7 +25,7 @@ defmodule UndercityServer.Actions.ScribbleTest do
     end
 
     test "does not consume chalk when text is blank", %{actor_id: actor_id, block_id: block_id} do
-      Player.add_item(actor_id, Item.new("Chalk", 3))
+      Player.add_item(actor_id, Item.build(:chalk, 3))
 
       Scribble.scribble(actor_id, block_id, "")
 
@@ -49,7 +49,7 @@ defmodule UndercityServer.Actions.ScribbleTest do
       actor_id: actor_id,
       block_id: block_id
     } do
-      Player.add_item(actor_id, Item.new("Chalk", 3))
+      Player.add_item(actor_id, Item.build(:chalk, 3))
 
       assert {:ok, 49} = Scribble.scribble(actor_id, block_id, "hello")
       :timer.sleep(10)

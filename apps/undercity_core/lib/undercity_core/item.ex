@@ -5,30 +5,14 @@ defmodule UndercityCore.Item do
 
   alias UndercityCore.Item.Catalogue
 
-  @enforce_keys [:name]
+  @enforce_keys [:id, :name]
   defstruct [:id, :name, :uses]
 
   @type t :: %__MODULE__{
-          id: atom() | nil,
+          id: atom(),
           name: String.t(),
           uses: non_neg_integer() | nil
         }
-
-  @doc """
-  Creates a non-consumable item with the given name.
-  """
-  @spec new(String.t()) :: t()
-  def new(name) when is_binary(name) do
-    %__MODULE__{name: name}
-  end
-
-  @doc """
-  Creates a consumable item with the given name and number of uses.
-  """
-  @spec new(String.t(), non_neg_integer()) :: t()
-  def new(name, uses) when is_binary(name) and is_integer(uses) and uses > 0 do
-    %__MODULE__{name: name, uses: uses}
-  end
 
   @doc """
   Builds an `Item` from the given catalogue id.
