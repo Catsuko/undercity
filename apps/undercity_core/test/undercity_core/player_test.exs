@@ -69,7 +69,7 @@ defmodule UndercityCore.PlayerTest do
 
   describe "drop/3" do
     setup do
-      item = Item.new("Sword")
+      item = Item.build(:iron_pipe)
       player = player_with_ap(10)
       {:ok, inventory} = Inventory.add_item(player.inventory, item)
       {:ok, player: %{player | inventory: inventory}, item: item}
@@ -91,7 +91,7 @@ defmodule UndercityCore.PlayerTest do
     end
 
     test "returns exhausted when out of AP" do
-      item = Item.new("Sword")
+      item = Item.build(:iron_pipe)
       {:ok, inventory} = Inventory.add_item(Inventory.new(), item)
       player = %{player_with_ap(0) | inventory: inventory}
       assert {:error, :exhausted} = Player.drop(player, 0, @now)
@@ -105,12 +105,12 @@ defmodule UndercityCore.PlayerTest do
 
   describe "eat/3" do
     setup do
-      mushroom = Item.new("Mushroom")
-      rock = Item.new("Rock")
+      mushroom = Item.build(:mushroom)
+      junk = Item.build(:junk)
       player = player_with_ap(10)
       {:ok, inv1} = Inventory.add_item(player.inventory, mushroom)
-      {:ok, inv2} = Inventory.add_item(inv1, rock)
-      {:ok, player: %{player | inventory: inv2}, mushroom: mushroom, rock: rock}
+      {:ok, inv2} = Inventory.add_item(inv1, junk)
+      {:ok, player: %{player | inventory: inv2}, mushroom: mushroom, junk: junk}
     end
 
     test "applies a health effect and removes the item", %{player: player} do
@@ -126,7 +126,7 @@ defmodule UndercityCore.PlayerTest do
     end
 
     test "returns not_edible for a non-food item", %{player: player} do
-      assert {:error, :not_edible, "Rock"} = Player.eat(player, 1, @now)
+      assert {:error, :not_edible, "Junk"} = Player.eat(player, 1, @now)
     end
 
     test "does not spend AP when item is not edible", %{player: player} do

@@ -3,10 +3,13 @@ defmodule UndercityCore.Item do
   An item that can be found and carried in the undercity.
   """
 
+  alias UndercityCore.Item.Catalogue
+
   @enforce_keys [:name]
-  defstruct [:name, :uses]
+  defstruct [:id, :name, :uses]
 
   @type t :: %__MODULE__{
+          id: atom() | nil,
           name: String.t(),
           uses: non_neg_integer() | nil
         }
@@ -25,6 +28,19 @@ defmodule UndercityCore.Item do
   @spec new(String.t(), non_neg_integer()) :: t()
   def new(name, uses) when is_binary(name) and is_integer(uses) and uses > 0 do
     %__MODULE__{name: name, uses: uses}
+  end
+
+  @doc """
+  Builds an `Item` from the given catalogue id.
+
+  - `uses` overrides the catalogue default use count when provided.
+  - Raises if `id` is not in the catalogue.
+  """
+  @spec build(atom()) :: t()
+  @spec build(atom(), pos_integer() | nil) :: t()
+  def build(id, uses \\ nil) when is_atom(id) do
+    {:ok, entry} = Catalogue.fetch(id)
+    %__MODULE__{id: id, name: entry.name, uses: uses || entry.default_uses}
   end
 
   @doc """

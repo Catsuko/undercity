@@ -3,6 +3,38 @@ defmodule UndercityCore.ItemTest do
 
   alias UndercityCore.Item
 
+  describe "build/1" do
+    test "builds an item with the catalogue name and default uses" do
+      chalk = Item.build(:chalk)
+      assert chalk.id == :chalk
+      assert chalk.name == "Chalk"
+      assert chalk.uses == 5
+    end
+
+    test "builds a non-consumable item with nil uses" do
+      pipe = Item.build(:iron_pipe)
+      assert pipe.id == :iron_pipe
+      assert pipe.name == "Iron Pipe"
+      assert pipe.uses == nil
+    end
+
+    test "sets catalogue id on the struct" do
+      assert %Item{id: :mushroom} = Item.build(:mushroom)
+    end
+  end
+
+  describe "build/2" do
+    test "overrides the default use count" do
+      chalk = Item.build(:chalk, 2)
+      assert chalk.uses == 2
+    end
+
+    test "allows nil to fall back to catalogue default" do
+      chalk = Item.build(:chalk, nil)
+      assert chalk.uses == 5
+    end
+  end
+
   describe "new/1" do
     test "creates an item with a name and nil uses" do
       item = Item.new("Junk")
