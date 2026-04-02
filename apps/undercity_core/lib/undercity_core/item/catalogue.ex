@@ -13,11 +13,11 @@ defmodule UndercityCore.Item.Catalogue do
   alias UndercityCore.Item.Catalogue.Entry
 
   @entries [
-    %Entry{id: :iron_pipe, name: "Iron Pipe", weapon: true},
-    %Entry{id: :chalk, name: "Chalk", default_uses: 5},
-    %Entry{id: :mushroom, name: "Mushroom", edible: true},
+    %Entry{id: :iron_pipe, name: "Iron Pipe", weapon: true, action: :attack},
+    %Entry{id: :chalk, name: "Chalk", default_uses: 5, action: :scribble},
+    %Entry{id: :mushroom, name: "Mushroom", edible: true, action: :eat},
     %Entry{id: :junk, name: "Junk"},
-    %Entry{id: :salve, name: "Salve", default_uses: 1}
+    %Entry{id: :salve, name: "Salve", default_uses: 1, action: :heal}
   ]
 
   @by_id Map.new(@entries, fn e -> {e.id, e} end)

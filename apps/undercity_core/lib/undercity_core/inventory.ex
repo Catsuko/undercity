@@ -80,4 +80,26 @@ defmodule UndercityCore.Inventory do
   def remove_at(%__MODULE__{items: items} = inventory, index) do
     %{inventory | items: List.delete_at(items, index)}
   end
+
+  @doc """
+  Finds the first item with the given atom id and consumes one use.
+
+  - Returns `{:ok, updated_inventory}` on success, removing the item if its last use was spent
+  - Returns `{:error, :item_missing}` if no item with the given id exists
+  """
+  @spec use_item(t(), atom()) :: {:ok, t()} | {:error, :item_missing}
+  def use_item(%__MODULE__{items: items} = inventory, item_id) when is_atom(item_id) do
+    case Enum.find_index(items, fn item -> item.id == item_id end) do
+      nil ->
+        {:error, :item_missing}
+
+      index ->
+        item = Enum.at(items, index)
+
+        case Item.use(item) do
+          :spent -> {:ok, remove_at(inventory, index)}
+          {:ok, used} -> {:ok, replace_at(inventory, index, used)}
+        end
+    end
+  end
 end

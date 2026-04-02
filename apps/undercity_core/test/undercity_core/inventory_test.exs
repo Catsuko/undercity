@@ -95,6 +95,57 @@ defmodule UndercityCore.InventoryTest do
     end
   end
 
+  describe "use_item/2" do
+    test "decrements uses on a consumable item" do
+      chalk = Item.build(:chalk)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), chalk)
+
+      assert {:ok, inventory} = Inventory.use_item(inventory, :chalk)
+
+      assert [%Item{id: :chalk, uses: 4}] = Inventory.list_items(inventory)
+    end
+
+    test "removes item when last use is spent" do
+      chalk = Item.build(:chalk, 1)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), chalk)
+
+      assert {:ok, inventory} = Inventory.use_item(inventory, :chalk)
+
+      assert [] = Inventory.list_items(inventory)
+    end
+
+    test "does not remove a non-consumable item" do
+      pipe = Item.build(:iron_pipe)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), pipe)
+
+      assert {:ok, inventory} = Inventory.use_item(inventory, :iron_pipe)
+
+      assert [%Item{id: :iron_pipe}] = Inventory.list_items(inventory)
+    end
+
+    test "returns :item_missing for an empty inventory" do
+      assert {:error, :item_missing} = Inventory.use_item(Inventory.new(), :chalk)
+    end
+
+    test "returns :item_missing when item not in inventory" do
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.build(:junk))
+
+      assert {:error, :item_missing} = Inventory.use_item(inventory, :chalk)
+    end
+
+    test "uses first matching item by id" do
+      chalk = Item.build(:chalk, 3)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.build(:junk))
+      {:ok, inventory} = Inventory.add_item(inventory, chalk)
+
+      assert {:ok, inventory} = Inventory.use_item(inventory, :chalk)
+
+      items = Inventory.list_items(inventory)
+      assert length(items) == 2
+      assert %Item{id: :chalk, uses: 2} = Enum.at(items, 1)
+    end
+  end
+
   describe "full?/1" do
     test "returns false when under capacity" do
       inventory = Inventory.new()

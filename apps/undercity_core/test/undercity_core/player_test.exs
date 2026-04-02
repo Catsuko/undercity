@@ -67,6 +67,86 @@ defmodule UndercityCore.PlayerTest do
     end
   end
 
+  describe "exert/3 (atom action)" do
+    test "spends 1 AP when action is an atom" do
+      player = player_with_ap(10)
+      assert {:ok, result} = Player.exert(player, :scribble, @now)
+      assert ActionPoints.current(result.action_points) == 9
+    end
+
+    test "returns exhausted when not enough AP" do
+      player = player_with_ap(0)
+      assert {:error, :exhausted} = Player.exert(player, :scribble, @now)
+    end
+
+    test "returns collapsed when HP is zero" do
+      player = player_with_hp(0)
+      assert {:error, :collapsed} = Player.exert(player, :scribble, @now)
+    end
+  end
+
+  describe "exert_using/3" do
+    setup do
+      chalk = Item.build(:chalk)
+      player = player_with_ap(10)
+      {:ok, inventory} = Inventory.add_item(player.inventory, chalk)
+      {:ok, player: %{player | inventory: inventory}}
+    end
+
+    test "returns {:ok, player} and decrements item uses", %{player: player} do
+      assert {:ok, result} = Player.exert_using(player, :chalk, @now)
+      assert [%Item{id: :chalk, uses: 4}] = Inventory.list_items(result.inventory)
+    end
+
+    test "spends 1 AP on success", %{player: player} do
+      assert {:ok, result} = Player.exert_using(player, :chalk, @now)
+      assert ActionPoints.current(result.action_points) == 9
+    end
+
+    test "removes item when last use is spent" do
+      chalk = Item.build(:chalk, 1)
+      player = player_with_ap(10)
+      {:ok, inventory} = Inventory.add_item(player.inventory, chalk)
+      player = %{player | inventory: inventory}
+
+      assert {:ok, result} = Player.exert_using(player, :chalk, @now)
+      assert [] = Inventory.list_items(result.inventory)
+    end
+
+    test "non-consumable item remains in inventory" do
+      pipe = Item.build(:iron_pipe)
+      player = player_with_ap(10)
+      {:ok, inventory} = Inventory.add_item(player.inventory, pipe)
+      player = %{player | inventory: inventory}
+
+      assert {:ok, result} = Player.exert_using(player, :iron_pipe, @now)
+      assert [%Item{id: :iron_pipe}] = Inventory.list_items(result.inventory)
+    end
+
+    test "returns :item_missing when item not in inventory" do
+      player = player_with_ap(10)
+      assert {:error, :item_missing} = Player.exert_using(player, :chalk, @now)
+    end
+
+    test "does not spend AP when item is absent" do
+      player = player_with_ap(10)
+      assert {:error, :item_missing} = Player.exert_using(player, :chalk, @now)
+      assert ActionPoints.current(player.action_points) == 10
+    end
+
+    test "returns :exhausted when AP insufficient, item use not consumed", %{player: player} do
+      player = %{player | action_points: %ActionPoints{ap: 0, updated_at: @now}}
+      assert {:error, :exhausted} = Player.exert_using(player, :chalk, @now)
+      assert [%Item{id: :chalk, uses: 5}] = Inventory.list_items(player.inventory)
+    end
+
+    test "returns :collapsed when HP is zero, item use not consumed", %{player: player} do
+      player = %{player | health: %Health{hp: 0}}
+      assert {:error, :collapsed} = Player.exert_using(player, :chalk, @now)
+      assert [%Item{id: :chalk, uses: 5}] = Inventory.list_items(player.inventory)
+    end
+  end
+
   describe "drop/3" do
     setup do
       item = Item.build(:iron_pipe)
