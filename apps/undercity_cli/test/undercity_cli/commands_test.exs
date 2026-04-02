@@ -52,7 +52,7 @@ defmodule UndercityCli.CommandsTest do
     end
 
     test "routes help to Help" do
-      expect(MessageBuffer, :info, fn _ -> :ok end)
+      stub(MessageBuffer, :info, fn _ -> :ok end)
       assert Commands.dispatch(%{@state | input: "help"}) == @state
     end
 

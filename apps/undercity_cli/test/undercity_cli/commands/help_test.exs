@@ -4,10 +4,14 @@ defmodule UndercityCli.Commands.HelpTest do
   alias UndercityCli.Commands
   alias UndercityCli.Commands.Help
 
-  test "displays usage hints and returns model unchanged" do
-    expect(MessageBuffer, :info, fn msg ->
-      assert msg == Commands.usage_hints()
-      :ok
+  test "displays each usage hint as a separate info message and returns model unchanged" do
+    Commands.usage_hints()
+    |> String.split("\n")
+    |> Enum.each(fn hint ->
+      expect(MessageBuffer, :info, fn msg ->
+        assert msg == hint
+        :ok
+      end)
     end)
 
     assert Help.dispatch("help", @state) == @state
