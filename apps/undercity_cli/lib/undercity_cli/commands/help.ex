@@ -13,7 +13,10 @@ defmodule UndercityCli.Commands.Help do
   Dispatches the help command, pushing all usage hints as an info message and returning state unchanged.
   """
   def dispatch(_verb, state) do
-    MessageBuffer.info(Commands.usage_hints())
+    Commands.usage_hints()
+    |> String.split("\n")
+    |> Enum.each(&MessageBuffer.info/1)
+
     state
   end
 end
