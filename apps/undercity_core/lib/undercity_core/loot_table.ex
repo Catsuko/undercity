@@ -8,7 +8,6 @@ defmodule UndercityCore.LootTable do
   """
 
   alias UndercityCore.Item
-  alias UndercityCore.Item.Catalogue
 
   @type item_spec :: atom()
   @type entry :: {float(), item_spec()}
@@ -57,18 +56,9 @@ defmodule UndercityCore.LootTable do
     threshold = acc + chance
 
     if value < threshold do
-      {:found, build_item(spec)}
+      {:found, Item.build(spec)}
     else
       find_item(rest, value, threshold)
-    end
-  end
-
-  defp build_item(id) when is_atom(id) do
-    {:ok, entry} = Catalogue.fetch(id)
-
-    case entry.default_uses do
-      nil -> Item.new(entry.name)
-      uses -> Item.new(entry.name, uses)
     end
   end
 end

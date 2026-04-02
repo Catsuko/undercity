@@ -19,16 +19,16 @@ defmodule UndercityServer.PlayerTest do
 
   describe "use_item/2" do
     test "decrements uses on a consumable item", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:chalk))
 
       assert :ok = Player.use_item(id, "Chalk")
 
       items = Player.check_inventory(id)
-      assert [%Item{name: "Chalk", uses: 2}] = items
+      assert [%Item{name: "Chalk", uses: 4}] = items
     end
 
     test "removes item when last use is spent", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 1))
+      Player.add_item(id, Item.build(:chalk, 1))
 
       assert :ok = Player.use_item(id, "Chalk")
 
@@ -40,7 +40,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "non-consumable items are not removed", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
 
       assert :ok = Player.use_item(id, "Junk")
 
@@ -51,16 +51,16 @@ defmodule UndercityServer.PlayerTest do
 
   describe "use_item/3 (atomic AP + item)" do
     test "spends AP and consumes item atomically", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:chalk))
 
       assert {:ok, 49} = Player.use_item(id, 0, 1)
 
-      assert [%Item{name: "Chalk", uses: 2}] = Player.check_inventory(id)
+      assert [%Item{name: "Chalk", uses: 4}] = Player.check_inventory(id)
       assert 49 = Player.constitution(id).ap
     end
 
     test "removes item on last use", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 1))
+      Player.add_item(id, Item.build(:chalk, 1))
 
       assert {:ok, 49} = Player.use_item(id, 0, 1)
 
@@ -68,14 +68,14 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns :exhausted when AP insufficient, item untouched", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:chalk))
 
       # Drain all AP
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
       assert {:error, :exhausted} = Player.use_item(id, 0, 1)
 
-      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+      assert [%Item{name: "Chalk", uses: 5}] = Player.check_inventory(id)
     end
 
     test "returns :item_missing when item not in inventory, AP untouched", %{id: id} do
@@ -85,7 +85,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "spends custom AP cost", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 5))
+      Player.add_item(id, Item.build(:chalk))
 
       assert {:ok, 47} = Player.use_item(id, 0, 3)
 
@@ -95,12 +95,12 @@ defmodule UndercityServer.PlayerTest do
 
   describe "drop_item/2" do
     test "removes item at index and spends AP", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:junk))
+      Player.add_item(id, Item.build(:chalk))
 
       assert {:ok, 49} = Player.drop_item(id, 0)
 
-      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+      assert [%Item{name: "Chalk", uses: 5}] = Player.check_inventory(id)
     end
 
     test "returns ok noop for out of range index", %{id: id} do
@@ -110,7 +110,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
@@ -122,7 +122,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
       collapse(id)
 
       assert {:error, :collapsed} = Player.drop_item(id, 0)
@@ -135,7 +135,7 @@ defmodule UndercityServer.PlayerTest do
 
   describe "eat_item/2" do
     test "consumes edible item and returns ap and hp", %{id: id} do
-      Player.add_item(id, Item.new("Mushroom"))
+      Player.add_item(id, Item.build(:mushroom))
 
       assert {:ok, 49, _hp} = Player.eat_item(id, 0)
 
@@ -149,7 +149,7 @@ defmodule UndercityServer.PlayerTest do
         for _ <- 1..100 do
           fresh_id = Helpers.start_player!()
           Player.take_damage(fresh_id, {"attacker_id", "Rat", 10})
-          Player.add_item(fresh_id, Item.new("Mushroom"))
+          Player.add_item(fresh_id, Item.build(:mushroom))
           initial_hp = Player.constitution(fresh_id).hp
           {:ok, _ap, new_hp} = Player.eat_item(fresh_id, 0)
           new_hp - initial_hp
@@ -161,7 +161,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns ok noop for non-edible item", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
       initial = Player.constitution(id)
 
       assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
@@ -175,7 +175,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns ok noop for non-edible item and writes inbox failure", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
       initial = Player.constitution(id)
 
       assert {:ok, initial.ap, initial.hp} == Player.eat_item(id, 0)
@@ -186,7 +186,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns :exhausted when AP insufficient and writes inbox warning", %{id: id} do
-      Player.add_item(id, Item.new("Mushroom"))
+      Player.add_item(id, Item.build(:mushroom))
 
       for _ <- 1..50, do: Player.perform(id, fn -> :ok end)
 
@@ -198,7 +198,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "returns :collapsed when HP is zero and writes inbox warning", %{id: id} do
-      Player.add_item(id, Item.new("Mushroom"))
+      Player.add_item(id, Item.build(:mushroom))
       collapse(id)
 
       assert {:error, :collapsed} = Player.eat_item(id, 0)
@@ -209,14 +209,14 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "does not consume item when not edible", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:chalk))
 
       assert {:ok, _ap, _hp} = Player.eat_item(id, 0)
-      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+      assert [%Item{name: "Chalk", uses: 5}] = Player.check_inventory(id)
     end
 
     test "does not spend AP when item is not edible", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
 
       assert {:ok, 50, _hp} = Player.eat_item(id, 0)
       assert 50 = Player.constitution(id).ap
@@ -225,9 +225,9 @@ defmodule UndercityServer.PlayerTest do
 
   describe "add_item/2" do
     test "returns error when inventory is full", %{id: id} do
-      for _ <- 1..15, do: Player.add_item(id, Item.new("Junk"))
+      for _ <- 1..15, do: Player.add_item(id, Item.build(:junk))
 
-      assert {:error, :full} = Player.add_item(id, Item.new("Extra"))
+      assert {:error, :full} = Player.add_item(id, Item.build(:junk))
     end
   end
 
@@ -248,7 +248,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "drop_item returns :collapsed", %{id: id} do
-      Player.add_item(id, Item.new("Junk"))
+      Player.add_item(id, Item.build(:junk))
       collapse(id)
 
       assert {:error, :collapsed} = Player.drop_item(id, 0)
@@ -256,7 +256,7 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "eat_item returns :collapsed", %{id: id} do
-      Player.add_item(id, Item.new("Mushroom"))
+      Player.add_item(id, Item.build(:mushroom))
       collapse(id)
 
       assert {:error, :collapsed} = Player.eat_item(id, 0)
@@ -264,11 +264,11 @@ defmodule UndercityServer.PlayerTest do
     end
 
     test "use_item/3 returns :collapsed", %{id: id} do
-      Player.add_item(id, Item.new("Chalk", 3))
+      Player.add_item(id, Item.build(:chalk))
       collapse(id)
 
       assert {:error, :collapsed} = Player.use_item(id, 0, 1)
-      assert [%Item{name: "Chalk", uses: 3}] = Player.check_inventory(id)
+      assert [%Item{name: "Chalk", uses: 5}] = Player.check_inventory(id)
     end
 
     test "action fn is not called when collapsed", %{id: id} do

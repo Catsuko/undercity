@@ -23,7 +23,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "consumes salve, restores HP, spends AP, and returns ap", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
 
       assert {:ok, 49} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
 
@@ -33,7 +33,7 @@ defmodule UndercityServer.Actions.HealTest do
     end
 
     test "heals 0 and consumes item when HP is at max", %{actor_id: actor_id, block_id: block_id} do
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
 
       assert {:ok, 49} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
 
@@ -43,7 +43,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "returns :collapsed when actor HP is 0, item and AP untouched",
          %{actor_id: actor_id, block_id: block_id} do
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       damage(actor_id, 50)
 
       assert {:error, :collapsed} = Heal.heal(actor_id, "player", block_id, actor_id, 0)
@@ -65,7 +65,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "returns ok noop and writes inbox failure when not a remedy", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
-      Player.add_item(actor_id, Item.new("Junk"))
+      Player.add_item(actor_id, Item.build(:junk))
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
       initial_ap = Player.constitution(actor_id).ap
@@ -78,7 +78,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "sends inbox message to actor on self-heal", %{actor_id: actor_id, block_id: block_id} do
       damage(actor_id, 20)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 
@@ -89,7 +89,7 @@ defmodule UndercityServer.Actions.HealTest do
     end
 
     test "sends inbox message to actor even when healed amount is 0", %{actor_id: actor_id, block_id: block_id} do
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 
@@ -110,7 +110,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "consumes salve and restores target HP", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
       damage(target_id, 20)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
 
       assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
 
@@ -124,7 +124,7 @@ defmodule UndercityServer.Actions.HealTest do
       block_id: block_id,
       target_id: target_id
     } do
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
 
       assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
 
@@ -138,7 +138,7 @@ defmodule UndercityServer.Actions.HealTest do
       target_id: target_id
     } do
       damage(target_id, 50)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
 
       assert {:ok, 49} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
       :timer.sleep(10)
@@ -168,7 +168,7 @@ defmodule UndercityServer.Actions.HealTest do
       target_id: target_id
     } do
       damage(target_id, 20)
-      Player.add_item(actor_id, Item.new("Junk"))
+      Player.add_item(actor_id, Item.build(:junk))
       initial_ap = Player.constitution(actor_id).ap
 
       assert {:ok, ^initial_ap} = Heal.heal(actor_id, "Healer", block_id, target_id, 0)
@@ -182,7 +182,7 @@ defmodule UndercityServer.Actions.HealTest do
       block_id: block_id
     } do
       outsider_id = Helpers.start_player!()
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       initial_ap = Player.constitution(actor_id).ap
 
       assert {:ok, ^initial_ap} = Heal.heal(actor_id, "Healer", block_id, outsider_id, 0)
@@ -194,7 +194,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "sends inbox message to target on success", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
       damage(target_id, 20)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       :timer.sleep(10)
       Player.fetch_inbox(target_id)
 
@@ -209,7 +209,7 @@ defmodule UndercityServer.Actions.HealTest do
       block_id: block_id,
       target_id: target_id
     } do
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       :timer.sleep(10)
       Player.fetch_inbox(target_id)
 
@@ -221,7 +221,7 @@ defmodule UndercityServer.Actions.HealTest do
 
     test "sends inbox message to actor on other-heal", %{actor_id: actor_id, block_id: block_id, target_id: target_id} do
       damage(target_id, 20)
-      Player.add_item(actor_id, Item.new("Salve", 1))
+      Player.add_item(actor_id, Item.build(:salve))
       :timer.sleep(10)
       Player.fetch_inbox(actor_id)
 

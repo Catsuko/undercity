@@ -43,19 +43,19 @@ defmodule UndercityCore.Combat.WeaponTest do
     end
 
     test "returns :none when inventory has no weapons" do
-      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.new("Junk"))
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.build(:junk))
       assert :none = Weapon.find_in_inventory(inventory)
     end
 
     test "returns {:ok, item} when inventory contains a weapon" do
-      iron_pipe = Item.new("Iron Pipe")
+      iron_pipe = Item.build(:iron_pipe)
       {:ok, inventory} = Inventory.add_item(Inventory.new(), iron_pipe)
       assert {:ok, ^iron_pipe} = Weapon.find_in_inventory(inventory)
     end
 
     test "returns the first weapon when inventory has multiple weapons" do
-      first = Item.new("Iron Pipe")
-      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.new("Junk"))
+      first = Item.build(:iron_pipe)
+      {:ok, inventory} = Inventory.add_item(Inventory.new(), Item.build(:junk))
       {:ok, inventory} = Inventory.add_item(inventory, first)
 
       assert {:ok, ^first} = Weapon.find_in_inventory(inventory)

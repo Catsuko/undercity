@@ -20,7 +20,7 @@ defmodule UndercityServer.Actions.AttackTest do
       block_id: block_id
     } do
       outsider_id = Helpers.start_player!()
-      Player.add_item(actor_id, Item.new("Iron Pipe"))
+      Player.add_item(actor_id, Item.build(:iron_pipe))
       initial_ap = Player.constitution(actor_id).ap
 
       assert {:ok, ^initial_ap} = Attack.attack(actor_id, "Attacker", block_id, outsider_id, 0)
@@ -33,7 +33,7 @@ defmodule UndercityServer.Actions.AttackTest do
       actor_id: actor_id,
       block_id: block_id
     } do
-      Player.add_item(actor_id, Item.new("Iron Pipe"))
+      Player.add_item(actor_id, Item.build(:iron_pipe))
       initial_ap = Player.constitution(actor_id).ap
 
       assert {:ok, ^initial_ap} = Attack.attack(actor_id, "Attacker", block_id, actor_id, 0)
@@ -55,7 +55,7 @@ defmodule UndercityServer.Actions.AttackTest do
       block_id: block_id,
       target_id: target_id
     } do
-      Player.add_item(actor_id, Item.new("Junk"))
+      Player.add_item(actor_id, Item.build(:junk))
       initial_ap = Player.constitution(actor_id).ap
 
       assert {:ok, ^initial_ap} = Attack.attack(actor_id, "Attacker", block_id, target_id, 0)
